@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "app/context.hpp"
-#include "app/style.hpp"
+#include "app/page.hpp"
 
 struct GLFWwindow;
 
@@ -23,18 +23,18 @@ class GUI {
     bool InitGLFW();
     void InitImGui();
 
+    void ChangePage(PageType type);
+
     void StartFrame();
     void Update();
     void EndFrame();
 
     void DrawMainMenuBar();
-    void DrawDashboard();
 
   private:
     GLFWwindow* m_Window;
     WindowData  m_WindowData;
 
-    AppFonts m_Fonts;
-
+    std::unique_ptr<Page> m_CurrentPage;
     std::shared_ptr<AppContext> m_Context;
 };

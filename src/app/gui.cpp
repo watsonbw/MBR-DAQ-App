@@ -5,6 +5,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include <implot.h>
+
 #include <GLFW/glfw3.h>
 
 #include "app/gui.hpp"
@@ -18,12 +20,15 @@ static const char* WINDOW_TITLE = "Michigan Baja Racing - Data Suite";
 GUI::GUI(std::shared_ptr<AppContext> ctx) : m_Context{ctx} {
     InitGLFW();
     InitImGui();
+
+    ChangePage(PageType::HOME);
 }
 
 GUI::~GUI() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    ImPlot::DestroyContext();
 
     glfwDestroyWindow(m_Window);
     glfwTerminate();
@@ -65,14 +70,37 @@ void GUI::InitImGui() {
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
 
+    ImPlot::CreateContext();
+
     ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
     ImGui_ImplOpenGL3_Init(GLSL_VERSION);
 
-    m_Fonts        = LoadFonts();
-    auto& io       = ImGui::GetIO();
-    io.FontDefault = m_Fonts.Regular;
+    m_Context->Fonts = LoadFonts();
+    auto& io         = ImGui::GetIO();
+    io.FontDefault   = m_Context->Fonts.Regular;
 
     SetDarkThemeColors();
+}
+
+void GUI::ChangePage(PageType type) {
+    if (m_CurrentPage) { m_CurrentPage->OnExit(); }
+
+    switch (type) {
+    case PageType::HOME:
+        m_CurrentPage = std::make_unique<HomePage>(m_Context);
+        break;
+    case PageType::RPM:
+        m_CurrentPage = std::make_unique<RPMPage>(m_Context);
+        break;
+    case PageType::SHOCK:
+        m_CurrentPage = std::make_unique<ShockPage>(m_Context);
+        break;
+    case PageType::VIEW:
+        m_CurrentPage = std::make_unique<ViewPage>(m_Context);
+        break;
+    }
+
+    if (m_CurrentPage) { m_CurrentPage->OnEnter(); }
 }
 
 void GUI::StartFrame() {
@@ -85,7 +113,19 @@ void GUI::Update() {
     StartFrame();
 
     DrawMainMenuBar();
-    DrawDashboard();
+
+    if (m_CurrentPage) {
+        const auto* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+        m_CurrentPage->Update();
+        ImGui::PopStyleVar(2);
+    }
 
     EndFrame();
 }
@@ -95,7 +135,7 @@ void GUI::EndFrame() {
     glfwGetFramebufferSize(m_Window, &m_WindowData.DisplayWidth, &m_WindowData.DisplayHeight);
     glViewport(0, 0, m_WindowData.DisplayWidth, m_WindowData.DisplayHeight);
 
-    glClearColor(GL_WHITE);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -103,13 +143,26 @@ void GUI::EndFrame() {
 }
 
 void GUI::DrawMainMenuBar() {
-    ImGui::PushFont(m_Fonts.Regular, 36.0f);
+    ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
 
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("Home")) { ChangePage(PageType::HOME); }
+            if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
+            if (ImGui::MenuItem("Shock")) { ChangePage(PageType::SHOCK); }
+            if (ImGui::MenuItem("View")) { ChangePage(PageType::VIEW); }
             if (ImGui::MenuItem("Exit")) { glfwSetWindowShouldClose(m_Window, true); }
+
             ImGui::EndMenu();
         }
+
+        ImGui::Separator();
+
+        if (ImGui::Button("Sync Time")) {}
+
+        ImGui::Separator();
+
+        if (ImGui::Button("Restart Connection")) {}
 
         ImGui::Separator();
 
@@ -131,23 +184,4 @@ void GUI::DrawMainMenuBar() {
     }
 
     ImGui::PopFont();
-}
-
-void GUI::DrawDashboard() {
-    ImGuiIO& io = ImGui::GetIO();
-    if (ImGui::Begin("Baja Telemetry Dashboard")) {
-        bool logging = m_Context->IsLogging;
-        ImGui::Text("Vehicle Status: %s", logging ? "LOGGING" : "IDLE");
-
-        // A simple button to toggle logging
-        if (ImGui::Button(logging ? "Stop Logging" : "Start Logging")) {
-            m_Context->IsLogging = !logging;
-        }
-
-        ImGui::Separator();
-        ImGui::Text("Application FPS: %.1f", io.Framerate);
-    }
-
-    // FYI: Windows will crash if they dont have an end at the end of their scope!
-    ImGui::End();
 }

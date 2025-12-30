@@ -75,9 +75,25 @@ add_library(imgui_setup STATIC
 target_include_directories(imgui_setup PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
 target_link_libraries(imgui_setup PUBLIC glfw)
 
+# ImPlot
+FetchContent_Declare(
+  implot
+  GIT_REPOSITORY https://github.com/epezent/implot.git
+  GIT_TAG v0.17
+)
+FetchContent_MakeAvailable(implot)
+
+add_library(implot_setup STATIC
+    ${implot_SOURCE_DIR}/implot.cpp
+    ${implot_SOURCE_DIR}/implot_items.cpp
+    ${implot_SOURCE_DIR}/implot_demo.cpp
+)
+target_include_directories(implot_setup PUBLIC ${implot_SOURCE_DIR})
+target_link_libraries(implot_setup PUBLIC imgui_setup)
+
 function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
-    target_link_libraries(baja_core_${TARGET_NAME} PUBLIC imgui_setup)
+    target_link_libraries(baja_core_${TARGET_NAME} PUBLIC imgui_setup implot_setup)
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC include)
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
 
