@@ -18,6 +18,7 @@ AlignOperands: true
 AlignTrailingComments: true
 Cpp11BracedListStyle: true
 PointerAlignment: Left
+ReferenceAlignment: Left
 AlwaysBreakAfterReturnType: None
 InsertNewlineAtEOF: true
 AlignConsecutiveBitFields: true

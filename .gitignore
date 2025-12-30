@@ -58,3 +58,5 @@ build/
 
 .vscode
 .zed
+
+__cmake*

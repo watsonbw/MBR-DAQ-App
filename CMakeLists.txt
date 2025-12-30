@@ -36,7 +36,7 @@ set(DEBUG_FLAGS "-O0" "-g" "-DDEBUG")
 set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
 file(GLOB_RECURSE ALL_SOURCES "${SRC_DIR}/*.cpp")
 set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
-file(GLOB_RECURSE HEADERS "${INCLUDE_DIR}/*.hpp")
+file(GLOB_RECURSE HEADERS "${INCLUDE_DIR}/*.hpp" "${INCLUDE_DIR}/*.h")
 
 set(LIB_SOURCES ${ALL_SOURCES})
 list(FILTER LIB_SOURCES EXCLUDE REGEX "main\\.cpp$")
@@ -47,7 +47,10 @@ set(FRAMEWORK_REGEX "test_framework/*")
 list(FILTER TEST_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
 
 # GLFW
-FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw.git GIT_TAG 3.4)
+FetchContent_Declare(glfw
+    GIT_REPOSITORY
+    https://github.com/glfw/glfw.git
+    GIT_TAG 3.4)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glfw)
@@ -101,9 +104,11 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         PRIVATE catch2_${TARGET_NAME} baja_core_${TARGET_NAME})
     target_include_directories(baja_tests_${TARGET_NAME}
         PRIVATE include tests/helpers)
-    target_compile_options(baja_tests_${TARGET_NAME} PRIVATE ${WARNING_IGNORE})
+    target_compile_options(baja_tests_${TARGET_NAME}
+        PRIVATE ${WARNING_IGNORE})
 
-    target_compile_options(baja_tests_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
+    target_compile_options(baja_tests_${TARGET_NAME}
+        PRIVATE ${EXTRA_FLAGS})
     target_link_options(baja_tests_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
     set_target_properties(baja_tests_${TARGET_NAME}
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUT_DIR})

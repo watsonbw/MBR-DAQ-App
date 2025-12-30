@@ -512,7 +512,7 @@ namespace Catch {
                 auto Estimate = [=](double(*f)(double const*, double const*)) {
                     std::random_device rd;
                     auto seed = rd();
-                    return std::async(std::Launch::async, [=] {
+                    return std::async(std::launch::async, [=] {
                         SimplePcg32 rng( seed );
                         auto resampled = resample(rng, n_resamples, first, last, f);
                         return bootstrap(confidence_level, first, last, resampled, f);
