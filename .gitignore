@@ -55,3 +55,6 @@ full_pgn_db
 release/
 build/
 .cache
+
+.vscode
+.zed
