@@ -12,6 +12,11 @@
 #include "app/gui.hpp"
 #include "app/style.hpp"
 
+#include "app/pages/home.hpp"
+#include "app/pages/rpm.hpp"
+#include "app/pages/shock.hpp"
+#include "app/pages/view.hpp"
+
 using namespace std::chrono;
 
 static const char* GLSL_VERSION = "#version 130";
@@ -101,6 +106,7 @@ void GUI::ChangePage(PageType type) {
     }
 
     if (m_CurrentPage) { m_CurrentPage->OnEnter(); }
+    m_Context->CurrentPageType = type;
 }
 
 void GUI::StartFrame() {
@@ -155,6 +161,10 @@ void GUI::DrawMainMenuBar() {
 
             ImGui::EndMenu();
         }
+
+        ImGui::Separator();
+
+        ImGui::Text(PageTypeString(m_Context->CurrentPageType));
 
         ImGui::Separator();
 

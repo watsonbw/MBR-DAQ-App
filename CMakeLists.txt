@@ -91,9 +91,32 @@ add_library(implot_setup STATIC
 target_include_directories(implot_setup PUBLIC ${implot_SOURCE_DIR})
 target_link_libraries(implot_setup PUBLIC imgui_setup)
 
+# OpenCV
+FetchContent_Declare(
+  opencv
+  GIT_REPOSITORY https://github.com/opencv/opencv.git
+  GIT_TAG 4.12.0
+)
+
+set(BUILD_opencv_apps OFF CACHE BOOL "" FORCE)
+set(BUILD_opencv_python2 OFF CACHE BOOL "" FORCE)
+set(BUILD_opencv_python3 OFF CACHE BOOL "" FORCE)
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_PERF_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_opencv_dnn OFF CACHE BOOL "" FORCE)
+set(BUILD_opencv_ml OFF CACHE BOOL "" FORCE)
+set(BUILD_opencv_python_bindings_generator OFF CACHE BOOL "" FORCE)
+set(BUILD_opencv_js OFF CACHE BOOL "" FORCE)
+set(BUILD_opencv_java OFF CACHE BOOL "" FORCE)
+set(BUILD_opencv_objc OFF CACHE BOOL "" FORCE)
+set(BUILD_opencv_ts OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(opencv)
+
 function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
-    target_link_libraries(baja_core_${TARGET_NAME} PUBLIC imgui_setup implot_setup)
+    target_link_libraries(baja_core_${TARGET_NAME} PUBLIC imgui_setup implot_setup opencv_core opencv_videoio opencv_imgproc)
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC include)
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
 

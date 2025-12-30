@@ -1,39 +1,8 @@
-#include <cstdint>
-#include <iostream>
-
-#include <algorithm>
-#include <numeric>
+#include "app/pages/rpm.hpp"
+#include "app/context.hpp"
 
 #include <imgui.h>
 #include <implot.h>
-
-#include "app/context.hpp"
-#include "app/page.hpp"
-#include "app/style.hpp"
-
-static ImGuiWindowFlags DefaultWindowFlags() {
-    ImGuiWindowFlags window_flags = 0;
-    window_flags |= ImGuiWindowFlags_NoTitleBar;
-    window_flags |= ImGuiWindowFlags_NoCollapse;
-    window_flags |= ImGuiWindowFlags_NoResize;
-    window_flags |= ImGuiWindowFlags_NoMove;
-    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-    window_flags |= ImGuiWindowFlags_NoNavFocus;
-    return window_flags;
-}
-
-void HomePage::OnEnter() { std::cout << "[INFO]: Entered HomePage" << "\n"; }
-
-void HomePage::Update() {
-    const auto window_flags = DefaultWindowFlags();
-    if (ImGui::Begin("Home Page", nullptr, window_flags)) {}
-
-    ImGui::End();
-}
-
-void HomePage::OnExit() { std::cout << "[INFO]: Exitted HomePage" << "\n"; }
-
-void RPMPage::OnEnter() { std::cout << "[INFO]: Enterred RPMPage" << "\n"; }
 
 void RPMPage::Update() {
     const auto window_flags = DefaultWindowFlags();
@@ -74,6 +43,10 @@ void RPMPage::Update() {
         engine               = rpm_data.EngineRPM;
     }
 
+    for (const auto& msg : raw_data) {
+        ImGui::TextUnformatted(msg.c_str());
+    }
+
     ImGui::EndChild();
 
     // Right Side
@@ -102,13 +75,3 @@ void RPMPage::Update() {
 
     ImGui::End();
 }
-
-void RPMPage::OnExit() { std::cout << "[INFO]: Exitted RPMPage" << "\n"; }
-
-void ShockPage::OnEnter() { std::cout << "[INFO]: Entered ShockPage" << "\n"; }
-void ShockPage::Update() {}
-void ShockPage::OnExit() { std::cout << "[INFO]: Exitted ShockPage" << "\n"; }
-
-void ViewPage::OnEnter() { std::cout << "[INFO]: Entered ViewPage" << "\n"; }
-void ViewPage::Update() {}
-void ViewPage::OnExit() { std::cout << "[INFO]: Exitted ViewPage" << "\n"; }

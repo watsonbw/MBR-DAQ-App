@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "app/context.hpp"
-#include "app/page.hpp"
+#include "app/pages/page.hpp"
 
 struct GLFWwindow;
 
@@ -35,6 +35,6 @@ class GUI {
     GLFWwindow* m_Window;
     WindowData  m_WindowData;
 
-    std::unique_ptr<Page> m_CurrentPage;
+    std::unique_ptr<Page>       m_CurrentPage;
     std::shared_ptr<AppContext> m_Context;
 };
