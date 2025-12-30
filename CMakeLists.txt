@@ -198,13 +198,6 @@ file(GLOB_RECURSE TOOLING_SOURCES
 )
 list(FILTER TOOLING_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
 
-# Lines of code
-find_program(CLOC cloc)
-if (CLOC)
-    add_custom_target(cloc COMMAND ${CLOC} ${SRC_DIR} ${INCLUDE_DIR})
-    add_custom_target(cloc-all COMMAND ${CLOC} ${TOOLING_SOURCES})
-endif()
-
 # Formatting
 find_program(CLANG_FORMAT clang-format)
 if(CLANG_FORMAT)

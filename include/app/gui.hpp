@@ -1,6 +1,9 @@
 #pragma once
 
-#include "esp32/data.hpp"
+#include <memory>
+
+#include "app/style.hpp"
+#include "app/context.hpp"
 
 struct GLFWwindow;
 
@@ -11,16 +14,17 @@ struct WindowData {
 
 class GUI {
   public:
-    GUI();
+    explicit GUI(std::shared_ptr<AppContext> ctx);
     ~GUI();
 
     void Launch();
 
   private:
     bool InitGLFW();
-    void InitImGUI();
+    void InitImGui();
 
     void StartFrame();
+    void Update();
     void EndFrame();
 
     void DrawMainMenuBar();
@@ -30,7 +34,7 @@ class GUI {
     GLFWwindow* m_Window;
     WindowData  m_WindowData;
 
-    Data  m_Data;
-    float m_IsConnected;
-    bool  m_IsLogging;
+    AppFonts m_Fonts;
+
+    std::shared_ptr<AppContext> m_Context;
 };

@@ -1,6 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <memory>
+#include <thread>
+
+struct AppContext;
 
 struct RPMData {
     std::vector<float> EngineRPM;
@@ -20,14 +24,21 @@ struct ShockData {
     void Clear();
 };
 
-class Data {
+class TelemetryData {
   public:
-    Data();
-    ~Data() = default;
+    explicit TelemetryData(std::shared_ptr<AppContext> ctx);
+    ~TelemetryData();
 
+    void Start();
+    
+  private:
+    void WorkerLoop();
     void PopulateData(const char* esp32_data);
 
   private:
+    std::shared_ptr<AppContext> m_Context;
+    std::thread m_Worker;
+  
     RPMData   m_RPMData;
     ShockData m_ShockData;
     float     m_Time;

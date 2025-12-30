@@ -7,8 +7,6 @@
 
 #include <GLFW/glfw3.h>
 
-#include "app/fonts/OpenSans.hpp"
-
 #include "app/gui.hpp"
 #include "app/style.hpp"
 
@@ -17,9 +15,9 @@ using namespace std::chrono;
 static const char* GLSL_VERSION = "#version 130";
 static const char* WINDOW_TITLE = "Michigan Baja Racing - Data Suite";
 
-GUI::GUI() : m_IsConnected{false}, m_IsLogging{false} {
+GUI::GUI(std::shared_ptr<AppContext> ctx) : m_Context{ctx} {
     InitGLFW();
-    InitImGUI();
+    InitImGui();
 }
 
 GUI::~GUI() {
@@ -29,6 +27,15 @@ GUI::~GUI() {
 
     glfwDestroyWindow(m_Window);
     glfwTerminate();
+}
+
+void GUI::Launch() {
+    while (!glfwWindowShouldClose(m_Window)) {
+        glfwPollEvents();
+        Update();
+    }
+    
+    m_Context->ShouldExit = true;
 }
 
 bool GUI::InitGLFW() {
@@ -53,7 +60,7 @@ bool GUI::InitGLFW() {
     return true;
 }
 
-void GUI::InitImGUI() {
+void GUI::InitImGui() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
@@ -61,21 +68,26 @@ void GUI::InitImGUI() {
     ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
     ImGui_ImplOpenGL3_Init(GLSL_VERSION);
 
-    ImGuiIO&     io = ImGui::GetIO();
-    ImFontConfig cfg;
-    cfg.FontDataOwnedByAtlas = false;
-    io.Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(OpenSansRegular_ttf),
-                                   OpenSansRegular_ttf_size,
-                                   DEFAULT_FONT_SIZE,
-                                   &cfg);
+    m_Fonts        = LoadFonts();
+    auto& io       = ImGui::GetIO();
+    io.FontDefault = m_Fonts.Regular;
+
+    SetDarkThemeColors();
 }
 
 void GUI::StartFrame() {
-    glfwPollEvents();
-
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+}
+
+void GUI::Update() {
+    StartFrame();
+
+    DrawMainMenuBar();
+    DrawDashboard();
+
+    EndFrame();
 }
 
 void GUI::EndFrame() {
@@ -90,20 +102,17 @@ void GUI::EndFrame() {
     glfwSwapBuffers(m_Window);
 }
 
-void GUI::Launch() {
-    while (!glfwWindowShouldClose(m_Window)) {
-        StartFrame();
-
-        DrawMainMenuBar();
-        DrawDashboard();
-
-        EndFrame();
-    }
-}
-
 void GUI::DrawMainMenuBar() {
-    // PLACEHOLDER LOGIC
+    ImGui::PushFont(m_Fonts.Regular, 36.0f);
+
     if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("Exit")) { glfwSetWindowShouldClose(m_Window, true); }
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
         auto now = system_clock::now();
 
         auto    time_now = system_clock::to_time_t(now);
@@ -118,24 +127,21 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Text("%02d:%02d:%02d.%03lld", lt.tm_hour, lt.tm_min, lt.tm_sec, ms.count());
 
-        ImGui::Separator();
-
-        if (ImGui::BeginMenu("File")) {
-            if (ImGui::MenuItem("Exit")) { glfwSetWindowShouldClose(m_Window, true); }
-            ImGui::EndMenu();
-        }
         ImGui::EndMainMenuBar();
     }
+
+    ImGui::PopFont();
 }
 
 void GUI::DrawDashboard() {
     ImGuiIO& io = ImGui::GetIO();
     if (ImGui::Begin("Baja Telemetry Dashboard")) {
-        ImGui::Text("Vehicle Status: %s", m_IsLogging ? "LOGGING" : "IDLE");
+        bool logging = m_Context->IsLogging;
+        ImGui::Text("Vehicle Status: %s", logging ? "LOGGING" : "IDLE");
 
         // A simple button to toggle logging
-        if (ImGui::Button(m_IsLogging ? "Stop Logging" : "Start Logging")) {
-            m_IsLogging = !m_IsLogging;
+        if (ImGui::Button(logging ? "Stop Logging" : "Start Logging")) {
+            m_Context->IsLogging = !logging;
         }
 
         ImGui::Separator();

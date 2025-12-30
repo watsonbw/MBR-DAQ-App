@@ -1,6 +1,6 @@
-#include "app/gui.hpp"
+#include "app/app.hpp"
 
 int main() {
-    GUI gui;
-    gui.Launch();
+    App app;
+    app.Run();
 }
