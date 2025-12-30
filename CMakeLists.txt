@@ -1,11 +1,15 @@
 cmake_minimum_required(VERSION 3.20)
 set(CMAKE_COLOR_MAKEFILE OFF)
 
+include(FetchContent)
+
 # Global configuration
 project(baja_data
     VERSION 0.1.0
     LANGUAGES CXX
 )
+
+find_package(OpenGL REQUIRED)
 
 # Qualify compile commands database for tooling
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -41,6 +45,32 @@ set(TEST_DIR "${CMAKE_SOURCE_DIR}/tests")
 file(GLOB_RECURSE TEST_SOURCES "${TEST_DIR}/*.cpp")
 set(FRAMEWORK_REGEX "test_framework/*")
 list(FILTER TEST_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
+
+# GLFW
+FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw.git GIT_TAG 3.4)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(glfw)
+
+# Dear ImGUI
+FetchContent_Declare(
+  imgui
+  GIT_REPOSITORY https://github.com/ocornut/imgui.git
+  GIT_TAG v1.92.5
+)
+FetchContent_MakeAvailable(imgui)
+
+add_library(imgui_setup STATIC
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+)
+target_include_directories(imgui_setup PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
+target_link_libraries(imgui_setup PUBLIC glfw)
 
 function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
@@ -85,7 +115,7 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
 
     add_executable(baja_${TARGET_NAME} src/main.cpp)
     target_link_libraries(baja_${TARGET_NAME}
-        PRIVATE baja_core_${TARGET_NAME})
+        PRIVATE baja_core_${TARGET_NAME} imgui_setup OpenGL::GL)
     add_custom_target(${TARGET_NAME} DEPENDS
         baja_tests_${TARGET_NAME} baja_${TARGET_NAME})
 
