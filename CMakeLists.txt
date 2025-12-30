@@ -74,6 +74,7 @@ target_link_libraries(imgui_setup PUBLIC glfw)
 
 function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
+    target_link_libraries(baja_core_${TARGET_NAME} PUBLIC imgui_setup)
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC include)
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
 
@@ -207,20 +208,5 @@ if(CLANG_FORMAT)
         ${CLANG_FORMAT}
         --dry-run
         --Werror
-        ${TOOLING_SOURCES})
-endif()
-
-# Static analysis
-find_program(RUN_CLANG_TIDY run-clang-tidy)
-find_program(CLANG_TIDY clang-tidy)
-if(RUN_CLANG_TIDY)
-    add_custom_target(tidy COMMAND
-        ${RUN_CLANG_TIDY}
-        -p ${CMAKE_BINARY_DIR}
-        ${TOOLING_SOURCES})
-elseif(CLANG_TIDY)
-    add_custom_target(tidy COMMAND
-        ${CLANG_TIDY}
-        -p ${CMAKE_BINARY_DIR}
         ${TOOLING_SOURCES})
 endif()
