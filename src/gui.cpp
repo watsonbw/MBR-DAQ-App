@@ -12,6 +12,10 @@
 
 #include "gui.hpp"
 
+using namespace std::chrono;
+
+#define GL_WHITE 1.0, 1.0, 1.0, 1.0f
+
 GUI::GUI() : m_isConnected{false}, m_IsLogging{false} {
   if (!glfwInit()) {
     throw std::runtime_error("I couldn't init GLFW");
@@ -54,15 +58,13 @@ void GUI::launch() {
   while (!glfwWindowShouldClose(m_Window)) {
     glfwPollEvents();
 
-    // Start ImGui Frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    // --- 5. Build the UI ---
-    {
-      ImGui::Begin("Baja Telemetry Dashboard");
+    drawMainMenuBar();
 
+    if (ImGui::Begin("Baja Telemetry Dashboard")) {
       ImGui::Text("Vehicle Status: %s", m_IsLogging ? "LOGGING" : "IDLE");
 
       // A simple button to toggle logging
@@ -70,35 +72,46 @@ void GUI::launch() {
         m_IsLogging = !m_IsLogging;
       }
 
-      ImGui::SliderFloat("Simulated RPM", &m_RPM, 0.0f, 4000.0f);
-
-      // Record history for the graph
-      m_RPMHistory.push_back(m_RPM);
-      if (m_RPMHistory.size() > 100)
-        m_RPMHistory.erase(m_RPMHistory.begin());
-
-      // Simple Plot
-      ImGui::PlotLines("Engine RPM", m_RPMHistory.data(),
-                       (int)m_RPMHistory.size(), 0, nullptr, 0.0f, 4000.0f,
-                       ImVec2(0, 80));
-
       ImGui::Separator();
       ImGui::Text("Application FPS: %.1f", io.Framerate);
 
       ImGui::End();
     }
 
-    // --- 6. Rendering ---
     ImGui::Render();
     int display_w, display_h;
     glfwGetFramebufferSize(m_Window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
 
     // Clear screen
-    glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
+    glClearColor(GL_WHITE);
     glClear(GL_COLOR_BUFFER_BIT);
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     glfwSwapBuffers(m_Window);
+  }
+}
+
+void GUI::drawMainMenuBar() {
+  if (ImGui::BeginMainMenuBar()) {
+    auto now = system_clock::now();
+
+    auto time_now = system_clock::to_time_t(now);
+    auto *lt = std::localtime(&time_now);
+
+    auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
+
+    ImGui::Text("%02d:%02d:%02d.%03lld", lt->tm_hour, lt->tm_min, lt->tm_sec,
+                ms.count());
+
+    ImGui::Separator();
+
+    if (ImGui::BeginMenu("File")) {
+      if (ImGui::MenuItem("Exit")) {
+        glfwSetWindowShouldClose(m_Window, true);
+      }
+      ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
   }
 }

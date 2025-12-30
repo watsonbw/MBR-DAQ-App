@@ -1,4 +1,3 @@
-#include "data.hpp"
 #include "gui.hpp"
 
 int main() {
