@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "app/style.hpp"
 #include "app/context.hpp"
+#include "app/style.hpp"
 
 struct GLFWwindow;
 

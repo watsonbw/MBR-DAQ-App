@@ -1,8 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <memory>
-#include <thread>
 
 struct AppContext;
 
@@ -26,19 +24,13 @@ struct ShockData {
 
 class TelemetryData {
   public:
-    explicit TelemetryData(std::shared_ptr<AppContext> ctx);
-    ~TelemetryData();
+    explicit TelemetryData();
+    ~TelemetryData() = default;
 
-    void Start();
-    
   private:
-    void WorkerLoop();
     void PopulateData(const char* esp32_data);
 
   private:
-    std::shared_ptr<AppContext> m_Context;
-    std::thread m_Worker;
-  
     RPMData   m_RPMData;
     ShockData m_ShockData;
     float     m_Time;

@@ -34,7 +34,7 @@ void GUI::Launch() {
         glfwPollEvents();
         Update();
     }
-    
+
     m_Context->ShouldExit = true;
 }
 

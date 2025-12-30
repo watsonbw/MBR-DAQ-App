@@ -6,7 +6,6 @@
 #include "esp32/data.hpp"
 
 struct AppContext {
-    AppContext() : Data{} {};
     std::atomic<bool> IsConnected{false};
     std::atomic<bool> IsLogging{false};
     std::atomic<bool> ShouldExit{false};
