@@ -11,10 +11,11 @@ public:
   GUI();
   ~GUI();
 
-  void launch();
+  void Launch();
 
 private:
-  void drawMainMenuBar();
+  void SetStyle();
+  void DrawMainMenuBar();
 
 private:
   GLFWwindow *m_Window;

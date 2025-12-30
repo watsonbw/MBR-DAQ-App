@@ -16,8 +16,10 @@ using namespace std::chrono;
 
 #define GL_WHITE 1.0, 1.0, 1.0, 1.0f
 
-GUI::GUI() : m_isConnected{false}, m_IsLogging{false} {
-  if (!glfwInit()) {
+GUI::GUI() : m_isConnected{false}, m_IsLogging{false}
+{
+  if (!glfwInit())
+  {
     throw std::runtime_error("I couldn't init GLFW");
   }
 
@@ -27,7 +29,8 @@ GUI::GUI() : m_isConnected{false}, m_IsLogging{false} {
   m_Window = glfwCreateWindow(1920, 1080, "Michigan Baja Racing - Data Suite",
                               nullptr, nullptr);
 
-  if (!m_Window) {
+  if (!m_Window)
+  {
     glfwTerminate();
     throw std::runtime_error("I couldn't create the window");
   }
@@ -43,7 +46,8 @@ GUI::GUI() : m_isConnected{false}, m_IsLogging{false} {
   ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
-GUI::~GUI() {
+GUI::~GUI()
+{
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
@@ -52,23 +56,27 @@ GUI::~GUI() {
   glfwTerminate();
 }
 
-void GUI::launch() {
+void GUI::Launch()
+{
   ImGuiIO &io = ImGui::GetIO();
 
-  while (!glfwWindowShouldClose(m_Window)) {
+  while (!glfwWindowShouldClose(m_Window))
+  {
     glfwPollEvents();
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    drawMainMenuBar();
+    DrawMainMenuBar();
 
-    if (ImGui::Begin("Baja Telemetry Dashboard")) {
+    if (ImGui::Begin("Baja Telemetry Dashboard"))
+    {
       ImGui::Text("Vehicle Status: %s", m_IsLogging ? "LOGGING" : "IDLE");
 
       // A simple button to toggle logging
-      if (ImGui::Button(m_IsLogging ? "Stop Logging" : "Start Logging")) {
+      if (ImGui::Button(m_IsLogging ? "Stop Logging" : "Start Logging"))
+      {
         m_IsLogging = !m_IsLogging;
       }
 
@@ -92,8 +100,14 @@ void GUI::launch() {
   }
 }
 
-void GUI::drawMainMenuBar() {
-  if (ImGui::BeginMainMenuBar()) {
+void SetStyle()
+{
+}
+
+void GUI::DrawMainMenuBar()
+{
+  if (ImGui::BeginMainMenuBar())
+  {
     auto now = system_clock::now();
 
     auto time_now = system_clock::to_time_t(now);
@@ -106,8 +120,10 @@ void GUI::drawMainMenuBar() {
 
     ImGui::Separator();
 
-    if (ImGui::BeginMenu("File")) {
-      if (ImGui::MenuItem("Exit")) {
+    if (ImGui::BeginMenu("File"))
+    {
+      if (ImGui::MenuItem("Exit"))
+      {
         glfwSetWindowShouldClose(m_Window, true);
       }
       ImGui::EndMenu();

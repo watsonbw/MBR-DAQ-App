@@ -43,7 +43,7 @@ public:
   Data();
   ~Data() = default;
 
-  void populate_data(const char *esp32_data);
+  void PopulateData(const char *esp32_data);
 
 private:
   RPMData m_RPMData;

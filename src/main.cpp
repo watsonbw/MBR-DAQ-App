@@ -2,5 +2,5 @@
 
 int main() {
   GUI gui;
-  gui.launch();
+  gui.Launch();
 }
