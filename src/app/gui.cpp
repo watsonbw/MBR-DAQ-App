@@ -1,14 +1,13 @@
 #include <chrono>
-#include <iostream>
 
 #include <imgui.h>
 #include <implot.h>
 
-#include <GLFW/glfw3.h>
-
+#include <sokol_app.h>
 #include <sokol_gfx.h>
 #include <sokol_glue.h>
 #include <sokol_imgui.h>
+#include <sokol_log.h>
 
 #include "app/gui.hpp"
 #include "app/style.hpp"
@@ -22,74 +21,104 @@ using namespace std::chrono;
 
 static const char* WINDOW_TITLE = "Michigan Baja Racing - Data Suite";
 
-GUI::GUI(std::shared_ptr<AppContext> ctx) : m_Context{ctx} {
-    InitGLFW();
-    InitImGui();
+static GUI* g_AppInstance = nullptr;
 
-    ChangePage(PageType::HOME);
+static void s_init() {
+    if (g_AppInstance) { g_AppInstance->OnInit(); }
+}
+static void s_frame() {
+    if (g_AppInstance) { g_AppInstance->OnFrame(); }
+}
+static void s_cleanup() {
+    if (g_AppInstance) { g_AppInstance->OnCleanup(); }
+}
+static void s_event(const sapp_event* e) {
+    if (g_AppInstance) { g_AppInstance->OnEvent(e); }
 }
 
-GUI::~GUI() {
-    simgui_shutdown();
-    sg_shutdown();
+GUI::GUI(std::shared_ptr<AppContext> ctx) : m_Context{ctx} { }
 
-    ImGui::DestroyContext();
-    ImPlot::DestroyContext();
+sapp_desc GUI::GetSokolDesc() {
+    g_AppInstance = this;
 
-    glfwDestroyWindow(m_Window);
-    glfwTerminate();
+    sapp_desc desc          = {};
+    desc.init_cb            = s_init;
+    desc.frame_cb           = s_frame;
+    desc.cleanup_cb         = s_cleanup;
+    desc.event_cb           = s_event;
+    desc.width              = 1920;
+    desc.height             = 1080;
+    desc.window_title       = WINDOW_TITLE;
+    desc.icon.sokol_default = true;
+
+    return desc;
 }
 
-void GUI::Launch() {
-    while (!glfwWindowShouldClose(m_Window)) {
-        glfwPollEvents();
-        Update();
-    }
-
-    m_Context->ShouldExit = true;
-}
-
-bool GUI::InitGLFW() {
-    if (!glfwInit()) {
-        std::cerr << "I couldn't init GLFW" << std::endl;
-        return false;
-    }
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    m_Window = glfwCreateWindow(1920, 1080, WINDOW_TITLE, nullptr, nullptr);
-
-    if (!m_Window) {
-        glfwTerminate();
-        std::cerr << "I couldn't create the window" << std::endl;
-        return false;
-    }
-
-    glfwMakeContextCurrent(m_Window);
-    glfwSwapInterval(1);
-
-    return true;
-}
-
-void GUI::InitImGui() {
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark();
-
-    sg_desc sg_description = {};
+void GUI::OnInit() {
+    sg_desc sg_description     = {};
+    sg_description.environment = sglue_environment();
+    sg_description.logger.func = slog_func;
     sg_setup(&sg_description);
 
     simgui_desc_t si_desc = {};
+    si_desc.no_default_font = true;
     simgui_setup(&si_desc);
 
-    ImPlot::CreateContext();
-
-    m_Context->Fonts = LoadFonts();
     auto& io         = ImGui::GetIO();
+    m_Context->Fonts = LoadFonts();
     io.FontDefault   = m_Context->Fonts.Regular;
 
+    ImPlot::CreateContext();
     SetDarkThemeColors();
+    
+    ChangePage(PageType::HOME);
+}
+
+void GUI::OnFrame() {
+    simgui_frame_desc_t frame_desc = {};
+    frame_desc.width               = sapp_width();
+    frame_desc.height              = sapp_height();
+    frame_desc.delta_time          = sapp_frame_duration();
+    frame_desc.dpi_scale           = sapp_dpi_scale();
+    simgui_new_frame(&frame_desc);
+
+    DrawMainMenuBar();
+
+    if (m_CurrentPage) {
+        const auto* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+        m_CurrentPage->Update();
+
+        ImGui::PopStyleVar(2);
+    }
+
+    sg_pass_action pass_action        = {};
+    pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
+    pass_action.colors[0].clear_value = {0.1f, 0.1f, 0.1f, 1.0f};
+
+    sg_pass pass   = {};
+    pass.action    = pass_action;
+    pass.swapchain = sglue_swapchain();
+
+    sg_begin_pass(&pass);
+    simgui_render();
+    sg_end_pass();
+    sg_commit();
+}
+
+void GUI::OnEvent(const sapp_event* event) {
+    // Forward events to ImGui
+    simgui_handle_event(event);
+}
+
+void GUI::OnCleanup() {
+    simgui_shutdown();
+    sg_shutdown();
+    ImPlot::DestroyContext();
 }
 
 void GUI::ChangePage(PageType type) {
@@ -114,59 +143,6 @@ void GUI::ChangePage(PageType type) {
     m_Context->CurrentPageType = type;
 }
 
-void GUI::StartFrame() {
-    ImGui::NewFrame();
-
-    simgui_new_frame({
-        m_WindowData.DisplayWidth,
-        m_WindowData.DisplayHeight,
-        1.0 / 60.0,
-        1.0,
-    });
-}
-
-void GUI::Update() {
-    StartFrame();
-
-    DrawMainMenuBar();
-
-    if (m_CurrentPage) {
-        const auto* viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-
-        ImGui::SetNextWindowSize(viewport->WorkSize);
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-
-        m_CurrentPage->Update();
-        ImGui::PopStyleVar(2);
-    }
-
-    EndFrame();
-}
-
-void GUI::EndFrame() {
-    ImGui::Render();
-
-    const sg_pass_action pass_action = {
-        .colors[0] =
-            {
-                .load_action = SG_LOADACTION_CLEAR,
-                .clear_value = {0.1f, 0.1f, 0.1f, 1.0f},
-            },
-    };
-
-    sg_begin_pass(&(sg_pass){.action = pass_action, .swapchain = sglue_swapchain()});
-    sg_end_pass();
-
-    simgui_render();
-    sg_end_pass();
-    sg_commit();
-
-    glfwSwapBuffers(m_Window);
-}
-
 void GUI::DrawMainMenuBar() {
     ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
 
@@ -176,7 +152,7 @@ void GUI::DrawMainMenuBar() {
             if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
             if (ImGui::MenuItem("Shock")) { ChangePage(PageType::SHOCK); }
             if (ImGui::MenuItem("View")) { ChangePage(PageType::VIEW); }
-            if (ImGui::MenuItem("Exit")) { glfwSetWindowShouldClose(m_Window, true); }
+            if (ImGui::MenuItem("Exit")) { sapp_request_quit(); }
 
             ImGui::EndMenu();
         }

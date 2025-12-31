@@ -42,20 +42,21 @@ file(GLOB_RECURSE TEST_SOURCES "${TEST_DIR}/*.cpp")
 set(FRAMEWORK_REGEX "test_framework/*")
 list(FILTER TEST_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
 
-# GLFW
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
-add_subdirectory(vendor/glfw SYSTEM)
-
 # Sokol
 add_library(sokol_setup STATIC src/app/sokol_impl.cpp)
-target_include_directories(sokol_setup SYSTEM PUBLIC vendor/sokol vendor/imgui vendor/imgui/backends)
-target_link_libraries(sokol_setup PUBLIC glfw)
+target_include_directories(sokol_setup SYSTEM PUBLIC
+    vendor/sokol
+    vendor/sokol/util
+    vendor/imgui 
+    vendor/imgui/backends)
+target_compile_options(sokol_setup PRIVATE ${WARNING_IGNORE})
 
 if(APPLE)
-    target_link_libraries(sokol_setup INTERFACE "-framework Metal -framework MetalKit -framework QuartzCore")
+    target_link_libraries(sokol_setup INTERFACE
+        "-framework Cocoa -framework IOKit -framework
+Metal -framework MetalKit -framework QuartzCore")
 elseif(WIN32)
+    target_compile_definitions(sokol_setup PUBLIC SOKOL_D3D11)
     target_link_libraries(sokol_setup INTERFACE d3d11 dxgi)
 endif()
 
@@ -67,8 +68,9 @@ add_library(imgui_setup STATIC
     vendor/imgui/imgui_tables.cpp
     vendor/imgui/imgui_demo.cpp
 )
-target_include_directories(imgui_setup SYSTEM PUBLIC vendor/imgui vendor/imgui/backends)
-target_link_libraries(imgui_setup PUBLIC glfw sokol_setup)
+target_include_directories(imgui_setup SYSTEM PUBLIC
+    vendor/imgui vendor/imgui/backends)
+target_link_libraries(imgui_setup PUBLIC sokol_setup)
 
 # ImPlot
 add_library(implot_setup STATIC
@@ -78,16 +80,25 @@ add_library(implot_setup STATIC
 )
 target_include_directories(implot_setup SYSTEM PUBLIC vendor/implot)
 target_link_libraries(implot_setup PUBLIC imgui_setup)
+target_compile_options(implot_setup PRIVATE ${WARNING_IGNORE})
 
 # OpenCV
 set(BUILD_opencv_apps OFF CACHE BOOL "" FORCE)
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
+set(WITH_IPP OFF CACHE BOOL "" FORCE) 
+set(WITH_JASPER OFF CACHE BOOL "" FORCE)
+set(WITH_TIFF OFF CACHE BOOL "" FORCE)
+set(WITH_WEBP OFF CACHE BOOL "" FORCE)
+set(WITH_OPENEXR OFF CACHE BOOL "" FORCE)
+
 add_subdirectory(vendor/opencv SYSTEM EXCLUDE_FROM_ALL)
 
 # TinyFileDialogs
 add_library(tinyfiledialogs STATIC vendor/libtinyfiledialogs/tinyfiledialogs.c)
 target_include_directories(tinyfiledialogs PUBLIC vendor/libtinyfiledialogs)
+target_compile_options(tinyfiledialogs PRIVATE ${WARNING_IGNORE})
 if(WIN32)
     target_link_libraries(tinyfiledialogs PUBLIC comdlg32 ole32 user32 shell32)
 endif()
@@ -105,10 +116,7 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
 
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC
         include
-        vendor/opencv/include
-        vendor/opencv/modules/core/include
-        vendor/opencv/modules/videoio/include
-        vendor/opencv/modules/imgproc/include)
+        vendor/opencv/include)
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
 
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
