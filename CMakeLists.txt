@@ -4,7 +4,7 @@ set(CMAKE_COLOR_MAKEFILE OFF)
 # Global configuration
 project(baja_data
     VERSION 0.1.0
-    LANGUAGES C CXX
+    LANGUAGES C CXX OBJCXX
 )
 
 # Qualify compile commands database for tooling
@@ -52,9 +52,15 @@ target_include_directories(sokol_setup SYSTEM PUBLIC
 target_compile_options(sokol_setup PRIVATE ${WARNING_IGNORE})
 
 if(APPLE)
+    target_compile_definitions(sokol_setup PUBLIC SOKOL_METAL)
+    set_source_files_properties(src/app/sokol_impl.cpp PROPERTIES LANGUAGE OBJCXX)
     target_link_libraries(sokol_setup INTERFACE
-        "-framework Cocoa -framework IOKit -framework
-Metal -framework MetalKit -framework QuartzCore")
+        "-framework Cocoa"
+        "-framework IOKit"
+        "-framework Metal"
+        "-framework MetalKit"
+        "-framework QuartzCore"
+    )
 elseif(WIN32)
     target_compile_definitions(sokol_setup PUBLIC SOKOL_D3D11)
     target_link_libraries(sokol_setup INTERFACE d3d11 dxgi)
