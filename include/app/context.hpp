@@ -18,6 +18,6 @@ struct AppContext {
 
     std::mutex    DataMutex;
     TelemetryData Data;
-    std::string username;
-    std::string password;
+    std::string   username;
+    std::string   password;
 };

@@ -3,6 +3,7 @@
 #define SOKOL_GLUE_IMPL
 #define SOKOL_IMGUI_IMPL
 #define SOKOL_LOG_IMPL
+#define SOKOL_NO_ENTRY
 
 #include <imgui.h>
 

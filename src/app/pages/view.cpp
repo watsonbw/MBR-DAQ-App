@@ -37,16 +37,27 @@ void ViewPage::Update() {
 
     if (m_IsPlaying && m_VideoFPS > 0.0f) {
         m_TimeAccumulator += ImGui::GetIO().DeltaTime;
-        double frame_dur = 1.0 / m_VideoFPS;
+        const double frame_dur         = 1.0 / m_VideoFPS;
+        const int    frames_to_advance = static_cast<int>(m_TimeAccumulator / frame_dur);
 
-        if (m_TimeAccumulator >= frame_dur) {
-            m_TimeAccumulator -= frame_dur;
-            if (m_TimeAccumulator > frame_dur) { m_TimeAccumulator = 0.0; }
+        // We have to handle skipped frames gracefully
+        if (frames_to_advance > 0) {
+            m_TimeAccumulator -= (frames_to_advance * frame_dur);
+
+            if (frames_to_advance > 1) {
+                std::lock_guard<std::mutex> lock(m_FrameMutex);
+
+                int recoverable_frames =
+                    std::min(static_cast<int>(m_FrameQueue.size()) - 1, frames_to_advance - 1);
+
+                for (int i = 0; i < recoverable_frames; i++) {
+                    m_FrameQueue.pop_front();
+                }
+            }
 
             UpdateTexture();
         }
     }
-    UpdateTexture();
 
     if (m_VideoTexture.id != SG_INVALID_ID && m_TexWidth > 0) {
         float aspect  = (float)m_TexWidth / (float)m_TexHeight;
@@ -67,6 +78,8 @@ std::optional<std::string> ViewPage::OpenFile() {
         return std::nullopt;
     }
 
+    const std::string real_path{path};
+    LOG_INFO("Selected file: {}", real_path);
     return path;
 }
 
@@ -82,19 +95,19 @@ void ViewPage::StartDecodingThread() {
             return;
         }
 
-        m_VideoFPS          = cap.get(cv::CAP_PROP_FPS);
-        m_TotalFrames       = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
+        m_VideoFPS    = cap.get(cv::CAP_PROP_FPS);
+        m_TotalFrames = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
 
         cv::Mat raw_frame, rgba_frame;
         while (m_ThreadRunning) {
             // Keep the buffer from becoming too large
             {
                 std::unique_lock<std::mutex> lock(m_FrameMutex);
-                if (m_FrameQueue.size() >= MAX_QUEUE_SIZE) {
-                    lock.unlock();
-                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-                    continue;
-                }
+                m_QueueCV.wait(lock, [this] {
+                    return m_FrameQueue.size() < MAX_QUEUE_SIZE || !m_ThreadRunning;
+                });
+
+                if (!m_ThreadRunning) { break; }
             }
 
             // Manage the actual frame decoding and buffering
@@ -106,8 +119,6 @@ void ViewPage::StartDecodingThread() {
                     std::lock_guard<std::mutex> lock(m_FrameMutex);
                     m_FrameQueue.push_back(frame_copy);
                 }
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         }
     });
@@ -115,6 +126,7 @@ void ViewPage::StartDecodingThread() {
 
 void ViewPage::StopDecodingThread() {
     m_ThreadRunning = false;
+    m_QueueCV.notify_all();
     if (m_DecodeThread.joinable()) { m_DecodeThread.join(); }
 
     std::lock_guard<std::mutex> lock(m_FrameMutex);
@@ -131,6 +143,8 @@ void ViewPage::UpdateTexture() {
                 frame_to_upload = m_FrameQueue.front();
                 m_FrameQueue.pop_front();
                 frame_ready = true;
+
+                m_QueueCV.notify_one();
             }
         }
     }
@@ -140,7 +154,7 @@ void ViewPage::UpdateTexture() {
         if (m_TexWidth != frame_to_upload.cols || m_TexHeight != frame_to_upload.rows) {
             TryCleanupSokolResources();
 
-            m_TexWidth = frame_to_upload.cols;
+            m_TexWidth  = frame_to_upload.cols;
             m_TexHeight = frame_to_upload.rows;
 
             sg_image_desc desc       = {};
@@ -154,8 +168,8 @@ void ViewPage::UpdateTexture() {
             if (m_VideoTexture.id != SG_INVALID_ID) {
                 sg_view_desc view_desc  = {};
                 view_desc.texture.image = m_VideoTexture;
-                m_VideoView      = sg_make_view(&view_desc);
-                m_VideoTextureID = simgui_imtextureid(m_VideoView);
+                m_VideoView             = sg_make_view(&view_desc);
+                m_VideoTextureID        = simgui_imtextureid(m_VideoView);
             }
         }
 
@@ -178,4 +192,7 @@ void ViewPage::TryCleanupSokolResources() {
         m_VideoTexture.id = SG_INVALID_ID;
         m_VideoTextureID  = 0;
     }
+
+    m_TexWidth  = 0;
+    m_TexHeight = 0;
 }

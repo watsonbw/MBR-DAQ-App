@@ -100,9 +100,14 @@ void GUI::OnFrame() {
     sg_commit();
 }
 
-void GUI::OnEvent(const sapp_event* event) { simgui_handle_event(event); }
+void GUI::OnEvent(const sapp_event* event) {
+    if (event->type == SAPP_EVENTTYPE_QUIT_REQUESTED) { sapp_quit(); }
+    simgui_handle_event(event);
+}
 
 void GUI::OnCleanup() {
+    m_Context->ShouldExit = true;
+
     simgui_shutdown();
     sg_shutdown();
     ImPlot::DestroyContext();

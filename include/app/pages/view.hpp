@@ -1,12 +1,15 @@
 #pragma once
 
 #include <atomic>
+#include <condition_variable>
 #include <deque>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <thread>
+
+#include <imgui.h>
 
 #include <opencv2/opencv.hpp>
 
@@ -33,19 +36,17 @@ class ViewPage : public Page {
     void TryCleanupSokolResources();
 
   private:
-    std::string      m_VideoPath;
-    cv::VideoCapture m_Cap;
-    cv::Mat          m_RawFrame;
-    cv::Mat          m_DisplayFrame;
-    int              m_TotalFrames = 0;
+    std::string m_VideoPath;
+    int         m_TotalFrames = 0;
 
     std::atomic<bool> m_IsPlaying = false;
 
-    std::thread         m_DecodeThread;
-    std::atomic<bool>   m_ThreadRunning = false;
-    std::mutex          m_FrameMutex;
-    std::deque<cv::Mat> m_FrameQueue;
-    const size_t        MAX_QUEUE_SIZE = 10;
+    std::thread             m_DecodeThread;
+    std::atomic<bool>       m_ThreadRunning = false;
+    std::mutex              m_FrameMutex;
+    std::deque<cv::Mat>     m_FrameQueue;
+    std::condition_variable m_QueueCV;
+    const size_t            MAX_QUEUE_SIZE = 10;
 
     sg_image    m_VideoTexture   = {SG_INVALID_ID};
     sg_view     m_VideoView      = {SG_INVALID_ID};
