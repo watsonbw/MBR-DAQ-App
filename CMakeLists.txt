@@ -2,19 +2,33 @@ cmake_minimum_required(VERSION 3.20)
 set(CMAKE_COLOR_MAKEFILE OFF)
 
 # Global configuration
-project(baja_data
-    VERSION 0.1.0
+set(GLOBAL_NAME baja_data)
+set(GLOBAL_VERSION 0.1.0)
+
+if(APPLE)
+project(${GLOBAL_NAME}
+    VERSION ${GLOBAL_VERSION}
     LANGUAGES C CXX OBJCXX
 )
+elseif(WIN32)
+project(${GLOBAL_NAME}
+    VERSION ${GLOBAL_VERSION}
+    LANGUAGES C CXX
+)
+else()
+message(ERROR "Platform currently unsupported!")
+endif()
 
 # Qualify compile commands database for tooling
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(APPLE)
-    execute_process(
+execute_process(
     COMMAND xcrun --show-sdk-path
     OUTPUT_VARIABLE CMAKE_OSX_SYSROOT
     OUTPUT_STRIP_TRAILING_WHITESPACE)
+elseif(WIN32)
+add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -99,7 +113,10 @@ set(WITH_TIFF OFF CACHE BOOL "" FORCE)
 set(WITH_WEBP OFF CACHE BOOL "" FORCE)
 set(WITH_OPENEXR OFF CACHE BOOL "" FORCE)
 
+set(OLD_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${WARNING_IGNORE})
 add_subdirectory(vendor/opencv SYSTEM EXCLUDE_FROM_ALL)
+set(CMAKE_CXX_FLAGS ${OLD_CXX_FLAGS})
 
 # TinyFileDialogs
 add_library(tinyfiledialogs STATIC vendor/libtinyfiledialogs/tinyfiledialogs.c)
