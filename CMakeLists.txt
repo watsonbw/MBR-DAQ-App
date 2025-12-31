@@ -103,20 +103,37 @@ target_link_libraries(implot_setup PUBLIC imgui_setup)
 target_compile_options(implot_setup PRIVATE ${WARNING_IGNORE})
 
 # OpenCV
+set(BUILD_LIST "core,imgproc,imgcodecs,videoio,highgui" CACHE STRING "" FORCE)
 set(BUILD_opencv_apps OFF CACHE BOOL "" FORCE)
+set(BUILD_opencv_java OFF CACHE BOOL "" FORCE)
+set(BUILD_opencv_python OFF CACHE BOOL "" FORCE)
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_PERF_TESTS OFF CACHE BOOL "" FORCE)
+set(WITH_IPP OFF CACHE BOOL "" FORCE)
+set(WITH_ITT OFF CACHE BOOL "" FORCE)
+set(WITH_CUDA OFF CACHE BOOL "" FORCE)
+set(WITH_OPENCL OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-set(WITH_IPP OFF CACHE BOOL "" FORCE) 
-set(WITH_JASPER OFF CACHE BOOL "" FORCE)
-set(WITH_TIFF OFF CACHE BOOL "" FORCE)
-set(WITH_WEBP OFF CACHE BOOL "" FORCE)
-set(WITH_OPENEXR OFF CACHE BOOL "" FORCE)
+set(OPENCV_WARNINGS_ARE_ERRORS OFF CACHE BOOL "" FORCE)
+set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS ON CACHE BOOL "" FORCE)
 
-set(OLD_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${WARNING_IGNORE})
-add_subdirectory(vendor/opencv SYSTEM EXCLUDE_FROM_ALL)
-set(CMAKE_CXX_FLAGS ${OLD_CXX_FLAGS})
+cmake_policy(PUSH)
+cmake_policy(SET CMP0077 NEW)
+
+set(CMAKE_C_FLAGS_BACKUP "${CMAKE_C_FLAGS}")
+set(CMAKE_CXX_FLAGS_BACKUP "${CMAKE_CXX_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
+
+add_subdirectory(vendor/opencv)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_BACKUP}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
+
+cmake_policy(POP)
 
 # TinyFileDialogs
 add_library(tinyfiledialogs STATIC vendor/libtinyfiledialogs/tinyfiledialogs.c)
@@ -131,15 +148,27 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     target_link_libraries(baja_core_${TARGET_NAME} PUBLIC
         imgui_setup
         implot_setup
-        opencv_core
-        opencv_videoio
-        opencv_imgproc
         tinyfiledialogs
+        opencv_core
+        opencv_imgproc
+        opencv_imgcodecs
+        opencv_videoio
+        opencv_highgui
     )
 
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC
-        include
-        vendor/opencv/include)
+        include)
+    
+    target_include_directories(baja_core_${TARGET_NAME} SYSTEM PUBLIC
+        ${CMAKE_BINARY_DIR}
+        ${CMAKE_SOURCE_DIR}/vendor/opencv/include
+        ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/core/include
+        ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/imgproc/include
+        ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/imgcodecs/include
+        ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/videoio/include
+        ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/highgui/include
+    )
+    
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
 
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})

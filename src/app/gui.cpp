@@ -1,5 +1,5 @@
-#include <chrono>
 #include <cassert>
+#include <chrono>
 
 #include <imgui.h>
 #include <implot.h>
@@ -100,9 +100,7 @@ void GUI::OnFrame() {
     sg_commit();
 }
 
-void GUI::OnEvent(const sapp_event* event) {
-    simgui_handle_event(event);
-}
+void GUI::OnEvent(const sapp_event* event) { simgui_handle_event(event); }
 
 void GUI::OnCleanup() {
     simgui_shutdown();
@@ -160,22 +158,28 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Separator();
 
-        auto now = system_clock::now();
-
-        auto    time_now = system_clock::to_time_t(now);
-        std::tm lt{};
-#ifdef _WIN32
-        localtime_s(&lt, &time_now);
-#else
-        localtime_r(&time_now, &lt);
-#endif
-
-        auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
-
-        ImGui::Text("%02d:%02d:%02d.%03lld", lt.tm_hour, lt.tm_min, lt.tm_sec, ms.count());
+        LocalTime lt;
+        ImGui::Text("%02d:%02d:%02d.%03lld", lt.Hour, lt.Minute, lt.Second, lt.Millisecond);
 
         ImGui::EndMainMenuBar();
     }
 
     ImGui::PopFont();
+}
+
+LocalTime::LocalTime() {
+    auto now            = current_zone()->to_local(system_clock::now());
+    auto today          = floor<days>(now);
+    auto since_midnight = duration_cast<milliseconds>(now - today);
+
+    Hour = duration_cast<hours>(since_midnight).count();
+    since_midnight -= hours{Hour};
+
+    Minute = duration_cast<minutes>(since_midnight).count();
+    since_midnight -= minutes{Minute};
+
+    Second = duration_cast<seconds>(since_midnight).count();
+    since_midnight -= seconds{Second};
+
+    Millisecond = since_midnight.count();
 }
