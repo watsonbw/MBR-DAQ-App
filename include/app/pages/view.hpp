@@ -4,11 +4,11 @@
 #include <optional>
 #include <string>
 
-#include <opencv2/opencv.hpp>
+// #include <opencv2/opencv.hpp>
 
 #include "app/pages/page.hpp"
 
-#include <GL/gl.h>
+#include "sokol_gfx.h"
 
 class ViewPage : public Page {
   public:
@@ -22,8 +22,10 @@ class ViewPage : public Page {
     std::optional<std::string> OpenFile();
 
   private:
-    std::string      video_path;
-    cv::VideoCapture cap;
-    cv::Mat frame;
-    GLuint video_texture = 0;
+    // std::string      video_path;
+    // cv::VideoCapture cap;
+    // cv::Mat          frame;
+    // sg_image         video_texture = {0};
 };
+
+// void FtoT(const cv::Mat& frame, sg_image tex);

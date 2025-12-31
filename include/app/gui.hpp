@@ -5,7 +5,8 @@
 #include "app/context.hpp"
 #include "app/pages/page.hpp"
 
-struct GLFWwindow;
+struct sapp_event;
+struct sapp_desc;
 
 struct WindowData {
     int DisplayWidth;
@@ -15,26 +16,21 @@ struct WindowData {
 class GUI {
   public:
     explicit GUI(std::shared_ptr<AppContext> ctx);
-    ~GUI();
+    ~GUI() = default;
 
-    void Launch();
+    sapp_desc GetSokolDesc();
+    
+    void OnInit();
+    void OnFrame();
+    void OnEvent(const sapp_event* event);
+    void OnCleanup();
 
   private:
-    bool InitGLFW();
-    void InitImGui();
-
     void ChangePage(PageType type);
-
-    void StartFrame();
-    void Update();
-    void EndFrame();
 
     void DrawMainMenuBar();
 
   private:
-    GLFWwindow* m_Window;
-    WindowData  m_WindowData;
-
     std::unique_ptr<Page>       m_CurrentPage;
     std::shared_ptr<AppContext> m_Context;
 };

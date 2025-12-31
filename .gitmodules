@@ -2,10 +2,6 @@
 	path = vendor/libtinyfiledialogs
 	url = https://github.com/native-toolkit/libtinyfiledialogs
 
-[submodule "vendor/glfw"]
-	path = vendor/glfw
-	url = https://github.com/glfw/glfw
-
 [submodule "vendor/imgui"]
 	path = vendor/imgui
 	url = https://github.com/ocornut/imgui

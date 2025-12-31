@@ -1,8 +1,5 @@
 #include <imgui.h>
 
-#include "app/context.hpp"
-#include "app/style.hpp"
-
 #include "app/pages/page.hpp"
 
 const char* PageTypeString(PageType type) {

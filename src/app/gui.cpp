@@ -1,13 +1,13 @@
 #include <chrono>
-#include <iostream>
 
 #include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-
 #include <implot.h>
 
-#include <GLFW/glfw3.h>
+#include <sokol_app.h>
+#include <sokol_gfx.h>
+#include <sokol_glue.h>
+#include <sokol_imgui.h>
+#include <sokol_log.h>
 
 #include "app/gui.hpp"
 #include "app/style.hpp"
@@ -19,72 +19,106 @@
 
 using namespace std::chrono;
 
-static const char* GLSL_VERSION = "#version 130";
 static const char* WINDOW_TITLE = "Michigan Baja Racing - Data Suite";
 
-GUI::GUI(std::shared_ptr<AppContext> ctx) : m_Context{ctx} {
-    InitGLFW();
-    InitImGui();
+static GUI* g_AppInstance = nullptr;
 
+static void s_init() {
+    if (g_AppInstance) { g_AppInstance->OnInit(); }
+}
+static void s_frame() {
+    if (g_AppInstance) { g_AppInstance->OnFrame(); }
+}
+static void s_cleanup() {
+    if (g_AppInstance) { g_AppInstance->OnCleanup(); }
+}
+static void s_event(const sapp_event* e) {
+    if (g_AppInstance) { g_AppInstance->OnEvent(e); }
+}
+
+GUI::GUI(std::shared_ptr<AppContext> ctx) : m_Context{ctx} { }
+
+sapp_desc GUI::GetSokolDesc() {
+    g_AppInstance = this;
+
+    sapp_desc desc          = {};
+    desc.init_cb            = s_init;
+    desc.frame_cb           = s_frame;
+    desc.cleanup_cb         = s_cleanup;
+    desc.event_cb           = s_event;
+    desc.width              = 1920;
+    desc.height             = 1080;
+    desc.window_title       = WINDOW_TITLE;
+    desc.icon.sokol_default = true;
+
+    return desc;
+}
+
+void GUI::OnInit() {
+    sg_desc sg_description     = {};
+    sg_description.environment = sglue_environment();
+    sg_description.logger.func = slog_func;
+    sg_setup(&sg_description);
+
+    simgui_desc_t si_desc = {};
+    si_desc.no_default_font = true;
+    simgui_setup(&si_desc);
+
+    auto& io         = ImGui::GetIO();
+    m_Context->Fonts = LoadFonts();
+    io.FontDefault   = m_Context->Fonts.Regular;
+
+    ImPlot::CreateContext();
+    SetDarkThemeColors();
+    
     ChangePage(PageType::HOME);
 }
 
-GUI::~GUI() {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+void GUI::OnFrame() {
+    simgui_frame_desc_t frame_desc = {};
+    frame_desc.width               = sapp_width();
+    frame_desc.height              = sapp_height();
+    frame_desc.delta_time          = sapp_frame_duration();
+    frame_desc.dpi_scale           = sapp_dpi_scale();
+    simgui_new_frame(&frame_desc);
+
+    DrawMainMenuBar();
+
+    if (m_CurrentPage) {
+        const auto* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+        m_CurrentPage->Update();
+
+        ImGui::PopStyleVar(2);
+    }
+
+    sg_pass_action pass_action        = {};
+    pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
+    pass_action.colors[0].clear_value = {0.1f, 0.1f, 0.1f, 1.0f};
+
+    sg_pass pass   = {};
+    pass.action    = pass_action;
+    pass.swapchain = sglue_swapchain();
+
+    sg_begin_pass(&pass);
+    simgui_render();
+    sg_end_pass();
+    sg_commit();
+}
+
+void GUI::OnEvent(const sapp_event* event) {
+    // Forward events to ImGui
+    simgui_handle_event(event);
+}
+
+void GUI::OnCleanup() {
+    simgui_shutdown();
+    sg_shutdown();
     ImPlot::DestroyContext();
-
-    glfwDestroyWindow(m_Window);
-    glfwTerminate();
-}
-
-void GUI::Launch() {
-    while (!glfwWindowShouldClose(m_Window)) {
-        glfwPollEvents();
-        Update();
-    }
-
-    m_Context->ShouldExit = true;
-}
-
-bool GUI::InitGLFW() {
-    if (!glfwInit()) {
-        std::cerr << "I couldn't init GLFW" << std::endl;
-        return false;
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    m_Window = glfwCreateWindow(1920, 1080, WINDOW_TITLE, nullptr, nullptr);
-
-    if (!m_Window) {
-        glfwTerminate();
-        std::cerr << "I couldn't create the window" << std::endl;
-        return false;
-    }
-
-    glfwMakeContextCurrent(m_Window);
-    glfwSwapInterval(1);
-
-    return true;
-}
-
-void GUI::InitImGui() {
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark();
-
-    ImPlot::CreateContext();
-
-    ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
-    ImGui_ImplOpenGL3_Init(GLSL_VERSION);
-
-    m_Context->Fonts = LoadFonts();
-    auto& io         = ImGui::GetIO();
-    io.FontDefault   = m_Context->Fonts.Regular;
-
-    SetDarkThemeColors();
 }
 
 void GUI::ChangePage(PageType type) {
@@ -109,45 +143,6 @@ void GUI::ChangePage(PageType type) {
     m_Context->CurrentPageType = type;
 }
 
-void GUI::StartFrame() {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-}
-
-void GUI::Update() {
-    StartFrame();
-
-    DrawMainMenuBar();
-
-    if (m_CurrentPage) {
-        const auto* viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-
-        ImGui::SetNextWindowSize(viewport->WorkSize);
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-
-        m_CurrentPage->Update();
-        ImGui::PopStyleVar(2);
-    }
-
-    EndFrame();
-}
-
-void GUI::EndFrame() {
-    ImGui::Render();
-    glfwGetFramebufferSize(m_Window, &m_WindowData.DisplayWidth, &m_WindowData.DisplayHeight);
-    glViewport(0, 0, m_WindowData.DisplayWidth, m_WindowData.DisplayHeight);
-
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    glfwSwapBuffers(m_Window);
-}
-
 void GUI::DrawMainMenuBar() {
     ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
 
@@ -157,7 +152,7 @@ void GUI::DrawMainMenuBar() {
             if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
             if (ImGui::MenuItem("Shock")) { ChangePage(PageType::SHOCK); }
             if (ImGui::MenuItem("View")) { ChangePage(PageType::VIEW); }
-            if (ImGui::MenuItem("Exit")) { glfwSetWindowShouldClose(m_Window, true); }
+            if (ImGui::MenuItem("Exit")) { sapp_request_quit(); }
 
             ImGui::EndMenu();
         }
