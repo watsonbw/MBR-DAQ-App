@@ -198,6 +198,20 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
 
 cmake_policy(POP)
 
+# date
+cmake_policy(PUSH)
+cmake_policy(SET CMP0077 NEW)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
+
+add_subdirectory(vendor/date)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_BACKUP}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
+
+cmake_policy(POP)
+
 function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
     target_link_libraries(baja_core_${TARGET_NAME} PUBLIC
@@ -211,6 +225,7 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         opencv_highgui
         spdlog::spdlog
         ixwebsocket
+        date
     )
 
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC
