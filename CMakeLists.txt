@@ -4,6 +4,7 @@ set(CMAKE_COLOR_MAKEFILE OFF)
 # Global configuration
 set(GLOBAL_NAME baja_data)
 set(GLOBAL_VERSION 0.1.0)
+set(CMAKE_BUILD_TYPE Release)
 
 if(APPLE)
 project(${GLOBAL_NAME}
@@ -40,7 +41,7 @@ set(WARNING_IGNORE "-w")
 
 set(DIST_FLAGS "-O3" "-DNDEBUG" "-DDIST")
 set(RELEASE_FLAGS "-O2" "-DRELEASE")
-set(DEBUG_FLAGS "-O0" "-g" "-DDEBUG")
+set(DEBUG_FLAGS "-O0" "-g" "-DDEBUG" "-UNDEBUG")
 
 # Source file collection
 set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
@@ -244,6 +245,15 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
     set_target_properties(baja_${TARGET_NAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${TARGET_NAME}
         OUTPUT_NAME baja)
+
+    if(WIN32)
+        add_custom_command(TARGET baja_${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_BINARY_DIR}/bin"
+            "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
+            COMMENT "Copy FFMPEG to output directory"
+        )
+    endif()
 endfunction()
 
 # Standard building & testing targets

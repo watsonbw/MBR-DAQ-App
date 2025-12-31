@@ -21,13 +21,20 @@ class ViewPage : public Page {
 
     std::optional<std::string> OpenFile();
 
-private:
-    
+  private:
+    void UpdateFrameToTexture();
+    void TryCleanupSokolResources();
+
   private:
     std::string      m_VideoPath;
     cv::VideoCapture m_Cap;
-    cv::Mat          m_Frame;
-    sg_image         m_VideoTexture = {0};
-};
+    cv::Mat          m_RawFrame;
+    cv::Mat          m_DisplayFrame;
 
-void FrameToTexture(const cv::Mat& frame, sg_image tex);
+    sg_image    m_VideoTexture   = {SG_INVALID_ID};
+    sg_view     m_VideoView           = {SG_INVALID_ID};
+    ImTextureID m_VideoTextureID = 0;
+
+    double m_VideoFPS        = 0.0;
+    double m_TimeAccumulator = 0.0;
+};
