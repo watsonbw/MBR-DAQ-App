@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <thread>
+#include <ixwebsocket/IXWebSocket.h>
 
 struct AppContext;
 

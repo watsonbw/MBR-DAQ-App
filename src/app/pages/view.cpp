@@ -16,6 +16,7 @@
 void ViewPage::OnEnter() { LOG_INFO("Entered ViewPage"); }
 
 void ViewPage::OnExit() {
+    StopDecodingThread();
     TryCleanupSokolResources();
     LOG_INFO("Exitted ViewPage");
 }
@@ -23,68 +24,36 @@ void ViewPage::OnExit() {
 void ViewPage::Update() {
     auto window_flags = DefaultWindowFlags();
     ImGui::Begin("View Data", nullptr, window_flags);
-    ImGui::Columns(2);
 
-    [[maybe_unused]] bool opened_file = 0;
-    if (ImGui::Button("New File")) {
+    if (ImGui::Button("Open Video")) {
         auto maybe_path = OpenFile();
         if (maybe_path.has_value()) {
-            m_VideoPath = maybe_path.value();
-            m_Cap.open(m_VideoPath);
-
-            m_VideoFPS        = m_Cap.get(cv::CAP_PROP_FPS);
-            m_VideoFPS        = m_VideoFPS <= 0.0 ? 30.0 : m_VideoFPS;
-            m_TimeAccumulator = 0.0;
-
+            StopDecodingThread();
             TryCleanupSokolResources();
-        } else {
-            ImGui::End();
-            return;
+            m_VideoPath = maybe_path.value();
+            StartDecodingThread();
         }
     }
 
-    if (!m_VideoPath.empty() && m_Cap.isOpened()) {
+    if (m_IsPlaying && m_VideoFPS > 0.0f) {
         m_TimeAccumulator += ImGui::GetIO().DeltaTime;
         double frame_dur = 1.0 / m_VideoFPS;
 
-        bool did_read_new_frame = false;
-        if (m_TimeAccumulator > frame_dur * 2.0) { m_TimeAccumulator = frame_dur; }
-
         if (m_TimeAccumulator >= frame_dur) {
             m_TimeAccumulator -= frame_dur;
-            if (m_Cap.grab() && m_Cap.retrieve(m_RawFrame)) { did_read_new_frame = true; }
+            if (m_TimeAccumulator > frame_dur) { m_TimeAccumulator = 0.0; }
+
+            UpdateTexture();
         }
+    }
+    UpdateTexture();
 
-        if (did_read_new_frame && !m_RawFrame.empty()) {
-            cv::cvtColor(m_RawFrame, m_DisplayFrame, cv::COLOR_BGR2RGBA);
-            assert(m_DisplayFrame.isContinuous());
+    if (m_VideoTexture.id != SG_INVALID_ID && m_TexWidth > 0) {
+        float aspect  = (float)m_TexWidth / (float)m_TexHeight;
+        float avail_w = ImGui::GetContentRegionAvail().x;
+        float h       = avail_w / aspect;
 
-            if (m_VideoTexture.id == SG_INVALID_ID) {
-                sg_image_desc desc       = {};
-                desc.width               = m_DisplayFrame.cols;
-                desc.height              = m_DisplayFrame.rows;
-                desc.pixel_format        = SG_PIXELFORMAT_RGBA8;
-                desc.usage.stream_update = true;
-                desc.num_mipmaps         = 1;
-                m_VideoTexture           = sg_make_image(&desc);
-
-                if (m_VideoTexture.id != SG_INVALID_ID) {
-                    sg_view_desc view_desc  = {};
-                    view_desc.texture.image = m_VideoTexture;
-
-                    m_VideoView      = sg_make_view(&view_desc);
-                    m_VideoTextureID = simgui_imtextureid(m_VideoView);
-                }
-            }
-
-            UpdateFrameToTexture();
-        }
-
-        if (m_VideoTexture.id != SG_INVALID_ID && m_DisplayFrame.cols > 0 &&
-            m_DisplayFrame.rows > 0) {
-            ImGui::Image((ImTextureID)(uintptr_t)m_VideoTextureID,
-                         ImVec2{(float)m_DisplayFrame.cols, (float)m_DisplayFrame.rows});
-        }
+        ImGui::Image(m_VideoTextureID, ImVec2(avail_w, h));
     }
 
     ImGui::End();
@@ -101,12 +70,101 @@ std::optional<std::string> ViewPage::OpenFile() {
     return path;
 }
 
-void ViewPage::UpdateFrameToTexture() {
-    sg_image_data data = {};
+void ViewPage::StartDecodingThread() {
+    m_ThreadRunning = true;
+    m_IsPlaying     = true;
 
-    data.mip_levels[0].ptr  = m_DisplayFrame.data;
-    data.mip_levels[0].size = m_DisplayFrame.total() * m_DisplayFrame.elemSize();
-    sg_update_image(m_VideoTexture, &data);
+    m_DecodeThread = std::thread([this]() {
+        cv::VideoCapture cap{m_VideoPath};
+        if (!cap.isOpened()) {
+            LOG_ERROR("Failed to open video");
+            m_ThreadRunning = false;
+            return;
+        }
+
+        m_VideoFPS          = cap.get(cv::CAP_PROP_FPS);
+        m_TotalFrames       = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
+
+        cv::Mat raw_frame, rgba_frame;
+        while (m_ThreadRunning) {
+            // Keep the buffer from becoming too large
+            {
+                std::unique_lock<std::mutex> lock(m_FrameMutex);
+                if (m_FrameQueue.size() >= MAX_QUEUE_SIZE) {
+                    lock.unlock();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                    continue;
+                }
+            }
+
+            // Manage the actual frame decoding and buffering
+            if (cap.read(raw_frame)) {
+                cv::cvtColor(raw_frame, rgba_frame, cv::COLOR_BGR2RGBA);
+                cv::Mat frame_copy = rgba_frame.clone();
+
+                {
+                    std::lock_guard<std::mutex> lock(m_FrameMutex);
+                    m_FrameQueue.push_back(frame_copy);
+                }
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
+    });
+}
+
+void ViewPage::StopDecodingThread() {
+    m_ThreadRunning = false;
+    if (m_DecodeThread.joinable()) { m_DecodeThread.join(); }
+
+    std::lock_guard<std::mutex> lock(m_FrameMutex);
+    m_FrameQueue.clear();
+}
+
+void ViewPage::UpdateTexture() {
+    cv::Mat frame_to_upload;
+    bool    frame_ready = false;
+    {
+        std::lock_guard<std::mutex> lock(m_FrameMutex);
+        if (!m_FrameQueue.empty()) {
+            if (m_IsPlaying || m_FrameQueue.size() == 1) {
+                frame_to_upload = m_FrameQueue.front();
+                m_FrameQueue.pop_front();
+                frame_ready = true;
+            }
+        }
+    }
+
+    if (frame_ready && !frame_to_upload.empty()) {
+        // Initialize Texture if resolution changed or first run
+        if (m_TexWidth != frame_to_upload.cols || m_TexHeight != frame_to_upload.rows) {
+            TryCleanupSokolResources();
+
+            m_TexWidth = frame_to_upload.cols;
+            m_TexHeight = frame_to_upload.rows;
+
+            sg_image_desc desc       = {};
+            desc.width               = m_TexWidth;
+            desc.height              = m_TexHeight;
+            desc.pixel_format        = SG_PIXELFORMAT_RGBA8;
+            desc.usage.stream_update = true;
+            desc.num_mipmaps         = 1;
+            m_VideoTexture           = sg_make_image(&desc);
+
+            if (m_VideoTexture.id != SG_INVALID_ID) {
+                sg_view_desc view_desc  = {};
+                view_desc.texture.image = m_VideoTexture;
+                m_VideoView      = sg_make_view(&view_desc);
+                m_VideoTextureID = simgui_imtextureid(m_VideoView);
+            }
+        }
+
+        // Perform the actual upload
+        sg_image_data data      = {};
+        data.mip_levels[0].ptr  = frame_to_upload.data;
+        data.mip_levels[0].size = frame_to_upload.total() * frame_to_upload.elemSize();
+        sg_update_image(m_VideoTexture, &data);
+    }
 };
 
 void ViewPage::TryCleanupSokolResources() {

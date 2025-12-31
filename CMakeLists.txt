@@ -169,6 +169,28 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
 
 cmake_policy(POP)
 
+# IXWebSocket
+set(IXWEBSOCKET_INSTALL OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(USE_TLS OFF CACHE BOOL "" FORCE)
+set(USE_WS OFF CACHE BOOL "" FORCE)
+set(USE_MBED_TLS OFF CACHE BOOL "" FORCE)
+set(USE_OPEN_SSL OFF CACHE BOOL "" FORCE)
+set(USE_ZLIB OFF CACHE BOOL "" FORCE)
+
+cmake_policy(PUSH)
+cmake_policy(SET CMP0077 NEW)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
+
+add_subdirectory(vendor/ixwebsocket)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_BACKUP}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
+
+cmake_policy(POP)
+
 function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
     target_link_libraries(baja_core_${TARGET_NAME} PUBLIC
@@ -181,6 +203,7 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         opencv_videoio
         opencv_highgui
         spdlog::spdlog
+        ixwebsocket
     )
 
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC

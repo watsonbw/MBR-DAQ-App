@@ -15,4 +15,5 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     static std::shared_ptr<AppContext> ctx = std::make_shared<AppContext>();
     static GUI                         app(ctx);
     return app.GetSokolDesc();
+    
 }
