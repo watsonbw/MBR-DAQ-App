@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cassert>
 
 #include <imgui.h>
 #include <implot.h>
@@ -19,37 +20,26 @@
 
 using namespace std::chrono;
 
-static const char* WINDOW_TITLE = "Michigan Baja Racing - Data Suite";
+GUI* GUI::s_Instance = nullptr;
 
-static GUI* g_AppInstance = nullptr;
-
-static void s_init() {
-    if (g_AppInstance) { g_AppInstance->OnInit(); }
-}
-static void s_frame() {
-    if (g_AppInstance) { g_AppInstance->OnFrame(); }
-}
-static void s_cleanup() {
-    if (g_AppInstance) { g_AppInstance->OnCleanup(); }
-}
-static void s_event(const sapp_event* e) {
-    if (g_AppInstance) { g_AppInstance->OnEvent(e); }
-}
-
-GUI::GUI(std::shared_ptr<AppContext> ctx) : m_Context{ctx} { }
+void GUI::SokolInitCB() { s_Instance->OnInit(); }
+void GUI::SokolCleanupCB() { s_Instance->OnCleanup(); }
+void GUI::SokolFrameCB() { s_Instance->OnFrame(); }
+void GUI::SokolEventCB(const sapp_event* e) { s_Instance->OnEvent(e); }
 
 sapp_desc GUI::GetSokolDesc() {
-    g_AppInstance = this;
+    assert(s_Instance == nullptr);
+    s_Instance = this;
 
     sapp_desc desc          = {};
-    desc.init_cb            = s_init;
-    desc.frame_cb           = s_frame;
-    desc.cleanup_cb         = s_cleanup;
-    desc.event_cb           = s_event;
+    desc.init_cb            = GUI::SokolInitCB;
+    desc.frame_cb           = GUI::SokolFrameCB;
+    desc.cleanup_cb         = GUI::SokolCleanupCB;
+    desc.event_cb           = GUI::SokolEventCB;
     desc.width              = 1920;
     desc.height             = 1080;
-    desc.window_title       = WINDOW_TITLE;
-    desc.icon.sokol_default = true;
+    desc.window_title       = "Michigan Baja Racing - Data Suite";
+    desc.icon.sokol_default = false;
 
     return desc;
 }
@@ -60,7 +50,7 @@ void GUI::OnInit() {
     sg_description.logger.func = slog_func;
     sg_setup(&sg_description);
 
-    simgui_desc_t si_desc = {};
+    simgui_desc_t si_desc   = {};
     si_desc.no_default_font = true;
     simgui_setup(&si_desc);
 
@@ -70,7 +60,7 @@ void GUI::OnInit() {
 
     ImPlot::CreateContext();
     SetDarkThemeColors();
-    
+
     ChangePage(PageType::HOME);
 }
 
@@ -111,7 +101,6 @@ void GUI::OnFrame() {
 }
 
 void GUI::OnEvent(const sapp_event* event) {
-    // Forward events to ImGui
     simgui_handle_event(event);
 }
 
