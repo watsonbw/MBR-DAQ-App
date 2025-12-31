@@ -1,6 +1,10 @@
 [submodule "vendor/libtinyfiledialogs"]
 	path = vendor/libtinyfiledialogs
 	url = https://github.com/native-toolkit/libtinyfiledialogs
+
+[submodule "vendor/glfw"]
+	path = vendor/glfw
+	url = https://github.com/glfw/glfw
 [submodule "vendor/glfw"]
 	path = vendor/glfw
 	url = https://github.com/glfw/glfw
