@@ -168,6 +168,7 @@ void GUI::DrawMainMenuBar() {
 }
 
 LocalTime::LocalTime() {
+    // https://stackoverflow.com/questions/61273498/number-of-seconds-since-midnight
     auto now            = current_zone()->to_local(system_clock::now());
     auto today          = floor<days>(now);
     auto since_midnight = duration_cast<milliseconds>(now - today);

@@ -1,13 +1,13 @@
-#include <iostream>
-
 #include <imgui.h>
 #include <implot.h>
+
+#include "core/log.hpp"
 
 #include "app/context.hpp"
 #include "app/pages/rpm.hpp"
 
-void RPMPage::OnEnter() { std::cout << "[INFO]: Entered RPMPage" << "\n"; }
-void RPMPage::OnExit() { std::cout << "[INFO]: Exitted RPMPage" << "\n"; }
+void RPMPage::OnEnter() { LOG_INFO("Entered RPMPage"); }
+void RPMPage::OnExit() { LOG_INFO("Exitted RPMPage"); }
 
 void RPMPage::Update() {
     const auto window_flags = DefaultWindowFlags();
@@ -15,7 +15,6 @@ void RPMPage::Update() {
     ImGui::Columns(2);
 
     // Left Side
-
     ImGui::Text("Data Log");
     ImGui::Separator();
 

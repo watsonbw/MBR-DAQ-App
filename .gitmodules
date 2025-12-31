@@ -17,3 +17,7 @@
 [submodule "vendor/sokol"]
 	path = vendor/sokol
 	url = https://github.com/floooh/sokol
+	
+[submodule "vendor/spdlog"]
+	path = vendor/spdlog
+	url = https://github.com/gabime/spdlog

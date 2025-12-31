@@ -1,11 +1,11 @@
-#include <iostream>
-
 #include <imgui.h>
+
+#include "core/log.hpp"
 
 #include "app/pages/home.hpp"
 
-void HomePage::OnEnter() { std::cout << "[INFO]: Entered HomePage" << "\n"; }
-void HomePage::OnExit() { std::cout << "[INFO]: Exitted HomePage" << "\n"; }
+void HomePage::OnEnter() { LOG_INFO("Entered HomePage"); }
+void HomePage::OnExit() { LOG_INFO("Exitted HomePage"); }
 
 void HomePage::Update() {
     const auto window_flags = DefaultWindowFlags();

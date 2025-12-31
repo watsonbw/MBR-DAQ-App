@@ -1,13 +1,13 @@
-#include <iostream>
-
 #include <imgui.h>
 #include <implot.h>
+
+#include "core/log.hpp"
 
 #include "app/context.hpp"
 #include "app/pages/shock.hpp"
 
-void ShockPage::OnEnter() { std::cout << "[INFO]: Entered ShockPage" << "\n"; }
-void ShockPage::OnExit() { std::cout << "[INFO]: Exitted ShockPage" << "\n"; }
+void ShockPage::OnEnter() { LOG_INFO("Entered ShockPage"); }
+void ShockPage::OnExit() { LOG_INFO("Exitted ShockPage"); }
 
 void ShockPage::Update() {
     const auto window_flags = DefaultWindowFlags();

@@ -21,11 +21,13 @@ class ViewPage : public Page {
 
     std::optional<std::string> OpenFile();
 
+private:
+    
   private:
-    std::string      video_path;
-    cv::VideoCapture cap;
-    cv::Mat          frame;
-    sg_image         video_texture = {0};
+    std::string      m_VideoPath;
+    cv::VideoCapture m_Cap;
+    cv::Mat          m_Frame;
+    sg_image         m_VideoTexture = {0};
 };
 
-void FtoT(const cv::Mat& frame, sg_image tex);
+void FrameToTexture(const cv::Mat& frame, sg_image tex);

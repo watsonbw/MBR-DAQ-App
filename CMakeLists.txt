@@ -143,6 +143,31 @@ if(WIN32)
     target_link_libraries(tinyfiledialogs PUBLIC comdlg32 ole32 user32 shell32)
 endif()
 
+# spdlog
+set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(SPDLOG_BUILD_BENCH OFF CACHE BOOL "" FORCE)
+set(SPDLOG_INSTALL OFF CACHE BOOL "" FORCE)
+
+cmake_policy(PUSH)
+cmake_policy(SET CMP0077 NEW)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
+
+add_subdirectory(vendor/spdlog)
+
+get_target_property(SPDLOG_INCLUDE_DIRS spdlog INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(spdlog PROPERTIES
+    INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${SPDLOG_INCLUDE_DIRS}"
+)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_BACKUP}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
+
+cmake_policy(POP)
+
 function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
     target_link_libraries(baja_core_${TARGET_NAME} PUBLIC
@@ -154,6 +179,7 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         opencv_imgcodecs
         opencv_videoio
         opencv_highgui
+        spdlog::spdlog
     )
 
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC
