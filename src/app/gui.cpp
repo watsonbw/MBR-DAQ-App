@@ -20,7 +20,6 @@
 
 using namespace std::chrono;
 
-static const char* GLSL_VERSION = "#version 130";
 static const char* WINDOW_TITLE = "Michigan Baja Racing - Data Suite";
 
 GUI::GUI(std::shared_ptr<AppContext> ctx) : m_Context{ctx} {
@@ -59,8 +58,6 @@ bool GUI::InitGLFW() {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     m_Window = glfwCreateWindow(1920, 1080, WINDOW_TITLE, nullptr, nullptr);
 
     if (!m_Window) {
@@ -118,9 +115,14 @@ void GUI::ChangePage(PageType type) {
 }
 
 void GUI::StartFrame() {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+
+    simgui_new_frame({
+        m_WindowData.DisplayWidth,
+        m_WindowData.DisplayHeight,
+        1.0 / 60.0,
+        1.0,
+    });
 }
 
 void GUI::Update() {
@@ -146,13 +148,22 @@ void GUI::Update() {
 
 void GUI::EndFrame() {
     ImGui::Render();
-    glfwGetFramebufferSize(m_Window, &m_WindowData.DisplayWidth, &m_WindowData.DisplayHeight);
-    glViewport(0, 0, m_WindowData.DisplayWidth, m_WindowData.DisplayHeight);
 
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    const sg_pass_action pass_action = {
+        .colors[0] =
+            {
+                .load_action = SG_LOADACTION_CLEAR,
+                .clear_value = {0.1f, 0.1f, 0.1f, 1.0f},
+            },
+    };
 
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    sg_begin_pass(&(sg_pass){.action = pass_action, .swapchain = sglue_swapchain()});
+    sg_end_pass();
+
+    simgui_render();
+    sg_end_pass();
+    sg_commit();
+
     glfwSwapBuffers(m_Window);
 }
 

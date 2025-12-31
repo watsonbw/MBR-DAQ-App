@@ -34,15 +34,17 @@ void ViewPage::Update() {
 
     if (cap.isOpened()) {
         if (cap.read(frame)) {
-            
+
             cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
+            CV_Assert(frame.isContinuous());
+
 
             if (video_texture.id == SG_INVALID_ID) { 
                 sg_image_desc desc = {}; 
                 desc.width = frame.cols; 
                 desc.height = frame.rows; 
-                desc.pixel_format = SG_PIXELFORMAT_RGBA8; 
-                desc.usage = ; 
+                desc.pixel_format = SG_PIXELFORMAT_RGBA8;
+                desc.num_mipmaps = 1;
                 video_texture = sg_make_image(&desc); 
             }
 
@@ -69,8 +71,8 @@ void FtoT(const cv::Mat& frame, sg_image tex) {
 
     sg_image_data data = {};
 
-    data.subimage[0][0].ptr = frame.data;
-    data.subimage[0][0].size = frame.total() * frame.elemSize(); 
+    data.mip_levels[0].ptr = frame.data;
+    data.mip_levels[0].size = frame.total() * frame.elemSize(); 
     sg_update_image(tex, &data);
 
 };

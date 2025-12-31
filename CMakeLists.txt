@@ -42,21 +42,22 @@ file(GLOB_RECURSE TEST_SOURCES "${TEST_DIR}/*.cpp")
 set(FRAMEWORK_REGEX "test_framework/*")
 list(FILTER TEST_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
 
+# GLFW
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+add_subdirectory(vendor/glfw SYSTEM)
+
 # Sokol
 add_library(sokol_setup STATIC src/app/sokol_impl.cpp)
 target_include_directories(sokol_setup SYSTEM PUBLIC vendor/sokol vendor/imgui vendor/imgui/backends)
+target_link_libraries(sokol_setup PUBLIC glfw)
 
 if(APPLE)
     target_link_libraries(sokol_setup INTERFACE "-framework Metal -framework MetalKit -framework QuartzCore")
 elseif(WIN32)
     target_link_libraries(sokol_setup INTERFACE d3d11 dxgi)
 endif()
-
-# GLFW
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
-add_subdirectory(vendor/glfw SYSTEM)
 
 # Dear ImGUI
 add_library(imgui_setup STATIC
