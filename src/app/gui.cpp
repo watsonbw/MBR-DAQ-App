@@ -2,12 +2,13 @@
 #include <iostream>
 
 #include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-
 #include <implot.h>
 
 #include <GLFW/glfw3.h>
+
+#include <sokol_gfx.h>
+#include <sokol_glue.h>
+#include <sokol_imgui.h>
 
 #include "app/gui.hpp"
 #include "app/style.hpp"
@@ -30,8 +31,9 @@ GUI::GUI(std::shared_ptr<AppContext> ctx) : m_Context{ctx} {
 }
 
 GUI::~GUI() {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
+    simgui_shutdown();
+    sg_shutdown();
+
     ImGui::DestroyContext();
     ImPlot::DestroyContext();
 
@@ -54,8 +56,11 @@ bool GUI::InitGLFW() {
         return false;
     }
 
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     m_Window = glfwCreateWindow(1920, 1080, WINDOW_TITLE, nullptr, nullptr);
 
     if (!m_Window) {
@@ -75,10 +80,13 @@ void GUI::InitImGui() {
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
 
-    ImPlot::CreateContext();
+    sg_desc sg_description = {};
+    sg_setup(&sg_description);
 
-    ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
-    ImGui_ImplOpenGL3_Init(GLSL_VERSION);
+    simgui_desc_t si_desc = {};
+    simgui_setup(&si_desc);
+
+    ImPlot::CreateContext();
 
     m_Context->Fonts = LoadFonts();
     auto& io         = ImGui::GetIO();
