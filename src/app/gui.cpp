@@ -164,7 +164,7 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Separator();
 
-        ImGui::Text(PageTypeString(m_Context->CurrentPageType));
+        ImGui::TextUnformatted(PageTypeString(m_Context->CurrentPageType));
 
         ImGui::Separator();
 

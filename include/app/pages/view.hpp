@@ -1,9 +1,14 @@
 #pragma once
 
-#include <iostream>
 #include <memory>
+#include <optional>
+#include <string>
+
+#include <opencv2/opencv.hpp>
 
 #include "app/pages/page.hpp"
+
+#include <GL/gl.h>
 
 class ViewPage : public Page {
   public:
@@ -11,6 +16,14 @@ class ViewPage : public Page {
     virtual ~ViewPage() = default;
 
     virtual void OnEnter() override;
-    virtual void Update() override;
     virtual void OnExit() override;
+    virtual void Update() override;
+
+    std::optional<std::string> OpenFile();
+
+  private:
+    std::string      video_path;
+    cv::VideoCapture cap;
+    cv::Mat frame;
+    GLuint video_texture = 0;
 };

@@ -1,8 +1,13 @@
-#include "app/pages/rpm.hpp"
-#include "app/context.hpp"
+#include <iostream>
 
 #include <imgui.h>
 #include <implot.h>
+
+#include "app/context.hpp"
+#include "app/pages/rpm.hpp"
+
+void RPMPage::OnEnter() { std::cout << "[INFO]: Entered RPMPage" << "\n"; }
+void RPMPage::OnExit() { std::cout << "[INFO]: Exitted RPMPage" << "\n"; }
 
 void RPMPage::Update() {
     const auto window_flags = DefaultWindowFlags();

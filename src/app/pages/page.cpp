@@ -1,9 +1,9 @@
+#include <imgui.h>
+
 #include "app/context.hpp"
 #include "app/style.hpp"
 
 #include "app/pages/page.hpp"
-
-#include <imgui.h>
 
 const char* PageTypeString(PageType type) {
     switch (type) {

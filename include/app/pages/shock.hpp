@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <memory>
 
 #include "app/pages/page.hpp"
@@ -10,7 +9,7 @@ class ShockPage : public Page {
     ShockPage(std::shared_ptr<AppContext> ctx) : Page{ctx} {}
     virtual ~ShockPage() = default;
 
-    inline virtual void OnEnter() override { std::cout << "[INFO]: Entered ShockPage" << "\n"; }
-    virtual void        Update() override;
-    inline virtual void OnExit() override { std::cout << "[INFO]: Exitted ShockPage" << "\n"; }
+    virtual void OnEnter() override;
+    virtual void OnExit() override;
+    virtual void Update() override;
 };

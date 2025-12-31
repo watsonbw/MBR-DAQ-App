@@ -1,15 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 set(CMAKE_COLOR_MAKEFILE OFF)
 
-include(FetchContent)
-
 # Global configuration
 project(baja_data
     VERSION 0.1.0
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
-
-find_package(OpenGL REQUIRED)
 
 # Qualify compile commands database for tooling
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -46,78 +42,72 @@ file(GLOB_RECURSE TEST_SOURCES "${TEST_DIR}/*.cpp")
 set(FRAMEWORK_REGEX "test_framework/*")
 list(FILTER TEST_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
 
+# Sokol
+add_library(sokol_setup STATIC src/app/sokol_impl.cpp)
+target_include_directories(sokol_setup SYSTEM PUBLIC vendor/sokol vendor/imgui vendor/imgui/backends)
+
+if(APPLE)
+    target_link_libraries(sokol_setup INTERFACE "-framework Metal -framework MetalKit -framework QuartzCore")
+elseif(WIN32)
+    target_link_libraries(sokol_setup INTERFACE d3d11 dxgi)
+endif()
+
 # GLFW
-FetchContent_Declare(glfw
-    GIT_REPOSITORY
-    https://github.com/glfw/glfw.git
-    GIT_TAG 3.4)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(glfw)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+add_subdirectory(vendor/glfw SYSTEM)
 
 # Dear ImGUI
-FetchContent_Declare(
-  imgui
-  GIT_REPOSITORY https://github.com/ocornut/imgui.git
-  GIT_TAG v1.92.5
-)
-FetchContent_MakeAvailable(imgui)
-
 add_library(imgui_setup STATIC
-    ${imgui_SOURCE_DIR}/imgui.cpp
-    ${imgui_SOURCE_DIR}/imgui_draw.cpp
-    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-    ${imgui_SOURCE_DIR}/imgui_tables.cpp
-    ${imgui_SOURCE_DIR}/imgui_demo.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+    vendor/imgui/imgui.cpp
+    vendor/imgui/imgui_draw.cpp
+    vendor/imgui/imgui_widgets.cpp
+    vendor/imgui/imgui_tables.cpp
+    vendor/imgui/imgui_demo.cpp
 )
-target_include_directories(imgui_setup PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
-target_link_libraries(imgui_setup PUBLIC glfw)
+target_include_directories(imgui_setup SYSTEM PUBLIC vendor/imgui vendor/imgui/backends)
+target_link_libraries(imgui_setup PUBLIC glfw sokol_setup)
 
 # ImPlot
-FetchContent_Declare(
-  implot
-  GIT_REPOSITORY https://github.com/epezent/implot.git
-  GIT_TAG v0.17
-)
-FetchContent_MakeAvailable(implot)
-
 add_library(implot_setup STATIC
-    ${implot_SOURCE_DIR}/implot.cpp
-    ${implot_SOURCE_DIR}/implot_items.cpp
-    ${implot_SOURCE_DIR}/implot_demo.cpp
+    vendor/implot/implot.cpp
+    vendor/implot/implot_items.cpp
+    vendor/implot/implot_demo.cpp
 )
-target_include_directories(implot_setup PUBLIC ${implot_SOURCE_DIR})
+target_include_directories(implot_setup SYSTEM PUBLIC vendor/implot)
 target_link_libraries(implot_setup PUBLIC imgui_setup)
 
 # OpenCV
-FetchContent_Declare(
-  opencv
-  GIT_REPOSITORY https://github.com/opencv/opencv.git
-  GIT_TAG 4.12.0
-)
-
 set(BUILD_opencv_apps OFF CACHE BOOL "" FORCE)
-set(BUILD_opencv_python2 OFF CACHE BOOL "" FORCE)
-set(BUILD_opencv_python3 OFF CACHE BOOL "" FORCE)
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(BUILD_PERF_TESTS OFF CACHE BOOL "" FORCE)
-set(BUILD_opencv_dnn OFF CACHE BOOL "" FORCE)
-set(BUILD_opencv_ml OFF CACHE BOOL "" FORCE)
-set(BUILD_opencv_python_bindings_generator OFF CACHE BOOL "" FORCE)
-set(BUILD_opencv_js OFF CACHE BOOL "" FORCE)
-set(BUILD_opencv_java OFF CACHE BOOL "" FORCE)
-set(BUILD_opencv_objc OFF CACHE BOOL "" FORCE)
-set(BUILD_opencv_ts OFF CACHE BOOL "" FORCE)
+add_subdirectory(vendor/opencv SYSTEM EXCLUDE_FROM_ALL)
 
-FetchContent_MakeAvailable(opencv)
+# TinyFileDialogs
+add_library(tinyfiledialogs STATIC vendor/libtinyfiledialogs/tinyfiledialogs.c)
+target_include_directories(tinyfiledialogs PUBLIC vendor/libtinyfiledialogs)
+if(WIN32)
+    target_link_libraries(tinyfiledialogs PUBLIC comdlg32 ole32 user32 shell32)
+endif()
 
 function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
-    target_link_libraries(baja_core_${TARGET_NAME} PUBLIC imgui_setup implot_setup opencv_core opencv_videoio opencv_imgproc)
-    target_include_directories(baja_core_${TARGET_NAME} PUBLIC include)
+    target_link_libraries(baja_core_${TARGET_NAME} PUBLIC
+        imgui_setup
+        implot_setup
+        opencv_core
+        opencv_videoio
+        opencv_imgproc
+        tinyfiledialogs
+    )
+
+    target_include_directories(baja_core_${TARGET_NAME} PUBLIC
+        include
+        vendor/opencv/include
+        vendor/opencv/modules/core/include
+        vendor/opencv/modules/videoio/include
+        vendor/opencv/modules/imgproc/include)
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
 
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
@@ -160,7 +150,7 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
 
     add_executable(baja_${TARGET_NAME} src/main.cpp)
     target_link_libraries(baja_${TARGET_NAME}
-        PRIVATE baja_core_${TARGET_NAME} imgui_setup OpenGL::GL)
+        PRIVATE baja_core_${TARGET_NAME} imgui_setup tinyfiledialogs)
     add_custom_target(${TARGET_NAME} DEPENDS
         baja_tests_${TARGET_NAME} baja_${TARGET_NAME})
 

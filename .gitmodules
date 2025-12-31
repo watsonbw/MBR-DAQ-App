@@ -17,3 +17,7 @@
 [submodule "vendor/opencv"]
 	path = vendor/opencv
 	url = https://github.com/opencv/opencv
+
+[submodule "vendor/sokol"]
+	path = vendor/sokol
+	url = https://github.com/floooh/sokol
