@@ -30,24 +30,23 @@ TelemetryData::TelemetryData() : m_Time{0.0f} {
     m_ShockData.Reserve();
 }
 
-void TelemetryData::WriteData( std::string identifier, std::string value) {
-    
-    if(identifier == "W"){
+void TelemetryData::WriteData(std::string identifier, std::string value) {
+
+    if (identifier == "W") {
         m_RPMData.WheelRPM.push_back(std::stod(value));
-    } else if(identifier == "E"){
+    } else if (identifier == "E") {
         m_RPMData.EngineRPM.push_back(std::stod(value));
-    } else if(identifier == "fr"){
+    } else if (identifier == "fr") {
         m_ShockData.FrontRight.push_back(std::stod(value));
-    } else if(identifier == "fl"){
+    } else if (identifier == "fl") {
         m_ShockData.FrontLeft.push_back(std::stod(value));
-    } else if(identifier == "br"){
+    } else if (identifier == "br") {
         m_ShockData.BackRight.push_back(std::stod(value));
-    } else if(identifier == "bl"){
+    } else if (identifier == "bl") {
         m_ShockData.BackLeft.push_back(std::stod(value));
     }
 }
 
 void TelemetryData::WriteRawLine(const std::string& full_message) {
-    
-    RawLines.push_back(full_message);
+    m_RawLines.push_back(full_message);
 }

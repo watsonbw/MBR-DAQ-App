@@ -42,7 +42,7 @@ void RPMPage::Update() {
         time = m_Context->Data.GetTime();
 
         const auto& rpm_data = m_Context->Data.GetRPMData();
-        raw_data             = rpm_data.RawLines;
+        raw_data             = m_Context->Data.GetRawLines();
         wheel                = rpm_data.WheelRPM;
         engine               = rpm_data.EngineRPM;
     }

@@ -43,7 +43,7 @@ void ShockPage::Update() {
         time = m_Context->Data.GetTime();
 
         const auto& shock_data = m_Context->Data.GetShockData();
-        raw_data               = shock_data.RawLines;
+        raw_data               = m_Context->Data.GetRawLines();
         fr                     = shock_data.FrontRight;
         fl                     = shock_data.FrontLeft;
         br                     = shock_data.BackRight;
