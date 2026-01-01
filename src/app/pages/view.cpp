@@ -4,14 +4,19 @@
 
 #include <imgui.h>
 
+#include <sokol_app.h>
+#include <sokol_gfx.h>
+#include <sokol_glue.h>
+#include <sokol_imgui.h>
+
 #include "core/log.hpp"
 
+#include "app/assets/images/image_buttons.hpp"
 #include "app/pages/view.hpp"
 
-#include "sokol_app.h"
-#include "sokol_gfx.h"
-#include "sokol_glue.h"
-#include "sokol_imgui.h"
+ViewPage::ViewPage(std::shared_ptr<AppContext> ctx)
+    : Page{ctx}, m_PlayButton{PlayButton_png, PlayButton_png_size},
+      m_PauseButton{PauseButton_png, PauseButton_png_size} {}
 
 void ViewPage::OnEnter() { LOG_INFO("Entered ViewPage"); }
 
@@ -97,25 +102,18 @@ void ViewPage::DrawLHSControls() {
         RequestSeek(slider_pos);
     }
     ImGui::PopItemWidth();
-    
-    // Step Backward
-    if (ImGui::Button("<")) {
-        m_IsPlaying = false;
-        RequestSeek(std::max(0, m_CurrentFrameUI - 1));
-    }
+
+    // Loop checkbox
+    bool looping = m_IsLooping;
+    if (ImGui::Checkbox("Looping", &looping)) { m_IsLooping = looping; }
     ImGui::SameLine();
 
     // Play/Pause
-    if (ImGui::Button(m_IsPlaying ? "||" : "|>")) {
+    if (ImGui::ImageButton("PlayPause",
+                           m_IsPlaying ? m_PauseButton.GetID() : m_PlayButton.GetID(),
+                           m_ButtonSize)) {
         m_IsPlaying       = !m_IsPlaying;
         m_TimeAccumulator = 0.0;
-    }
-    ImGui::SameLine();
-
-    // Step Forward
-    if (ImGui::Button(">")) {
-        m_IsPlaying = false;
-        RequestSeek(std::min(m_TotalFrames, m_CurrentFrameUI + 1));
     }
 }
 
@@ -140,6 +138,11 @@ std::optional<std::string> ViewPage::OpenFile() {
 }
 
 void ViewPage::RequestSeek(int frame_index) {
+    {
+        std::lock_guard<std::mutex> lock(m_FrameMutex);
+        m_FrameQueue.clear();
+    }
+
     m_SeekTarget       = frame_index;
     m_ForceUpdateFrame = true;
     m_CurrentFrameUI   = frame_index;

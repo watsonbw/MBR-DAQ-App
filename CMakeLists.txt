@@ -64,7 +64,7 @@ set(FRAMEWORK_REGEX "test_framework/*")
 list(FILTER TEST_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
 
 # Sokol
-add_library(sokol_setup STATIC src/app/sokol_impl.cpp)
+add_library(sokol_setup STATIC src/vendor/sokol_impl.cpp)
 target_include_directories(sokol_setup SYSTEM PUBLIC
     vendor/sokol
     vendor/sokol/util
@@ -74,7 +74,7 @@ target_compile_options(sokol_setup PRIVATE ${WARNING_IGNORE})
 
 if(APPLE)
     target_compile_definitions(sokol_setup PUBLIC SOKOL_METAL)
-    set_source_files_properties(src/app/sokol_impl.cpp PROPERTIES LANGUAGE OBJCXX)
+    set_source_files_properties(src/vendor/sokol_impl.cpp PROPERTIES LANGUAGE OBJCXX)
     target_link_libraries(sokol_setup INTERFACE
         "-framework Cocoa"
         "-framework IOKit"
@@ -223,6 +223,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
 
 cmake_policy(POP)
 
+# stb_image
+add_library(stb_image_setup STATIC src/vendor/stb_impl.cpp)
+target_include_directories(stb_image_setup SYSTEM PUBLIC vendor/stb)
+target_compile_options(stb_image_setup PRIVATE ${WARNING_IGNORE})
+
 function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
     target_link_libraries(baja_core_${TARGET_NAME} PUBLIC
@@ -236,6 +241,7 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         opencv_highgui
         spdlog::spdlog
         ixwebsocket
+        stb_image_setup
     )
 
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC
@@ -312,7 +318,7 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
                 "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/mac"
                 "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
             
-            COMMAND bash -c "cd \"$<TARGET_FILE_DIR:baja_${TARGET_NAME}>\" && for lib in *.dylib; do [ -L \"$lib\" ] && continue; install_name_tool -id \"@rpath/$lib\" \"$lib\"; install_name_tool -change \"${FFMPEG_DIR}/$lib\" \"@rpath/$lib\" \"$<TARGET_FILE:baja_${TARGET_NAME}>\" 2>/dev/null || true; done"
+            COMMAND bash -c "cd \"$<TARGET_FILE_DIR:baja_${TARGET_NAME}>\" && for lib in *.dylib; do [ -L \"$lib\" ] && continue; install_name_tool -id \"@rpath/$lib\" \"$lib\" 2>/dev/null; install_name_tool -change \"${FFMPEG_DIR}/$lib\" \"@rpath/$lib\" \"$<TARGET_FILE:baja_${TARGET_NAME}>\" 2>/dev/null || true; done"
             VERBATIM
             COMMENT "Remapping FFMPEG dylibs"
         )
@@ -403,4 +409,10 @@ if(CLANG_FORMAT)
         --dry-run
         --Werror
         ${TOOLING_SOURCES})
+endif()
+
+# Cloc
+find_program(CLOC cloc)
+if (CLOC)
+    add_custom_target(cloc COMMAND ${CLOC} ${TOOLING_SOURCES})
 endif()

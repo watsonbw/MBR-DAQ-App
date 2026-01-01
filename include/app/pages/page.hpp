@@ -2,16 +2,7 @@
 
 #include <memory>
 
-struct AppContext;
-
-enum PageType {
-    HOME,
-    RPM,
-    SHOCK,
-    VIEW,
-};
-
-const char* PageTypeString(PageType type);
+#include "app/context.hpp"
 
 class Page {
   public:

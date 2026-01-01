@@ -3,7 +3,6 @@
 
 #include "core/log.hpp"
 
-#include "app/context.hpp"
 #include "app/pages/shock.hpp"
 
 void ShockPage::OnEnter() { LOG_INFO("Entered ShockPage"); }

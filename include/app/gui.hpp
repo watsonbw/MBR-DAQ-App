@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <memory>
 
 #include "app/context.hpp"
@@ -37,13 +36,4 @@ class GUI {
 
     std::unique_ptr<Page>       m_CurrentPage;
     std::shared_ptr<AppContext> m_Context;
-};
-
-struct LocalTime {
-    explicit LocalTime();
-
-    int     Hour;
-    int     Minute;
-    int     Second;
-    int64_t Millisecond;
 };

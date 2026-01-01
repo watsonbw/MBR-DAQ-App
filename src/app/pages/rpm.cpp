@@ -3,7 +3,6 @@
 
 #include "core/log.hpp"
 
-#include "app/context.hpp"
 #include "app/pages/rpm.hpp"
 
 void RPMPage::OnEnter() { LOG_INFO("Entered RPMPage"); }

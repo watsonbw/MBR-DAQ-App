@@ -1,8 +1,8 @@
-#include "app/style.hpp"
-
 #include <imgui.h>
 
-#include "app/fonts/OpenSans.hpp"
+#include "app/style.hpp"
+
+#include "app/assets/fonts/OpenSans.hpp"
 
 AppFonts LoadFonts() {
     ImGuiIO&     io = ImGui::GetIO();

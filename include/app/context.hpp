@@ -3,10 +3,18 @@
 #include <atomic>
 #include <mutex>
 
-#include "app/pages/page.hpp"
 #include "app/style.hpp"
 
 #include "esp32/data.hpp"
+
+enum PageType {
+    HOME,
+    RPM,
+    SHOCK,
+    VIEW,
+};
+
+const char* PageTypeString(PageType type);
 
 struct AppContext {
     AppFonts Fonts;
