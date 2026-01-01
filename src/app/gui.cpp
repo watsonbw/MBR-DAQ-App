@@ -183,7 +183,8 @@ LocalTime::LocalTime() {
     Hour        = lt.tm_hour;
     Minute      = lt.tm_min;
     Second      = lt.tm_sec;
-    Millisecond = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
+    auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
+    Millisecond = ms.count();
 #else
     // https://stackoverflow.com/questions/61273498/number-of-seconds-since-midnight
     auto now            = current_zone()->to_local(system_clock::now());
