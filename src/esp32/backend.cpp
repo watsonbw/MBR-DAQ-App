@@ -8,9 +8,7 @@
 
 TelemetryBackend::TelemetryBackend(std::shared_ptr<AppContext> ctx) : m_Context{ctx} {}
 
-TelemetryBackend::~TelemetryBackend() {
-    if (m_Worker.joinable()) { m_Worker.join(); }
-}
+TelemetryBackend::~TelemetryBackend() { Kill(); }
 
 void TelemetryBackend::Start() {
     Kill();
