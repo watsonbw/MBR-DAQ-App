@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <thread>
 
@@ -14,6 +15,7 @@ class TelemetryBackend {
 
     void Start();
     void Kill();
+    void SendCMD(const std::string& text);
 
   private:
     void WorkerLoop();
@@ -23,4 +25,6 @@ class TelemetryBackend {
     std::shared_ptr<AppContext> m_Context;
     std::thread                 m_Worker;
     ix::WebSocket               m_WebSocket;
+
+    std::atomic<bool> m_ShouldKill = false;
 };

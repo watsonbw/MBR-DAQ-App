@@ -1,4 +1,5 @@
 #include "esp32/data.hpp"
+#include <mutex>
 
 void RPMData::Reserve(size_t size) {
     EngineRPM.reserve(size);
@@ -29,5 +30,24 @@ TelemetryData::TelemetryData() : m_Time{0.0f} {
     m_ShockData.Reserve();
 }
 
-void TelemetryData::WriteData([[maybe_unused]] std::string identifier,
-                              [[maybe_unused]] std::string value) {}
+void TelemetryData::WriteData( std::string identifier, std::string value) {
+    
+    if(identifier == "W"){
+        m_RPMData.WheelRPM.push_back(std::stod(value));
+    } else if(identifier == "E"){
+        m_RPMData.EngineRPM.push_back(std::stod(value));
+    } else if(identifier == "fr"){
+        m_ShockData.FrontRight.push_back(std::stod(value));
+    } else if(identifier == "fl"){
+        m_ShockData.FrontLeft.push_back(std::stod(value));
+    } else if(identifier == "br"){
+        m_ShockData.BackRight.push_back(std::stod(value));
+    } else if(identifier == "bl"){
+        m_ShockData.BackLeft.push_back(std::stod(value));
+    }
+}
+
+void TelemetryData::WriteRawLine(const std::string& full_message) {
+    
+    RawLines.push_back(full_message);
+}
