@@ -8,14 +8,15 @@
 #include <optional>
 #include <string>
 #include <thread>
+#include <utility>
 
 #include <imgui.h>
 
 #include <opencv2/opencv.hpp>
 
-#include "app/pages/page.hpp"
+#include <sokol_gfx.h>
 
-#include "sokol_gfx.h"
+#include "app/pages/page.hpp"
 
 class ViewPage : public Page {
   public:
@@ -27,24 +28,36 @@ class ViewPage : public Page {
     virtual void Update() override;
 
   private:
+    void DrawLHS();
+    void DrawLHSControls();
+    void DrawRHS();
+
     std::optional<std::string> OpenFile();
+    void                       RequestSeek(int frame_index);
 
     void StartDecodingThread();
     void StopDecodingThread();
-    void UpdateTexture();
+    void UpdateTexture(bool is_timer_tick);
 
     void TryCleanupSokolResources();
 
   private:
     std::string m_VideoPath;
-    int         m_TotalFrames = 0;
+    int         m_TotalFrames     = 0;
+    double      m_VideoFPS        = 0.0;
+    double      m_FrameDuration   = 0.0;
+    double      m_TimeAccumulator = 0.0;
+    int         m_CurrentFrameUI  = 0;
 
-    std::atomic<bool> m_IsPlaying = false;
+    std::atomic<bool> m_IsPlaying       = false;
+    std::atomic<bool> m_IsLooping       = false;
+    std::atomic<int>  m_SeekTarget      = -1;
+    std::atomic<bool> m_ForceUpdateFrame = false;
 
     std::thread             m_DecodeThread;
     std::atomic<bool>       m_ThreadRunning = false;
     std::mutex              m_FrameMutex;
-    std::deque<cv::Mat>     m_FrameQueue;
+    std::deque<std::pair<cv::Mat, int>>     m_FrameQueue;
     std::condition_variable m_QueueCV;
     const size_t            MAX_QUEUE_SIZE = 10;
 
@@ -53,7 +66,4 @@ class ViewPage : public Page {
     ImTextureID m_VideoTextureID = 0;
     int         m_TexWidth       = 0;
     int         m_TexHeight      = 0;
-
-    double m_VideoFPS        = 0.0;
-    double m_TimeAccumulator = 0.0;
 };

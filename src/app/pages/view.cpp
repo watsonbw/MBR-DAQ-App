@@ -18,13 +18,25 @@ void ViewPage::OnEnter() { LOG_INFO("Entered ViewPage"); }
 void ViewPage::OnExit() {
     StopDecodingThread();
     TryCleanupSokolResources();
-    LOG_INFO("Exitted ViewPage");
+    LOG_INFO("Exited ViewPage");
 }
 
 void ViewPage::Update() {
     auto window_flags = DefaultWindowFlags();
     ImGui::Begin("View Data", nullptr, window_flags);
 
+    DrawLHS();
+    ImGui::SameLine();
+    DrawRHS();
+
+    ImGui::End();
+}
+
+void ViewPage::DrawLHS() {
+    auto left_col_width = ImGui::GetContentRegionAvail().x * 0.65f;
+    ImGui::BeginChild("VideoPlayerColumn", ImVec2(left_col_width, 0), true);
+
+    // File selection can happen at any point during playback
     if (ImGui::Button("Open Video")) {
         auto maybe_path = OpenFile();
         if (maybe_path.has_value()) {
@@ -35,29 +47,31 @@ void ViewPage::Update() {
         }
     }
 
+    // Playback logic and frame skipping can be ignored if paused
+    bool is_timer_tick = false;
     if (m_IsPlaying && m_VideoFPS > 0.0f) {
         m_TimeAccumulator += ImGui::GetIO().DeltaTime;
-        const double frame_dur         = 1.0 / m_VideoFPS;
-        const int    frames_to_advance = static_cast<int>(m_TimeAccumulator / frame_dur);
+        const auto frames_to_advance = static_cast<int>(m_TimeAccumulator / m_FrameDuration);
 
         // We have to handle skipped frames gracefully
         if (frames_to_advance > 0) {
-            m_TimeAccumulator -= (frames_to_advance * frame_dur);
+            m_TimeAccumulator -= (frames_to_advance * m_FrameDuration);
 
             if (frames_to_advance > 1) {
                 std::lock_guard<std::mutex> lock(m_FrameMutex);
 
-                int recoverable_frames =
+                const auto recoverable_frames =
                     std::min(static_cast<int>(m_FrameQueue.size()) - 1, frames_to_advance - 1);
-
-                for (int i = 0; i < recoverable_frames; i++) {
+                for (auto i = 0; i < recoverable_frames; i++) {
                     m_FrameQueue.pop_front();
                 }
             }
 
-            UpdateTexture();
+            is_timer_tick = true;
         }
     }
+
+    UpdateTexture(is_timer_tick);
 
     if (m_VideoTexture.id != SG_INVALID_ID && m_TexWidth > 0) {
         float aspect  = (float)m_TexWidth / (float)m_TexHeight;
@@ -67,7 +81,49 @@ void ViewPage::Update() {
         ImGui::Image(m_VideoTextureID, ImVec2(avail_w, h));
     }
 
-    ImGui::End();
+    if (m_ThreadRunning) { DrawLHSControls(); }
+
+    ImGui::EndChild();
+}
+
+void ViewPage::DrawLHSControls() {
+    ImGui::Separator();
+
+    // Slider
+    int slider_pos = m_CurrentFrameUI;
+    ImGui::PushItemWidth(-1);
+    if (ImGui::SliderInt("##scrub", &slider_pos, 0, m_TotalFrames)) {
+        if (m_IsPlaying) { m_IsPlaying = false; }
+        RequestSeek(slider_pos);
+    }
+    ImGui::PopItemWidth();
+    
+    // Step Backward
+    if (ImGui::Button("<")) {
+        m_IsPlaying = false;
+        RequestSeek(std::max(0, m_CurrentFrameUI - 1));
+    }
+    ImGui::SameLine();
+
+    // Play/Pause
+    if (ImGui::Button(m_IsPlaying ? "||" : "|>")) {
+        m_IsPlaying       = !m_IsPlaying;
+        m_TimeAccumulator = 0.0;
+    }
+    ImGui::SameLine();
+
+    // Step Forward
+    if (ImGui::Button(">")) {
+        m_IsPlaying = false;
+        RequestSeek(std::min(m_TotalFrames, m_CurrentFrameUI + 1));
+    }
+}
+
+void ViewPage::DrawRHS() {
+    ImGui::BeginChild("Data");
+    ImGui::Text("Data & Analysis");
+    ImGui::Separator();
+    ImGui::EndChild();
 }
 
 std::optional<std::string> ViewPage::OpenFile() {
@@ -83,6 +139,13 @@ std::optional<std::string> ViewPage::OpenFile() {
     return path;
 }
 
+void ViewPage::RequestSeek(int frame_index) {
+    m_SeekTarget       = frame_index;
+    m_ForceUpdateFrame = true;
+    m_CurrentFrameUI   = frame_index;
+    m_QueueCV.notify_one();
+}
+
 void ViewPage::StartDecodingThread() {
     m_ThreadRunning = true;
     m_IsPlaying     = true;
@@ -95,8 +158,9 @@ void ViewPage::StartDecodingThread() {
             return;
         }
 
-        m_VideoFPS    = cap.get(cv::CAP_PROP_FPS);
-        m_TotalFrames = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
+        m_VideoFPS      = cap.get(cv::CAP_PROP_FPS);
+        m_FrameDuration = 1.0 / m_VideoFPS;
+        m_TotalFrames   = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
 
         cv::Mat raw_frame, rgba_frame;
         while (m_ThreadRunning) {
@@ -110,14 +174,34 @@ void ViewPage::StartDecodingThread() {
                 if (!m_ThreadRunning) { break; }
             }
 
-            // Manage the actual frame decoding and buffering
+            int  seek_req    = m_SeekTarget.exchange(-1);
+            bool just_sought = false;
+
+            if (seek_req != -1) {
+                cap.set(cv::CAP_PROP_POS_FRAMES, seek_req);
+                std::lock_guard<std::mutex> lock(m_FrameMutex);
+                m_FrameQueue.clear();
+                just_sought = true;
+            }
+
+            // Don't decode if seeking or paused to prevent jitters
+            if (!m_IsPlaying && !just_sought) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                continue;
+            }
+
+            auto current_frame_index = static_cast<int>(cap.get(cv::CAP_PROP_POS_FRAMES));
             if (cap.read(raw_frame)) {
                 cv::cvtColor(raw_frame, rgba_frame, cv::COLOR_BGR2RGBA);
                 cv::Mat frame_copy = rgba_frame.clone();
 
-                {
-                    std::lock_guard<std::mutex> lock(m_FrameMutex);
-                    m_FrameQueue.push_back(frame_copy);
+                std::lock_guard<std::mutex> lock(m_FrameMutex);
+                m_FrameQueue.push_back({frame_copy, current_frame_index});
+            } else {
+                if (m_IsLooping) {
+                    cap.set(cv::CAP_PROP_POS_FRAMES, 0);
+                } else {
+                    m_IsPlaying = false;
                 }
             }
         }
@@ -133,19 +217,23 @@ void ViewPage::StopDecodingThread() {
     m_FrameQueue.clear();
 }
 
-void ViewPage::UpdateTexture() {
+void ViewPage::UpdateTexture(bool is_timer_tick) {
     cv::Mat frame_to_upload;
     bool    frame_ready = false;
     {
         std::lock_guard<std::mutex> lock(m_FrameMutex);
-        if (!m_FrameQueue.empty()) {
-            if (m_IsPlaying || m_FrameQueue.size() == 1) {
-                frame_to_upload = m_FrameQueue.front();
-                m_FrameQueue.pop_front();
-                frame_ready = true;
+        bool                        should_consume = is_timer_tick || m_ForceUpdateFrame;
 
-                m_QueueCV.notify_one();
-            }
+        if (should_consume && !m_FrameQueue.empty()) {
+            const auto p     = m_FrameQueue.front();
+            frame_to_upload  = p.first;
+            m_CurrentFrameUI = p.second;
+
+            m_FrameQueue.pop_front();
+            frame_ready = true;
+            m_QueueCV.notify_one();
+
+            if (m_ForceUpdateFrame) { m_ForceUpdateFrame = false; }
         }
     }
 
@@ -164,13 +252,12 @@ void ViewPage::UpdateTexture() {
             desc.usage.stream_update = true;
             desc.num_mipmaps         = 1;
             m_VideoTexture           = sg_make_image(&desc);
+            assert(m_VideoTexture.id != SG_INVALID_ID);
 
-            if (m_VideoTexture.id != SG_INVALID_ID) {
-                sg_view_desc view_desc  = {};
-                view_desc.texture.image = m_VideoTexture;
-                m_VideoView             = sg_make_view(&view_desc);
-                m_VideoTextureID        = simgui_imtextureid(m_VideoView);
-            }
+            sg_view_desc view_desc  = {};
+            view_desc.texture.image = m_VideoTexture;
+            m_VideoView             = sg_make_view(&view_desc);
+            m_VideoTextureID        = simgui_imtextureid(m_VideoView);
         }
 
         // Perform the actual upload

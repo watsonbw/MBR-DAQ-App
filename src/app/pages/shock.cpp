@@ -7,7 +7,7 @@
 #include "app/pages/shock.hpp"
 
 void ShockPage::OnEnter() { LOG_INFO("Entered ShockPage"); }
-void ShockPage::OnExit() { LOG_INFO("Exitted ShockPage"); }
+void ShockPage::OnExit() { LOG_INFO("Exited ShockPage"); }
 
 void ShockPage::Update() {
     const auto window_flags = DefaultWindowFlags();

@@ -314,7 +314,7 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
             
             COMMAND bash -c "cd \"$<TARGET_FILE_DIR:baja_${TARGET_NAME}>\" && for lib in *.dylib; do [ -L \"$lib\" ] && continue; install_name_tool -id \"@rpath/$lib\" \"$lib\"; install_name_tool -change \"${FFMPEG_DIR}/$lib\" \"@rpath/$lib\" \"$<TARGET_FILE:baja_${TARGET_NAME}>\" 2>/dev/null || true; done"
             VERBATIM
-            COMMENT "Relocating versioned FFmpeg dylibs"
+            COMMENT "Remapping FFMPEG dylibs"
         )
     elseif(WIN32)
         add_custom_command(TARGET baja_${TARGET_NAME} POST_BUILD

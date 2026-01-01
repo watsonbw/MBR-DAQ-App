@@ -7,7 +7,7 @@
 #include "app/pages/rpm.hpp"
 
 void RPMPage::OnEnter() { LOG_INFO("Entered RPMPage"); }
-void RPMPage::OnExit() { LOG_INFO("Exitted RPMPage"); }
+void RPMPage::OnExit() { LOG_INFO("Exited RPMPage"); }
 
 void RPMPage::Update() {
     const auto window_flags = DefaultWindowFlags();
