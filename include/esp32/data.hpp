@@ -30,9 +30,10 @@ class TelemetryData {
     explicit TelemetryData();
     ~TelemetryData() = default;
 
-    const std::vector<double>& getTime() const { return m_Time; }
-    const RPMData&             getRPMData() const { return m_RPMData; }
-    const ShockData&           getShockData() const { return m_ShockData; }
+    const std::vector<double>& GetTime() const { return m_Time; }
+    const RPMData&             GetRPMData() const { return m_RPMData; }
+    const ShockData&           GetShockData() const { return m_ShockData; }
+    void                       WriteData(std::string identifier, std::string value);
 
   private:
     void PopulateData(const char* esp32_data);

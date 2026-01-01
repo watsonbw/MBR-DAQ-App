@@ -21,9 +21,7 @@
 [submodule "vendor/spdlog"]
 	path = vendor/spdlog
 	url = https://github.com/gabime/spdlog
+
 [submodule "vendor/ixwebsocket"]
 	path = vendor/ixwebsocket
 	url = https://github.com/machinezone/IXWebSocket
-[submodule "vendor/date"]
-	path = vendor/date
-	url = https://github.com/HowardHinnant/date

@@ -39,9 +39,9 @@ void RPMPage::Update() {
 
     {
         std::lock_guard lock{m_Context->DataMutex};
-        time = m_Context->Data.getTime();
+        time = m_Context->Data.GetTime();
 
-        const auto& rpm_data = m_Context->Data.getRPMData();
+        const auto& rpm_data = m_Context->Data.GetRPMData();
         raw_data             = rpm_data.RawLines;
         wheel                = rpm_data.WheelRPM;
         engine               = rpm_data.EngineRPM;

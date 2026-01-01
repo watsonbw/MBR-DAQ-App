@@ -1,8 +1,9 @@
 #pragma once
 
-#include <ixwebsocket/IXWebSocket.h>
 #include <memory>
 #include <thread>
+
+#include <ixwebsocket/IXWebSocket.h>
 
 struct AppContext;
 
@@ -12,11 +13,14 @@ class TelemetryBackend {
     ~TelemetryBackend();
 
     void Start();
+    void Kill();
 
   private:
     void WorkerLoop();
+    void OnMessage(const ix::WebSocketMessagePtr& msg);
 
   private:
     std::shared_ptr<AppContext> m_Context;
     std::thread                 m_Worker;
+    ix::WebSocket               m_WebSocket;
 };

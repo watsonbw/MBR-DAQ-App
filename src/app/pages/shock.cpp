@@ -40,9 +40,9 @@ void ShockPage::Update() {
 
     {
         std::lock_guard lock{m_Context->DataMutex};
-        time = m_Context->Data.getTime();
+        time = m_Context->Data.GetTime();
 
-        const auto& shock_data = m_Context->Data.getShockData();
+        const auto& shock_data = m_Context->Data.GetShockData();
         raw_data               = shock_data.RawLines;
         fr                     = shock_data.FrontRight;
         fl                     = shock_data.FrontLeft;

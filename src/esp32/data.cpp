@@ -29,10 +29,5 @@ TelemetryData::TelemetryData() : m_Time{0.0f} {
     m_ShockData.Reserve();
 }
 
-void TelemetryData::PopulateData([[maybe_unused]] const char* esp32_data) {
-    // Empty the data buffers but retain their capacity
-    m_RPMData.Clear();
-    m_ShockData.Clear();
-
-    // Do something fun with the raw bytes to parse
-}
+void TelemetryData::WriteData([[maybe_unused]] std::string identifier,
+                              [[maybe_unused]] std::string value) {}
