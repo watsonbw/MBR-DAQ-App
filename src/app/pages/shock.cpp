@@ -14,11 +14,9 @@ void ShockPage::Update() {
     ImGui::Columns(2);
 
     // Left Side
-
+    ImGui::BeginChild("Data Log Child");
     ImGui::Text("Data Log");
     ImGui::Separator();
-
-    ImGui::BeginChild("Data Log Child");
 
     // Logging Button
     {
@@ -41,8 +39,8 @@ void ShockPage::Update() {
         std::lock_guard lock{m_Context->DataMutex};
         time = m_Context->Data.GetTime();
 
-        const auto& shock_data = m_Context->Data.GetShockData();
         raw_data               = m_Context->Data.GetRawLines();
+        const auto& shock_data = m_Context->Data.GetShockData();
         fr                     = shock_data.FrontRight;
         fl                     = shock_data.FrontLeft;
         br                     = shock_data.BackRight;
@@ -60,9 +58,6 @@ void ShockPage::Update() {
     ImGui::NextColumn();
 
     ImGui::BeginChild("Graph Child");
-
-    ImGui::Text("Shock Graph");
-    ImGui::Separator();
 
     if (ImPlot::BeginPlot("RPM Over Time", {-1, -1})) {
         if (!time.empty()) {

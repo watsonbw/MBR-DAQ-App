@@ -3,6 +3,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <deque>
+#include <future>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -43,12 +44,14 @@ class ViewPage : public Page {
     void TryCleanupSokolResources();
 
   private:
-    std::string m_VideoPath;
-    int         m_TotalFrames     = 0;
-    double      m_VideoFPS        = 0.0;
-    double      m_FrameDuration   = 0.0;
-    double      m_TimeAccumulator = 0.0;
-    int         m_CurrentFrameUI  = 0;
+    std::string                             m_VideoPath;
+    std::future<std::optional<std::string>> m_FileDialogFuture;
+
+    int    m_TotalFrames     = 0;
+    double m_VideoFPS        = 0.0;
+    double m_FrameDuration   = 0.0;
+    double m_TimeAccumulator = 0.0;
+    int    m_CurrentFrameUI  = 0;
 
     std::atomic<bool> m_IsPlaying        = false;
     std::atomic<bool> m_IsLooping        = false;

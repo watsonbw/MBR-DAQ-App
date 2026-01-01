@@ -1,8 +1,10 @@
 #include <cassert>
+#include <chrono>
 
 #include <tinyfiledialogs.h>
 
 #include <imgui.h>
+#include <implot.h>
 
 #include <sokol_app.h>
 #include <sokol_gfx.h>
@@ -30,27 +32,38 @@ void ViewPage::Update() {
     auto window_flags = DefaultWindowFlags();
     ImGui::Begin("View Data", nullptr, window_flags);
 
+    ImGui::Columns(2);
     DrawLHS();
-    ImGui::SameLine();
+    ImGui::NextColumn();
     DrawRHS();
 
     ImGui::End();
 }
 
 void ViewPage::DrawLHS() {
-    auto left_col_width = ImGui::GetContentRegionAvail().x * 0.65f;
-    ImGui::BeginChild("VideoPlayerColumn", ImVec2(left_col_width, 0), true);
+    ImGui::BeginChild("VideoPlayerColumn");
 
-    // File selection can happen at any point during playback
-    if (ImGui::Button("Open Video")) {
-        auto maybe_path = OpenFile();
-        if (maybe_path.has_value()) {
-            StopDecodingThread();
-            TryCleanupSokolResources();
-            m_VideoPath = maybe_path.value();
-            StartDecodingThread();
+    // Check if the file is ready
+    if (m_FileDialogFuture.valid()) {
+        using namespace std::chrono_literals;
+        if (m_FileDialogFuture.wait_for(0s) == std::future_status::ready) {
+            const auto maybe_path = m_FileDialogFuture.get();
+            if (maybe_path.has_value()) {
+                StopDecodingThread();
+                TryCleanupSokolResources();
+                m_VideoPath = maybe_path.value();
+                StartDecodingThread();
+            }
         }
     }
+
+    // File selection can happen at any point during playback
+    const bool is_dialog_open = m_FileDialogFuture.valid();
+    if (is_dialog_open) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Open Video")) {
+        m_FileDialogFuture = std::async(std::launch::async, [this]() { return this->OpenFile(); });
+    }
+    if (is_dialog_open) { ImGui::EndDisabled(); }
 
     // Playback logic and frame skipping can be ignored if paused
     bool is_timer_tick = false;
@@ -119,8 +132,38 @@ void ViewPage::DrawLHSControls() {
 
 void ViewPage::DrawRHS() {
     ImGui::BeginChild("Data");
-    ImGui::Text("Data & Analysis");
-    ImGui::Separator();
+
+    std::vector<double> time, fr, fl, br, bl;
+
+    {
+        std::lock_guard lock{m_Context->DataMutex};
+        time = m_Context->Data.GetTime();
+
+        const auto& shock_data = m_Context->Data.GetShockData();
+        fr                     = shock_data.FrontRight;
+        fl                     = shock_data.FrontLeft;
+        br                     = shock_data.BackRight;
+        bl                     = shock_data.BackRight;
+    }
+
+    if (ImPlot::BeginPlot("RPM Over Time", {-1, -1})) {
+        if (!time.empty()) {
+            if (!fr.empty()) {
+                ImPlot::PlotLine("Wheel Speed", time.data(), fr.data(), time.size());
+            }
+            if (!fr.empty()) {
+                ImPlot::PlotLine("Wheel Speed", time.data(), fl.data(), time.size());
+            }
+            if (!fr.empty()) {
+                ImPlot::PlotLine("Wheel Speed", time.data(), br.data(), time.size());
+            }
+            if (!fr.empty()) {
+                ImPlot::PlotLine("Wheel Speed", time.data(), bl.data(), time.size());
+            }
+        }
+        ImPlot::EndPlot();
+    }
+
     ImGui::EndChild();
 }
 

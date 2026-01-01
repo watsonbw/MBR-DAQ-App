@@ -14,10 +14,9 @@ void RPMPage::Update() {
     ImGui::Columns(2);
 
     // Left Side
+    ImGui::BeginChild("Data Log Child");
     ImGui::Text("Data Log");
     ImGui::Separator();
-
-    ImGui::BeginChild("Data Log Child");
 
     // Logging Button
     {
@@ -56,10 +55,7 @@ void RPMPage::Update() {
 
     ImGui::NextColumn();
 
-    ImGui::BeginChild("Graph Child");
-
-    ImGui::Text("RPM Graph");
-    ImGui::Separator();
+    ImGui::BeginChild("Graph Child", {0, 0});
 
     if (ImPlot::BeginPlot("RPM Over Time", {-1, -1})) {
         if (!time.empty()) {

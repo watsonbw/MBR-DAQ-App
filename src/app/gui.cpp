@@ -141,7 +141,7 @@ void GUI::DrawMainMenuBar() {
     ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
 
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("File")) {
+        if (ImGui::BeginMenu("Menu")) {
             if (ImGui::MenuItem("Home")) { ChangePage(PageType::HOME); }
             if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
             if (ImGui::MenuItem("Shock")) { ChangePage(PageType::SHOCK); }
