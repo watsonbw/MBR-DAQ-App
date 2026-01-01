@@ -7,29 +7,29 @@ set(GLOBAL_VERSION 0.1.0)
 set(CMAKE_BUILD_TYPE Release)
 
 if(APPLE)
-project(${GLOBAL_NAME}
+    project(${GLOBAL_NAME}
     VERSION ${GLOBAL_VERSION}
     LANGUAGES C CXX OBJCXX
 )
 elseif(WIN32)
-project(${GLOBAL_NAME}
+    project(${GLOBAL_NAME}
     VERSION ${GLOBAL_VERSION}
     LANGUAGES C CXX
 )
 else()
-message(ERROR "Platform currently unsupported!")
+    message(ERROR "Platform currently unsupported!")
 endif()
 
 # Qualify compile commands database for tooling
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(APPLE)
-execute_process(
+    execute_process(
     COMMAND xcrun --show-sdk-path
     OUTPUT_VARIABLE CMAKE_OSX_SYSROOT
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 elseif(WIN32)
-add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -68,7 +68,7 @@ add_library(sokol_setup STATIC src/app/sokol_impl.cpp)
 target_include_directories(sokol_setup SYSTEM PUBLIC
     vendor/sokol
     vendor/sokol/util
-    vendor/imgui 
+    vendor/imgui
     vendor/imgui/backends)
 target_compile_options(sokol_setup PRIVATE ${WARNING_IGNORE})
 
@@ -135,6 +135,31 @@ set(CMAKE_C_FLAGS_BACKUP "${CMAKE_C_FLAGS}")
 set(CMAKE_CXX_FLAGS_BACKUP "${CMAKE_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
+
+if(APPLE)
+    set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/mac")
+    set(FFMPEG_INC "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/include")
+
+    set(_ffmpeg_libs avcodec avformat avutil swscale swresample)
+    set(FFMPEG_LIBRARIES "")
+
+    foreach(_lib ${_ffmpeg_libs})
+        add_library(ffmpeg_${_lib} SHARED IMPORTED)
+        set_target_properties(ffmpeg_${_lib} PROPERTIES
+            IMPORTED_LOCATION "${FFMPEG_DIR}/lib${_lib}.dylib"
+            INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INC}"
+        )
+        list(APPEND FFMPEG_LIBRARIES ffmpeg_${_lib})
+    endforeach()
+
+    set(WITH_FFMPEG ON CACHE BOOL "" FORCE)
+    set(HAVE_FFMPEG ON CACHE BOOL "" FORCE)
+    set(FFMPEG_INCLUDE_DIRS "${FFMPEG_INC}" CACHE PATH "" FORCE)
+    set(FFMPEG_LIBRARIES "${FFMPEG_LIBRARIES}" CACHE STRING "" FORCE)
+    
+    set(OPENCV_FFMPEG_SKIP_BUILD_CHECK ON CACHE BOOL "" FORCE)
+    set(OPENCV_FFMPEG_SKIP_VERSION_CHECK ON CACHE BOOL "" FORCE)
+endif()
 
 add_subdirectory(vendor/opencv)
 
@@ -215,7 +240,7 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
 
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC
         include)
-    
+
     target_include_directories(baja_core_${TARGET_NAME} SYSTEM PUBLIC
         ${CMAKE_BINARY_DIR}
         ${CMAKE_SOURCE_DIR}/vendor/opencv/include
@@ -225,7 +250,7 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/videoio/include
         ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/highgui/include
     )
-    
+
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
 
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
@@ -276,7 +301,22 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${TARGET_NAME}
         OUTPUT_NAME baja)
 
-    if(WIN32)
+    if(APPLE)
+        set_target_properties(baja_${TARGET_NAME} PROPERTIES
+            BUILD_WITH_INSTALL_RPATH TRUE
+            INSTALL_RPATH "@executable_path"
+        )
+
+        add_custom_command(TARGET baja_${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/mac"
+                "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
+            
+            COMMAND bash -c "cd \"$<TARGET_FILE_DIR:baja_${TARGET_NAME}>\" && for lib in *.dylib; do [ -L \"$lib\" ] && continue; install_name_tool -id \"@rpath/$lib\" \"$lib\"; install_name_tool -change \"${FFMPEG_DIR}/$lib\" \"@rpath/$lib\" \"$<TARGET_FILE:baja_${TARGET_NAME}>\" 2>/dev/null || true; done"
+            VERBATIM
+            COMMENT "Relocating versioned FFmpeg dylibs"
+        )
+    elseif(WIN32)
         add_custom_command(TARGET baja_${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_BINARY_DIR}/bin"
