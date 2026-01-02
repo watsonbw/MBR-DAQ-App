@@ -9,25 +9,24 @@
 class BoardWifi {
   public:
     BoardWifi(const char* ssid, const char* password);
-    void cleanupClients() { _ws.cleanupClients(); }
-    void Start();
-    void ReceiveCMD();
-    void SendData(String msg);
-    String lastCommand = "";
-    volatile bool newCommand = false;
-    uint64_t getRealTime(); 
+    void          cleanupClients() { _ws.cleanupClients(); }
+    void          Start();
+    void          ReceiveCMD();
+    void          SendData(String msg);
+    String        lastCommand = "";
+    volatile bool newCommand  = false;
+    uint64_t      getRealTime();
 
   private:
-    const char* _ssid;
-    const char* _password;
-    uint64_t baseTimeMicros = 0;
-    uint32_t localSyncMicros = 0;
-    volatile bool isTimeSynced = 0; 
+    const char*   _ssid;
+    const char*   _password;
+    uint64_t      baseTimeMicros  = 0;
+    uint32_t      localSyncMicros = 0;
+    volatile bool isTimeSynced    = 0;
 
     AsyncWebServer _server;
     AsyncWebSocket _ws;
 
-    
     static void onWsEvent(AsyncWebSocket*       server,
                           AsyncWebSocketClient* client,
                           AwsEventType          type,

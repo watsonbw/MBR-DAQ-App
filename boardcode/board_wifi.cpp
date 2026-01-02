@@ -3,7 +3,9 @@
 static BoardWifi* instance = nullptr;
 
 BoardWifi::BoardWifi(const char* ssid, const char* password)
-    : _ssid(ssid), _password(password), _server(81), _ws("/ws") { instance = this;}
+    : _ssid(ssid), _password(password), _server(81), _ws("/ws") {
+    instance = this;
+}
 
 void BoardWifi::Start() {
     WiFi.softAP(_ssid, _password);
@@ -26,7 +28,6 @@ void BoardWifi::SendData(String msg) {
     }
 }
 
-
 void BoardWifi::onWsEvent(AsyncWebSocket*       server,
                           AsyncWebSocketClient* client,
                           AwsEventType          type,
@@ -35,18 +36,18 @@ void BoardWifi::onWsEvent(AsyncWebSocket*       server,
                           size_t                len) {
     if (type == WS_EVT_DATA && instance != nullptr) {
         String command = "";
-        for (size_t i = 0; i < len; i++){
+        for (size_t i = 0; i < len; i++) {
             command += (char)data[i];
         }
 
-        if(command.startsWith("SYNC")){
-            String timeStr = command.substring(4);
+        if (command.startsWith("SYNC")) {
+            String timeStr            = command.substring(4);
             instance->localSyncMicros = micros();
-            instance->baseTimeMicros = strtoull(timeStr.c_str(), NULL, 10);
-            instance->isTimeSynced = 1;
+            instance->baseTimeMicros  = strtoull(timeStr.c_str(), NULL, 10);
+            instance->isTimeSynced    = 1;
         } else {
             instance->lastCommand = command;
-            instance->newCommand = true;
+            instance->newCommand  = true;
         }
 
         Serial.print("Received Command: ");

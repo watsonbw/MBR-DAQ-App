@@ -398,11 +398,16 @@ if(APPLE)
 endif()
 
 # Tooling
+set(ESP32_DIR "${CMAKE_SOURCE_DIR}/boardcode")
+
 file(GLOB_RECURSE TOOLING_SOURCES
     ${SRC_DIR}/*.cpp
     ${INCLUDE_DIR}/*.hpp
     ${TEST_DIR}/*.cpp
     ${TEST_DIR}/*.hpp
+    ${ESP32_DIR}/*.hpp
+    ${ESP32_DIR}/*.cpp
+    ${ESP32_DIR}/*.ino
 )
 list(FILTER TOOLING_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
 
