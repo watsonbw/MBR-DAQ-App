@@ -4,6 +4,7 @@ release/
 build/
 .cache
 
+.theia
 .vscode
 .zed
 

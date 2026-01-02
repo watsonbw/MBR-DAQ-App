@@ -1,6 +1,8 @@
 #include "app/app.hpp"
+#include <ixwebsocket/IXNetSystem.h>
 
 int main(int arc, char* argv[]) {
-    auto app = std::make_unique<App>();
+    ix::initNetSystem();
+    App app;
     app->Run();
 }

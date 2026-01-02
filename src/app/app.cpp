@@ -14,14 +14,14 @@
 
 App::App() : m_Context{std::make_shared<AppContext>()} {
     Log::Init();
-    m_Backend = std::make_unique<TelemetryBackend>(m_Context);
     m_GUI     = std::make_unique<GUI>(m_Context);
+    m_Context->m_Backend = std::make_unique<TelemetryBackend>();
 }
 
 App::~App() = default;
 
 void App::Run() {
-    m_Backend->Start();
     auto app_desc = m_GUI->GetSokolDesc();
     sapp_run(&app_desc);
+
 }

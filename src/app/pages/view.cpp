@@ -136,10 +136,10 @@ void ViewPage::DrawRHS() {
     std::vector<double> time, fr, fl, br, bl;
 
     {
-        std::lock_guard lock{m_Context->DataMutex};
-        time = m_Context->Data.GetTime();
+        std::lock_guard lock{m_Context->m_Backend->DataMutex};
+        time = m_Context->m_Backend->Data.GetTime();
 
-        const auto& shock_data = m_Context->Data.GetShockData();
+        const auto& shock_data = m_Context->m_Backend->Data.GetShockData();
         fr                     = shock_data.FrontRight;
         fl                     = shock_data.FrontLeft;
         br                     = shock_data.BackRight;

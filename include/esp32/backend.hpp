@@ -5,24 +5,30 @@
 #include <thread>
 
 #include <ixwebsocket/IXWebSocket.h>
+#include "data.hpp"
 
 struct AppContext;
 
 class TelemetryBackend {
   public:
-    explicit TelemetryBackend(std::shared_ptr<AppContext> ctx);
+    explicit TelemetryBackend() = default;
     ~TelemetryBackend();
 
     void Start();
     void Kill();
     void SendCMD(const std::string& text);
 
+    std::mutex    DataMutex;
+    TelemetryData Data;
+    std::atomic<bool> TryConnection{false};
+    std::atomic<bool> IsConnected{false};
+    std::atomic<bool> IsLogging{false};
+
   private:
     void WorkerLoop();
     void OnMessage(const ix::WebSocketMessagePtr& msg);
 
   private:
-    std::shared_ptr<AppContext> m_Context;
     std::thread                 m_Worker;
     ix::WebSocket               m_WebSocket;
 

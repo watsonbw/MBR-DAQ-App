@@ -2,10 +2,12 @@
 
 #include <atomic>
 #include <mutex>
+#include <memory>
 
 #include "app/style.hpp"
 
 #include "esp32/data.hpp"
+#include "esp32/backend.hpp"
 
 enum PageType {
     HOME,
@@ -16,6 +18,8 @@ enum PageType {
 
 const char* PageTypeString(PageType type);
 
+class TelemetryBackend;
+
 struct AppContext {
     AppFonts Fonts;
     PageType CurrentPageType;
@@ -23,9 +27,9 @@ struct AppContext {
     std::atomic<bool> IsConnected{false};
     std::atomic<bool> IsLogging{false};
     std::atomic<bool> ShouldExit{false};
+    std::atomic<bool> TryConnection{false};
+    std::unique_ptr<TelemetryBackend> m_Backend;
 
-    std::mutex    DataMutex;
-    TelemetryData Data;
     std::string   Username;
     std::string   Password;
 };

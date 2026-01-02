@@ -22,9 +22,9 @@ void ShockPage::Update() {
     {
         ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
 
-        bool logging = m_Context->IsLogging;
+        bool logging = m_Context->m_Backend->IsLogging;
         if (ImGui::Button(logging ? "Stop Logging" : "Start Logging")) {
-            m_Context->IsLogging = !logging;
+            m_Context->m_Backend->IsLogging = !logging;
         }
 
         ImGui::PopFont();
@@ -36,11 +36,11 @@ void ShockPage::Update() {
     std::vector<double>      time, fr, fl, br, bl;
 
     {
-        std::lock_guard lock{m_Context->DataMutex};
-        time = m_Context->Data.GetTime();
+        std::lock_guard lock{m_Context->m_Backend->DataMutex};
+        time = m_Context->m_Backend->Data.GetTime();
 
-        raw_data               = m_Context->Data.GetRawLines();
-        const auto& shock_data = m_Context->Data.GetShockData();
+        raw_data               = m_Context->m_Backend->Data.GetRawLines();
+        const auto& shock_data = m_Context->m_Backend->Data.GetShockData();
         fr                     = shock_data.FrontRight;
         fl                     = shock_data.FrontLeft;
         br                     = shock_data.BackRight;

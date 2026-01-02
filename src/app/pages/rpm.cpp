@@ -9,38 +9,40 @@ void RPMPage::OnEnter() { LOG_INFO("Entered RPMPage"); }
 void RPMPage::OnExit() { LOG_INFO("Exited RPMPage"); }
 
 void RPMPage::Update() {
+    //LOG_INFO("Began Update RPM");
     const auto window_flags = DefaultWindowFlags();
     ImGui::Begin("RPM Data Collection", nullptr, window_flags);
     ImGui::Columns(2);
-
+    //LOG_INFO("1");
     // Left Side
     ImGui::BeginChild("Data Log Child");
     ImGui::Text("Data Log");
     ImGui::Separator();
-
+    //LOG_INFO("2");
     // Logging Button
     {
         ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
-
-        bool logging = m_Context->IsLogging;
+        //LOG_INFO("2.5");
+        bool logging = m_Context->m_Backend->IsLogging;
+        //LOG_INFO("2.75");
         if (ImGui::Button(logging ? "Stop Logging" : "Start Logging")) {
-            m_Context->IsLogging = !logging;
+            m_Context->m_Backend->IsLogging = !logging;
         }
 
         ImGui::PopFont();
     }
 
     ImGui::Separator();
-
+    //LOG_INFO("3");
     std::vector<std::string> raw_data;
     std::vector<double>      time, wheel, engine;
 
     {
-        std::lock_guard lock{m_Context->DataMutex};
-        time = m_Context->Data.GetTime();
+        std::lock_guard lock{m_Context->m_Backend->DataMutex};
+        time = m_Context->m_Backend->Data.GetTime();
 
-        const auto& rpm_data = m_Context->Data.GetRPMData();
-        raw_data             = m_Context->Data.GetRawLines();
+        const auto& rpm_data = m_Context->m_Backend->Data.GetRPMData();
+        raw_data             = m_Context->m_Backend->Data.GetRawLines();
         wheel                = rpm_data.WheelRPM;
         engine               = rpm_data.EngineRPM;
     }
@@ -50,7 +52,7 @@ void RPMPage::Update() {
     }
 
     ImGui::EndChild();
-
+    //LOG_INFO("4");
     // Right Side
 
     ImGui::NextColumn();
