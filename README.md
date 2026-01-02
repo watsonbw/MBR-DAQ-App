@@ -4,6 +4,9 @@ Data visualization and ESP32 interface for the University of Michigan's baja tea
 ## License
 This project is licensed under the GNU General Public License v3.0 or later.
 
+## Availablility
+This software is provided precompiled as a standalone executable for x86-64 Windows and Apple Silicone macOS only. Other platforms require manual tweaking of the build process and are not guaranteed to work.
+
 ## Getting Started
 Precompiled releases for macOS and windows are available in the releases tab. They are standalone executables and should work perfectly out of the box. You will likely have to fight your systems antivirus the first time you launch the app, since we are __not__ paying for code signing.
 - Windows: Just have to tell Defender that it's ok.

@@ -109,6 +109,51 @@ target_include_directories(implot_setup SYSTEM PUBLIC vendor/implot)
 target_link_libraries(implot_setup PUBLIC imgui_setup)
 target_compile_options(implot_setup PRIVATE ${WARNING_IGNORE})
 
+# FFmpeg resolution
+set(FFMPEG_INC "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/include")
+
+if(APPLE)
+    set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/mac")
+elseif(WIN32)
+    set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/win32")
+endif()
+
+add_library(ffmpeg_system_deps INTERFACE)
+if(APPLE)
+    target_link_libraries(ffmpeg_system_deps INTERFACE
+        "-framework CoreMedia"
+        "-framework VideoToolbox"
+        "-framework AudioToolbox"
+        "-framework CoreVideo"
+        "-framework CoreFoundation"
+        "-framework Security"
+        "-framework IOKit" # Often needed if not already linked
+        z iconv bz2
+    )
+elseif(WIN32)
+    target_link_libraries(ffmpeg_system_deps INTERFACE
+        ws2_32 bcrypt secur32 shlwapi mfplat mfuuid strmiids ole32 user32
+    )
+endif()
+
+set(_ffmpeg_libs avdevice avfilter avformat avcodec swresample swscale avutil)
+set(FFMPEG_LIBRARIES "")
+
+foreach(_lib ${_ffmpeg_libs})
+    add_library(ffmpeg_${_lib} STATIC IMPORTED)
+    
+    set_target_properties(ffmpeg_${_lib} PROPERTIES
+        IMPORTED_LOCATION "${FFMPEG_DIR}/lib${_lib}.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INC}"
+    )
+    
+    target_link_libraries(ffmpeg_${_lib} INTERFACE ffmpeg_system_deps)
+    list(APPEND FFMPEG_LIBRARIES ffmpeg_${_lib})
+endforeach()
+
+set(WITH_FFMPEG ON CACHE BOOL "" FORCE)
+set(HAVE_FFMPEG ON CACHE BOOL "" FORCE)
+
 # OpenCV
 set(BUILD_LIST "core,imgproc,imgcodecs,videoio,highgui" CACHE STRING "" FORCE)
 set(BUILD_opencv_apps OFF CACHE BOOL "" FORCE)
@@ -125,6 +170,18 @@ set(WITH_OPENCL OFF CACHE BOOL "" FORCE)
 set(WITH_WEBP OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
+set(WITH_MSMF OFF CACHE BOOL "" FORCE)
+set(WITH_DXVA OFF CACHE BOOL "" FORCE)
+set(WITH_OBSENSOR OFF CACHE BOOL "" FORCE)
+set(WITH_DSHOW OFF CACHE BOOL "" FORCE)
+set(WITH_DIRECTX OFF CACHE BOOL "" FORCE)
+
+set(OPENCV_FFMPEG_SKIP_DOWNLOAD ON CACHE BOOL "" FORCE)
+set(OPENCV_FFMPEG_SKIP_BUILD_CHECK ON CACHE BOOL "" FORCE)
+set(OPENCV_FFMPEG_USE_FIND_PACKAGE OFF CACHE BOOL "" FORCE)
+set(FFMPEG_INCLUDE_DIRS "${FFMPEG_INC}" CACHE PATH "" FORCE)
+set(FFMPEG_LIBRARIES "${FFMPEG_LIBRARIES}" CACHE STRING "" FORCE)
+
 set(OPENCV_WARNINGS_ARE_ERRORS OFF CACHE BOOL "" FORCE)
 set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS ON CACHE BOOL "" FORCE)
 
@@ -135,48 +192,6 @@ set(CMAKE_C_FLAGS_BACKUP "${CMAKE_C_FLAGS}")
 set(CMAKE_CXX_FLAGS_BACKUP "${CMAKE_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
-
-# ffmpeg resolution
-set(_ffmpeg_libs avcodec avformat avutil swscale swresample)
-set(FFMPEG_INC "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/include")
-
-if(APPLE)
-    set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/mac")
-elseif(WIN32)
-    set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/win32")
-endif()
-
-set(FFMPEG_LIBRARIES "")
-
-foreach(_lib ${_ffmpeg_libs})
-    add_library(ffmpeg_${_lib} SHARED IMPORTED)
-
-    if(APPLE)
-        set_target_properties(ffmpeg_${_lib} PROPERTIES
-            IMPORTED_LOCATION "${FFMPEG_DIR}/lib${_lib}.dylib"
-        )
-    elseif(WIN32)
-        set_target_properties(ffmpeg_${_lib} PROPERTIES
-            IMPORTED_IMPLIB "${FFMPEG_DIR}/lib${_lib}.dll.a"
-            IMPORTED_LOCATION "${FFMPEG_DIR}/lib${_lib}.dll"
-        )
-    endif()
-    
-    set_target_properties(ffmpeg_${_lib} PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INC}"
-    )
-    list(APPEND FFMPEG_LIBRARIES ffmpeg_${_lib})
-endforeach()
-
-if(APPLE)
-    set(WITH_FFMPEG ON CACHE BOOL "" FORCE)
-    set(HAVE_FFMPEG ON CACHE BOOL "" FORCE)
-    set(FFMPEG_INCLUDE_DIRS "${FFMPEG_INC}" CACHE PATH "" FORCE)
-    set(FFMPEG_LIBRARIES "${FFMPEG_LIBRARIES}" CACHE STRING "" FORCE)
-    
-    set(OPENCV_FFMPEG_SKIP_BUILD_CHECK ON CACHE BOOL "" FORCE)
-    set(OPENCV_FFMPEG_SKIP_VERSION_CHECK ON CACHE BOOL "" FORCE)
-endif()
 
 add_subdirectory(vendor/opencv)
 
@@ -330,28 +345,6 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
         set_target_properties(baja_${TARGET_NAME} PROPERTIES
             BUILD_WITH_INSTALL_RPATH TRUE
             INSTALL_RPATH "@executable_path"
-        )
-
-        add_custom_command(TARGET baja_${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/mac"
-                "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
-            
-            COMMAND bash -c "cd \"$<TARGET_FILE_DIR:baja_${TARGET_NAME}>\" && for lib in *.dylib; do [ -L \"$lib\" ] && continue; install_name_tool -id \"@rpath/$lib\" \"$lib\" 2>/dev/null; install_name_tool -change \"${FFMPEG_DIR}/$lib\" \"@rpath/$lib\" \"$<TARGET_FILE:baja_${TARGET_NAME}>\" 2>/dev/null || true; done"
-            VERBATIM
-            COMMENT "Remapping FFMPEG dylibs"
-        )
-    elseif(WIN32)
-        add_custom_command(TARGET baja_${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_BINARY_DIR}/bin"
-                "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
-            COMMENT "Copy FFMPEG to output directory"
-
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${FFMPEG_DIR}"
-                "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
-            COMMENT "Copying FFmpeg DLLs to executable directory"
         )
     endif()
 endfunction()
