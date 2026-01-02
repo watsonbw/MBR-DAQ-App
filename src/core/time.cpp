@@ -6,7 +6,7 @@ using namespace std::chrono;
 
 LocalTime::LocalTime() {
 #ifdef __APPLE__
-    auto now = system_clock::now();
+    const auto now = system_clock::now();
 
     auto    time_now = system_clock::to_time_t(now);
     std::tm lt{};
@@ -16,10 +16,11 @@ LocalTime::LocalTime() {
     Minute = static_cast<uint64_t>(lt.tm_min);
     Second = static_cast<uint64_t>(lt.tm_sec);
 
-    auto ms     = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
-    Millisecond = static_cast<uint64_t>(ms.count());
+    const auto duration = now.time_since_epoch();
+    auto       ms       = duration_cast<milliseconds>(duration) % 1000;
+    Millisecond         = static_cast<uint64_t>(ms.count());
 
-    auto us     = duration_cast<microseconds>(now.time_since_epoch()) % 1000000;
+    auto us     = duration_cast<microseconds>(duration) % 1000;
     Microsecond = static_cast<uint64_t>(us.count());
 #else
     // https://stackoverflow.com/questions/61273498/number-of-seconds-since-midnight

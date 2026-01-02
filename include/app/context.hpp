@@ -1,12 +1,10 @@
 #pragma once
 
 #include <atomic>
-#include <mutex>
 #include <memory>
 
 #include "app/style.hpp"
 
-#include "esp32/data.hpp"
 #include "esp32/backend.hpp"
 
 enum PageType {
@@ -21,11 +19,11 @@ const char* PageTypeString(PageType type);
 class TelemetryBackend;
 
 struct AppContext {
-    AppFonts Fonts;
-    PageType CurrentPageType;
-    std::atomic<bool> ShouldExit{false};
+    AppFonts                          Fonts;
+    PageType                          CurrentPageType;
+    std::atomic<bool>                 ShouldExit{false};
     std::unique_ptr<TelemetryBackend> Backend;
 
-    std::string   Username;
-    std::string   Password;
+    std::string Username;
+    std::string Password;
 };

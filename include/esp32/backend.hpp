@@ -4,8 +4,8 @@
 #include <memory>
 #include <thread>
 
-#include <ixwebsocket/IXWebSocket.h>
 #include "data.hpp"
+#include <ixwebsocket/IXWebSocket.h>
 
 struct AppContext;
 
@@ -18,8 +18,8 @@ class TelemetryBackend {
     void Kill();
     void SendCMD(const std::string& text);
 
-    std::mutex    DataMutex;
-    TelemetryData Data;
+    std::mutex        DataMutex;
+    TelemetryData     Data;
     std::atomic<bool> TryConnection{false};
     std::atomic<bool> IsConnected{false};
     std::atomic<bool> IsLogging{false};
@@ -29,8 +29,8 @@ class TelemetryBackend {
     void OnMessage(const ix::WebSocketMessagePtr& msg);
 
   private:
-    std::thread                 m_Worker;
-    ix::WebSocket               m_WebSocket;
+    std::thread   m_Worker;
+    ix::WebSocket m_WebSocket;
 
     std::atomic<bool> m_ShouldKill = false;
 };

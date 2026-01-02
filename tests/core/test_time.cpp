@@ -4,7 +4,7 @@
 
 TEST_CASE("Roundtrip time") {
     const LocalTime actual;
-    const auto micros = actual.MicrosSinceMidnight();
+    const auto      micros = actual.MicrosSinceMidnight();
     const LocalTime regenerated{micros};
 
     REQUIRE(actual.Hour == regenerated.Hour);

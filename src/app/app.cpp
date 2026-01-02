@@ -17,7 +17,7 @@
 App::App() : m_Context{std::make_shared<AppContext>()} {
     Log::Init();
     ix::initNetSystem();
-    m_GUI     = std::make_unique<GUI>(m_Context);
+    m_GUI              = std::make_unique<GUI>(m_Context);
     m_Context->Backend = std::make_unique<TelemetryBackend>();
 }
 

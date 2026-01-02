@@ -1,6 +1,6 @@
 #include <cassert>
-#include <sstream>
 #include <format>
+#include <sstream>
 
 #include <imgui.h>
 #include <implot.h>
@@ -20,7 +20,6 @@
 #include "app/pages/rpm.hpp"
 #include "app/pages/shock.hpp"
 #include "app/pages/view.hpp"
-#include "core/log.hpp"
 
 using namespace std::chrono;
 
@@ -166,7 +165,7 @@ void GUI::DrawMainMenuBar() {
         ImGui::Separator();
 
         LocalTime lt;
-        auto    sync_time = lt.MicrosSinceMidnight();
+        auto      sync_time = lt.MicrosSinceMidnight();
 
         std::stringstream ss;
         ss << "SYNC ";
@@ -198,7 +197,8 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Separator();
 
-        const std::string time_formatted = std::format("{}:{}:{}.{}", lt.Hour, lt.Minute, lt.Second, lt.Millisecond);
+        const std::string time_formatted =
+            std::format("{}:{}:{}.{}", lt.Hour, lt.Minute, lt.Second, lt.Millisecond);
         ImGui::TextUnformatted(time_formatted.c_str());
 
         ImGui::EndMainMenuBar();
