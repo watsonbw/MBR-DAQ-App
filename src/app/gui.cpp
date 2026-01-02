@@ -116,6 +116,7 @@ void GUI::OnEvent(const sapp_event* event) {
 void GUI::OnCleanup() {
     m_Context->ShouldExit = true;
     if (m_CurrentPage) { m_CurrentPage->OnExit(); }
+    m_CurrentPage.reset();
 
     simgui_shutdown();
     sg_shutdown();
