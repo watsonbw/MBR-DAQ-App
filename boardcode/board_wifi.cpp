@@ -3,7 +3,7 @@
 static BoardWifi* instance = nullptr;
 
 BoardWifi::BoardWifi(const char* ssid, const char* password)
-    : _ssid(ssid), _password(password), _server(81), _ws("/ws") {
+    : _ssid(ssid), _password(password), _server(80), _ws("/ws") {
     instance = this;
 }
 
@@ -16,15 +16,16 @@ void BoardWifi::Start() {
     if (MDNS.begin("telemetry")) { Serial.println("mDNS responder started"); }
 
     _ws.onEvent(onWsEvent);
+    _server.addHandler(&_ws);
 
     _server.begin();
     Serial.println("HTTP Server started");
-    _server.addHandler(&_ws);
+    
 }
 
 void BoardWifi::SendData(String msg) {
     if (_ws.count() > 0) {
-        if (_ws.availableForWriteAll()) { _ws.textAll(msg); }
+        _ws.textAll(msg);
     }
 }
 

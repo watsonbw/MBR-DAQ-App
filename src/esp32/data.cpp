@@ -1,4 +1,5 @@
 #include "esp32/data.hpp"
+#include "core/log.hpp"
 
 void RPMData::Reserve(size_t size) {
     EngineRPM.reserve(size);
@@ -30,7 +31,7 @@ TelemetryData::TelemetryData() : m_Time{0.0f} {
 }
 
 void TelemetryData::WriteData(std::string identifier, std::string value) {
-
+    
     if (identifier == "T") {
         m_Time.push_back(std::stod(value));
     } else if (identifier == "W") {

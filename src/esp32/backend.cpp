@@ -21,14 +21,34 @@ void TelemetryBackend::Start() {
 
     m_ShouldKill = false;
 
-    m_WebSocket.setUrl("ws://192.168.4.1:81/ws");
+    m_WebSocket.setUrl("ws://192.168.4.1:80/ws");
+
+    m_WebSocket.setMaxWaitBetweenReconnectionRetries(2000);  
+    m_WebSocket.setMinWaitBetweenReconnectionRetries(200);  
+    m_WebSocket.enableAutomaticReconnection();
+    m_WebSocket.setPingInterval(30);
+    m_WebSocket.setHandshakeTimeout(10); 
+ 
 
     m_WebSocket.setOnMessageCallback([this](const ix::WebSocketMessagePtr& msg) {
-        if (msg->type == ix::WebSocketMessageType::Open) { IsConnected = true; }
+        if (msg->type == ix::WebSocketMessageType::Open) { 
+            IsConnected = true; 
+            LOG_INFO("Connected to ESP32");
+        }
 
         if (msg->type == ix::WebSocketMessageType::Close ||
             msg->type == ix::WebSocketMessageType::Error)
             IsConnected = false;
+
+        if (msg->type == ix::WebSocketMessageType::Close) {LOG_WARN("WebSocket closed");}
+        
+
+        if (msg->type == ix::WebSocketMessageType::Error) {
+            LOG_ERROR("WebSocket error: {}", msg->errorInfo.reason.c_str());
+            LOG_ERROR("HTTP Status: {}", msg->errorInfo.http_status);
+        }
+        
+
 
         if (msg->type == ix::WebSocketMessageType::Message) { this->OnMessage(msg); }
     });
@@ -58,12 +78,13 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
     if (msg->type == ix::WebSocketMessageType::Message) {
         std::lock_guard<std::mutex> lock(DataMutex);
         std::stringstream           ss(msg->str);
-
+        
         std::string identifier;
         std::string value;
         if (IsLogging) {
             Data.WriteRawLine(msg->str);
             while (ss >> identifier >> value) {
+                //LOG_INFO("Parsed: Key='{}' Val='{}'", identifier, value);
                 Data.WriteData(identifier, value);
             }
         }
@@ -71,5 +92,11 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
 }
 
 void TelemetryBackend::SendCMD(const std::string& text) {
-    if (m_WebSocket.getReadyState() == ix::ReadyState::Open) { m_WebSocket.send(text); }
+    if (m_WebSocket.getReadyState() == ix::ReadyState::Open) { 
+        ix::WebSocketSendInfo info = m_WebSocket.send(text);
+        if (!info.success){
+            LOG_WARN("Send failed:");
+            IsConnected = false;
+        } 
+    }
 }

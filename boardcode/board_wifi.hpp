@@ -23,6 +23,7 @@ class BoardWifi {
     uint64_t      baseTimeMicros  = 0;
     uint32_t      localSyncMicros = 0;
     volatile bool isTimeSynced    = 0;
+    volatile bool timeCMD         = 0;
 
     AsyncWebServer _server;
     AsyncWebSocket _ws;
