@@ -7,7 +7,11 @@ vendor/** linguist-vendored
 *.cpp    text eol=lf
 *.h      text eol=lf
 *.hpp    text eol=lf
+*.m      text eol=lf
+*.mm     text eol=lf
+*.ino    text eol=lf
 
-Makefile text eol=lf
 *.sh     text eol=lf
 *.bat    text eol=crlf
+
+.clang-format text eol=lf

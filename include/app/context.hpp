@@ -23,12 +23,8 @@ class TelemetryBackend;
 struct AppContext {
     AppFonts Fonts;
     PageType CurrentPageType;
-
-    std::atomic<bool> IsConnected{false};
-    std::atomic<bool> IsLogging{false};
     std::atomic<bool> ShouldExit{false};
-    std::atomic<bool> TryConnection{false};
-    std::unique_ptr<TelemetryBackend> m_Backend;
+    std::unique_ptr<TelemetryBackend> Backend;
 
     std::string   Username;
     std::string   Password;

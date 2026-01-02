@@ -11,7 +11,15 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  Serial.println("this thing is on");
-  delay(1000);
+
+    wifi.cleanupClients(); 
+
+
+    static unsigned long lastSend = 0;
+    if (micros() - lastSend > 50) {
+      uint64_t realTime = wifi.getRealTime();
+
+        wifi.SendData("T " + String(realTime) + " W 2300 E 300 fr 0 fl 0 br 0 bl 0");
+        lastSend = micros();
+    }
 }

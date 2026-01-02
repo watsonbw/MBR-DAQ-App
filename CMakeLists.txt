@@ -136,22 +136,39 @@ set(CMAKE_CXX_FLAGS_BACKUP "${CMAKE_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
 
+# ffmpeg resolution
+set(_ffmpeg_libs avcodec avformat avutil swscale swresample)
+set(FFMPEG_INC "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/include")
+
 if(APPLE)
     set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/mac")
-    set(FFMPEG_INC "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/include")
+elseif(WIN32)
+    set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/win32")
+endif()
 
-    set(_ffmpeg_libs avcodec avformat avutil swscale swresample)
-    set(FFMPEG_LIBRARIES "")
+set(FFMPEG_LIBRARIES "")
 
-    foreach(_lib ${_ffmpeg_libs})
-        add_library(ffmpeg_${_lib} SHARED IMPORTED)
+foreach(_lib ${_ffmpeg_libs})
+    add_library(ffmpeg_${_lib} SHARED IMPORTED)
+
+    if(APPLE)
         set_target_properties(ffmpeg_${_lib} PROPERTIES
             IMPORTED_LOCATION "${FFMPEG_DIR}/lib${_lib}.dylib"
-            INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INC}"
         )
-        list(APPEND FFMPEG_LIBRARIES ffmpeg_${_lib})
-    endforeach()
+    elseif(WIN32)
+        set_target_properties(ffmpeg_${_lib} PROPERTIES
+            IMPORTED_IMPLIB "${FFMPEG_DIR}/lib${_lib}.dll.a"
+            IMPORTED_LOCATION "${FFMPEG_DIR}/lib${_lib}.dll"
+        )
+    endif()
+    
+    set_target_properties(ffmpeg_${_lib} PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INC}"
+    )
+    list(APPEND FFMPEG_LIBRARIES ffmpeg_${_lib})
+endforeach()
 
+if(APPLE)
     set(WITH_FFMPEG ON CACHE BOOL "" FORCE)
     set(HAVE_FFMPEG ON CACHE BOOL "" FORCE)
     set(FFMPEG_INCLUDE_DIRS "${FFMPEG_INC}" CACHE PATH "" FORCE)
@@ -233,6 +250,7 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     target_link_libraries(baja_core_${TARGET_NAME} PUBLIC
         imgui_setup
         implot_setup
+        ${FFMPEG_LIBRARIES}
         tinyfiledialogs
         opencv_core
         opencv_imgproc
@@ -255,6 +273,7 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/imgcodecs/include
         ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/videoio/include
         ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/highgui/include
+        ${FFMPEG_INC}
     )
 
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
@@ -325,9 +344,14 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
     elseif(WIN32)
         add_custom_command(TARGET baja_${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_BINARY_DIR}/bin"
-            "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
+                "${CMAKE_BINARY_DIR}/bin"
+                "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
             COMMENT "Copy FFMPEG to output directory"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${FFMPEG_DIR}"
+                "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
+            COMMENT "Copying FFmpeg DLLs to executable directory"
         )
     endif()
 endfunction()
@@ -358,24 +382,12 @@ add_custom_target(baja_tests
     USES_TERMINAL)
 
 # Standard tooling disabled on windows due to clang/llvm weirdness
-if(NOT WIN32 AND
-    (CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "GNU"))
-    # ASan configuration
-    if(APPLE AND CMAKE_C_COMPILER_ID MATCHES "Clang")
-        # leaks tool is needed and asan pollutes its memory profiler
+if(APPLE)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang")
         set(ASAN_FLAGS "-fsanitize=undefined" "-fno-sanitize-recover=all" "-g")
         set(ASAN_RUN_CMD leaks --atExit -- $<TARGET_FILE:baja_tests_asan>)
-    elseif(APPLE AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
-        message(ERROR "The GNU Compiler is not supported on macOS")
     elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-        set(ASAN_FLAGS "-fsanitize=address" "-fsanitize=undefined" "-g")
-        set(ASAN_RUN_CMD $<TARGET_FILE:baja_tests_asan>)
-    elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
-        set(ASAN_FLAGS
-            "-fsanitize=address,undefined"
-            "-fno-sanitize-recover=all"
-            "-g")
-        set(ASAN_RUN_CMD $<TARGET_FILE:baja_tests_asan>)
+        message(ERROR "The GNU Compiler is not supported on macOS")
     endif()
 
     create_baja_suite("asan" "${ASAN_FLAGS}" "${CMAKE_BINARY_DIR}/asan")
@@ -383,12 +395,6 @@ if(NOT WIN32 AND
         COMMAND ${ASAN_RUN_CMD}
         DEPENDS baja_tests_asan
         USES_TERMINAL)
-elseif(NOT WIN32)
-    message(WARNING
-            "Skipped ASan generation as the active
-            compiler is not recognized.\n"
-            "Consider using the Clang toolchain by rebuilding with:\n"
-            "    CC=clang CXX=clang++ cmake ..")
 endif()
 
 # Tooling

@@ -28,7 +28,6 @@ void TelemetryBackend::Start() {
  
     m_WebSocket.setOnMessageCallback(
         [this](const ix::WebSocketMessagePtr& msg) { 
-            
             if (msg->type == ix::WebSocketMessageType::Open)
             IsConnected = true;
 
@@ -70,9 +69,11 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
 
         std::string identifier;
         std::string value;
-        Data.WriteRawLine(msg->str);
-        while (ss >> identifier >> value) {
-            Data.WriteData(identifier, value);
+        if (IsLogging){
+            Data.WriteRawLine(msg->str);
+            while (ss >> identifier >> value) {
+                Data.WriteData(identifier, value);
+            }
         }
     }
 }

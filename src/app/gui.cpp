@@ -1,4 +1,6 @@
 #include <cassert>
+#include <sstream>
+#include <format>
 
 #include <imgui.h>
 #include <implot.h>
@@ -88,9 +90,9 @@ void GUI::OnFrame() {
         ImGui::PopStyleVar(2);
     }
 
-    if (m_Context->m_Backend->TryConnection == true){
-        m_Context->m_Backend->Start();
-        m_Context->m_Backend->TryConnection = false;
+    if (m_Context->Backend->TryConnection == true) {
+        m_Context->Backend->Start();
+        m_Context->Backend->TryConnection = false;
     }
 
     sg_pass_action pass_action        = {};
@@ -163,40 +165,41 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Separator();
 
-        if (ImGui::Button("Sync Time")) {}
+        LocalTime lt;
+        auto    sync_time = lt.MicrosSinceMidnight();
+
+        std::stringstream ss;
+        ss << "SYNC ";
+        ss << sync_time;
+        if (ImGui::Button("Sync Time")) { m_Context->Backend->SendCMD(ss.str()); }
 
         ImGui::Separator();
 
-        if (ImGui::Button("Restart Connection")) {m_Context->m_Backend->TryConnection = true;}
+        if (ImGui::Button("Restart Connection")) { m_Context->Backend->TryConnection = true; }
 
         ImGui::Separator();
 
         // Connection indicator
 
-        bool connected = m_Context->m_Backend->IsConnected; 
+        bool connected = m_Context->Backend->IsConnected;
 
-        float radius = 10.0f;
-        ImVec2 pos = ImGui::GetCursorScreenPos();
+        float  radius = 10.0f;
+        ImVec2 pos    = ImGui::GetCursorScreenPos();
         ImVec2 center = ImVec2(pos.x + radius, pos.y + ImGui::GetFrameHeight() * 0.5f);
 
-        ImU32 color = connected
-        ? IM_COL32(0, 200, 0, 255)     
-        : IM_COL32(200, 0, 0, 255);    
+        ImU32 color = connected ? IM_COL32(0, 200, 0, 255) : IM_COL32(200, 0, 0, 255);
 
         ImDrawList* draw = ImGui::GetWindowDrawList();
         draw->AddCircleFilled(center, radius, color);
 
-    
         ImGui::Dummy(ImVec2(radius * 2.5f, radius * 2.0f));
         ImGui::SameLine();
         ImGui::TextUnformatted(connected ? "Connected" : "Not Connected");
 
+        ImGui::Separator();
 
-
-        ImGui:: Separator();
-
-        LocalTime lt;
-        ImGui::Text("%02d:%02d:%02d.%03lld", lt.Hour, lt.Minute, lt.Second, lt.Millisecond);
+        const std::string time_formatted = std::format("{}:{}:{}.{}", lt.Hour, lt.Minute, lt.Second, lt.Millisecond);
+        ImGui::TextUnformatted(time_formatted.c_str());
 
         ImGui::EndMainMenuBar();
     }

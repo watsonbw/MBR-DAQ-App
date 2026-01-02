@@ -3,6 +3,8 @@
 #include <sokol_glue.h>
 #include <sokol_imgui.h>
 
+#include <ixwebsocket/IXNetSystem.h>
+
 #include "core/log.hpp"
 
 #include "app/app.hpp"
@@ -14,8 +16,9 @@
 
 App::App() : m_Context{std::make_shared<AppContext>()} {
     Log::Init();
+    ix::initNetSystem();
     m_GUI     = std::make_unique<GUI>(m_Context);
-    m_Context->m_Backend = std::make_unique<TelemetryBackend>();
+    m_Context->Backend = std::make_unique<TelemetryBackend>();
 }
 
 App::~App() = default;
@@ -23,5 +26,4 @@ App::~App() = default;
 void App::Run() {
     auto app_desc = m_GUI->GetSokolDesc();
     sapp_run(&app_desc);
-
 }

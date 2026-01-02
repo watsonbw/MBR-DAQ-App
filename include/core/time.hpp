@@ -4,9 +4,13 @@
 
 struct LocalTime {
     explicit LocalTime();
+    explicit LocalTime(uint64_t micros);
 
-    int     Hour;
-    int     Minute;
-    int     Second;
-    int64_t Millisecond;
+    uint64_t MicrosSinceMidnight() const;
+
+    uint64_t     Hour;
+    uint64_t     Minute;
+    uint64_t     Second;
+    uint64_t Millisecond;
+    uint64_t Microsecond;
 };
