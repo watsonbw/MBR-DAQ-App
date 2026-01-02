@@ -23,13 +23,15 @@
 class ViewPage : public Page {
   public:
     ViewPage(std::shared_ptr<AppContext> ctx);
-    virtual ~ViewPage() = default;
+    virtual ~ViewPage();
 
     virtual void OnEnter() override;
     virtual void OnExit() override;
     virtual void Update() override;
 
   private:
+    void Cleanup();
+
     void DrawLHS();
     void DrawLHSControls();
     void DrawRHS();

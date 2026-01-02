@@ -20,11 +20,15 @@ ViewPage::ViewPage(std::shared_ptr<AppContext> ctx)
     : Page{ctx}, m_PlayButton{PlayButton_png, PlayButton_png_size},
       m_PauseButton{PauseButton_png, PauseButton_png_size} {}
 
+ViewPage::~ViewPage() {
+    Cleanup();
+    LOG_INFO("Destroyed ViewPage");
+}
+
 void ViewPage::OnEnter() { LOG_INFO("Entered ViewPage"); }
 
 void ViewPage::OnExit() {
-    StopDecodingThread();
-    TryCleanupSokolResources();
+    Cleanup();
     LOG_INFO("Exited ViewPage");
 }
 
@@ -38,6 +42,11 @@ void ViewPage::Update() {
     DrawRHS();
 
     ImGui::End();
+}
+
+void ViewPage::Cleanup() {
+    StopDecodingThread();
+    TryCleanupSokolResources();
 }
 
 void ViewPage::DrawLHS() {
