@@ -20,6 +20,17 @@ else()
     message(ERROR "Platform currently unsupported!")
 endif()
 
+if(WIN32)
+    set(Threads_FOUND TRUE CACHE BOOL "" FORCE)
+    set(CMAKE_THREAD_LIBS_INIT "" CACHE STRING "" FORCE)
+    set(CMAKE_USE_PTHREADS_INIT OFF CACHE BOOL "" FORCE)
+    set(CMAKE_USE_WIN32_THREADS_INIT ON CACHE BOOL "" FORCE)
+    
+    if(NOT TARGET Threads::Threads)
+        add_library(Threads::Threads INTERFACE IMPORTED)
+    endif()
+endif()
+
 # Qualify compile commands database for tooling
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -110,49 +121,68 @@ target_link_libraries(implot_setup PUBLIC imgui_setup)
 target_compile_options(implot_setup PRIVATE ${WARNING_IGNORE})
 
 # FFmpeg resolution
-set(FFMPEG_INC "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/include")
-
 if(APPLE)
+    set(FFMPEG_INC "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/include")
     set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/mac")
-elseif(WIN32)
-    set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/win32")
-endif()
-
-add_library(ffmpeg_system_deps INTERFACE)
-if(APPLE)
-    target_link_libraries(ffmpeg_system_deps INTERFACE
+    set(FFMPEG_SYS_DEPS
         "-framework CoreMedia"
         "-framework VideoToolbox"
         "-framework AudioToolbox"
         "-framework CoreVideo"
         "-framework CoreFoundation"
         "-framework Security"
-        "-framework IOKit" # Often needed if not already linked
+        "-framework IOKit"
         z iconv bz2
     )
 elseif(WIN32)
-    target_link_libraries(ffmpeg_system_deps INTERFACE
-        ws2_32 bcrypt secur32 shlwapi mfplat mfuuid strmiids ole32 user32
+    set(FFMPEG_INC "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/win32/include")
+    set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/win32")
+
+    set(FFMPEG_SYS_DEPS
+        ws2_32 bcrypt secur32 shlwapi mfplat mfuuid strmiids ole32 user32 vfw32 gdi32
     )
+
+    set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 endif()
 
-set(_ffmpeg_libs avdevice avfilter avformat avcodec swresample swscale avutil)
-set(FFMPEG_LIBRARIES "")
+set(_ffmpeg_libs avfilter avformat avcodec swresample swscale avutil)
+set(FFMPEG_RAW_LIBS "")
+
+if(APPLE)
+    set(FFMPEG_PLATFORM_SUFFIX .a)
+elseif(WIN32)    
+    set(FFMPEG_PLATFORM_SUFFIX .a)
+endif()
 
 foreach(_lib ${_ffmpeg_libs})
     add_library(ffmpeg_${_lib} STATIC IMPORTED)
-    
+
     set_target_properties(ffmpeg_${_lib} PROPERTIES
-        IMPORTED_LOCATION "${FFMPEG_DIR}/lib${_lib}.a"
+        IMPORTED_LOCATION "${FFMPEG_DIR}/lib${_lib}${FFMPEG_PLATFORM_SUFFIX}"
         INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INC}"
     )
-    
-    target_link_libraries(ffmpeg_${_lib} INTERFACE ffmpeg_system_deps)
-    list(APPEND FFMPEG_LIBRARIES ffmpeg_${_lib})
+
+    list(APPEND FFMPEG_RAW_LIBS "${FFMPEG_DIR}/lib${_lib}${FFMPEG_PLATFORM_SUFFIX}")
 endforeach()
 
-set(WITH_FFMPEG ON CACHE BOOL "" FORCE)
-set(HAVE_FFMPEG ON CACHE BOOL "" FORCE)
+set(FULL_FFMPEG_LIBS ${FFMPEG_RAW_LIBS} ${FFMPEG_SYS_DEPS})
+
+set(FFMPEG_INCLUDE_DIRS "${FFMPEG_INC}" CACHE PATH "" FORCE)
+set(FFMPEG_LIBRARIES "${FULL_FFMPEG_LIBS}" CACHE STRING "" FORCE)
+
+set(FFMPEG_libavcodec_LIBRARY "${FFMPEG_DIR}/libavcodec${FFMPEG_PLATFORM_SUFFIX}" CACHE FILEPATH "" FORCE)
+set(FFMPEG_libavformat_LIBRARY "${FFMPEG_DIR}/libavformat${FFMPEG_PLATFORM_SUFFIX}" CACHE FILEPATH "" FORCE)
+set(FFMPEG_libavutil_LIBRARY "${FFMPEG_DIR}/libavutil${FFMPEG_PLATFORM_SUFFIX}" CACHE FILEPATH "" FORCE)
+set(FFMPEG_libswscale_LIBRARY "${FFMPEG_DIR}/libswscale${FFMPEG_PLATFORM_SUFFIX}" CACHE FILEPATH "" FORCE)
+set(FFMPEG_libavresample_LIBRARY "" CACHE FILEPATH "" FORCE)
+
+set(FFMPEG_libavcodec_VERSION "60.0.0" CACHE STRING "" FORCE)
+set(FFMPEG_libavformat_VERSION "60.0.0" CACHE STRING "" FORCE)
+set(FFMPEG_libavutil_VERSION "58.0.0" CACHE STRING "" FORCE)
+set(FFMPEG_libswscale_VERSION "7.0.0" CACHE STRING "" FORCE)
+set(FFMPEG_libavresample_VERSION "" CACHE STRING "" FORCE)
 
 # OpenCV
 set(BUILD_LIST "core,imgproc,imgcodecs,videoio,highgui" CACHE STRING "" FORCE)
@@ -171,16 +201,23 @@ set(WITH_WEBP OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 set(WITH_MSMF OFF CACHE BOOL "" FORCE)
-set(WITH_DXVA OFF CACHE BOOL "" FORCE)
-set(WITH_OBSENSOR OFF CACHE BOOL "" FORCE)
 set(WITH_DSHOW OFF CACHE BOOL "" FORCE)
-set(WITH_DIRECTX OFF CACHE BOOL "" FORCE)
+set(VIDEOIO_ENABLE_PLUGINS OFF CACHE BOOL "" FORCE)
+set(WITH_OBSENSOR OFF CACHE BOOL "" FORCE)
 
+set(WITH_1394 OFF CACHE BOOL "" FORCE)
+set(WITH_GSTREAMER OFF CACHE BOOL "" FORCE)
+set(WITH_WIN32UI OFF CACHE BOOL "" FORCE)
+set(WITH_VTK OFF CACHE BOOL "" FORCE)
+
+set(WITH_FFMPEG ON CACHE BOOL "" FORCE)
+set(HAVE_FFMPEG ON CACHE BOOL "" FORCE)
 set(OPENCV_FFMPEG_SKIP_DOWNLOAD ON CACHE BOOL "" FORCE)
 set(OPENCV_FFMPEG_SKIP_BUILD_CHECK ON CACHE BOOL "" FORCE)
 set(OPENCV_FFMPEG_USE_FIND_PACKAGE OFF CACHE BOOL "" FORCE)
 set(FFMPEG_INCLUDE_DIRS "${FFMPEG_INC}" CACHE PATH "" FORCE)
 set(FFMPEG_LIBRARIES "${FFMPEG_LIBRARIES}" CACHE STRING "" FORCE)
+set(OPENCV_EXAMPLES_DISABLE_THREADS OFF CACHE BOOL "" FORCE)
 
 set(OPENCV_WARNINGS_ARE_ERRORS OFF CACHE BOOL "" FORCE)
 set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS ON CACHE BOOL "" FORCE)
@@ -209,29 +246,7 @@ if(WIN32)
 endif()
 
 # spdlog
-set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
-set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
-set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(SPDLOG_BUILD_BENCH OFF CACHE BOOL "" FORCE)
-set(SPDLOG_INSTALL OFF CACHE BOOL "" FORCE)
-
-cmake_policy(PUSH)
-cmake_policy(SET CMP0077 NEW)
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
-
-add_subdirectory(vendor/spdlog)
-
-get_target_property(SPDLOG_INCLUDE_DIRS spdlog INTERFACE_INCLUDE_DIRECTORIES)
-set_target_properties(spdlog PROPERTIES
-    INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${SPDLOG_INCLUDE_DIRS}"
-)
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_BACKUP}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
-
-cmake_policy(POP)
+set(SPDLOG_INC "vendor/spdlog/include")
 
 # IXWebSocket
 set(IXWEBSOCKET_INSTALL OFF CACHE BOOL "" FORCE)
@@ -260,6 +275,9 @@ add_library(stb_image_setup STATIC src/vendor/stb_impl.cpp)
 target_include_directories(stb_image_setup SYSTEM PUBLIC vendor/stb)
 target_compile_options(stb_image_setup PRIVATE ${WARNING_IGNORE})
 
+get_target_property(IX_LIBS ixwebsocket INTERFACE_LINK_LIBRARIES)
+message(STATUS "DEBUG: ixwebsocket link libs: ${IX_LIBS}")
+
 function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
     target_link_libraries(baja_core_${TARGET_NAME} PUBLIC
@@ -272,16 +290,24 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         opencv_imgcodecs
         opencv_videoio
         opencv_highgui
-        spdlog::spdlog
         ixwebsocket
         stb_image_setup
     )
+    
+    if(WIN32)
+        get_target_property(_core_libs baja_core_${TARGET_NAME} LINK_LIBRARIES)
+        if(_core_libs)
+            list(FILTER _core_libs EXCLUDE REGEX "pthreads")
+            set_target_properties(baja_core_${TARGET_NAME} PROPERTIES LINK_LIBRARIES "${_core_libs}")
+        endif()
+    endif()
 
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC
         include)
 
     target_include_directories(baja_core_${TARGET_NAME} SYSTEM PUBLIC
         ${CMAKE_BINARY_DIR}
+        ${SPDLOG_INC}
         ${CMAKE_SOURCE_DIR}/vendor/opencv/include
         ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/core/include
         ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/imgproc/include

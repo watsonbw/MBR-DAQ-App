@@ -5,10 +5,10 @@ Data visualization and ESP32 interface for the University of Michigan's baja tea
 This project is licensed under the GNU General Public License v3.0 or later.
 
 ## Availablility
-This software is provided precompiled as a standalone executable for x86-64 Windows and Apple Silicone macOS only. Other platforms require manual tweaking of the build process and are not guaranteed to work.
+This software is provided precompiled as a nearly standalone executable (a single dll is needed on windows and is included for you) for x86-64 Windows and Apple Silicone macOS only. Other platforms require manual tweaking of the build process and are not guaranteed to work.
 
 ## Getting Started
-Precompiled releases for macOS and windows are available in the releases tab. They are standalone executables and should work perfectly out of the box. You will likely have to fight your systems antivirus the first time you launch the app, since we are __not__ paying for code signing.
+Precompiled releases for macOS and windows are available in the releases tab. They are nearly standalone executables and should work perfectly out of the box. You will likely have to fight your systems antivirus the first time you launch the app, since we are __not__ paying for code signing.
 - Windows: Just have to tell Defender that it's ok.
 - macOS: You have to remove the app from 'quarantine'. This can be done in settings, or by running this command in your terminal:
 ```shell
@@ -35,7 +35,7 @@ cmake -G Ninja ..
 cmake --build . --target dist
 ```
 
-This will build the fully optimized, standalone executable and place it in `build/dist` (relative to the project root). Please open an issue if you have any probles when compiling!
+This will build the fully optimized executable and place it in `build/dist` (relative to the project root). On windows, you must run the executable with the included ffmpeg dll in the working directory. Please open an issue if you have any probles when compiling!
 
 ## Third-Party Software
 This software statically links against FFmpeg, which was built with GPL components enabled.
