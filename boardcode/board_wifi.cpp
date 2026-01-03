@@ -3,28 +3,52 @@
 static BoardWifi* instance = nullptr;
 
 BoardWifi::BoardWifi(const char* ssid, const char* password)
-    : _ssid(ssid), _password(password), _server(81), _ws("/ws") {
+    : _ssid(ssid), _password(password), _server(80), _ws("/ws") {
     instance = this;
 }
 
 void BoardWifi::Start() {
-    WiFi.softAP(_ssid, _password);
 
+    WiFi.softAPdisconnect(true);
+    WiFi.mode(WIFI_AP);
+    delay(100);
+
+    IPAddress local_IP(192,168,4,1);
+    IPAddress gateway(192,168,4,1);
+    IPAddress subnet(255,255,255,0);
+    WiFi.softAPConfig(local_IP, gateway, subnet);
+
+    if (WiFi.softAP(_ssid, _password, 1, 0, 4)) {
+        Serial.println("SoftAP Started Successfully");
+    } else {
+        Serial.println("SoftAP Failed to Start");
+    }
     Serial.print("WiFi IP address: ");
     Serial.println(WiFi.softAPIP());
+
+
 
     if (MDNS.begin("telemetry")) { Serial.println("mDNS responder started"); }
 
     _ws.onEvent(onWsEvent);
+    _server.addHandler(&_ws);
+
+    _server.on("/connecttest.txt", [](AsyncWebServerRequest *request){
+        request->send(200, "text/plain", "Microsoft NCSI");
+    });
+    
+    _server.on("/generate_204", [](AsyncWebServerRequest *request){
+        request->send(204);
+    });
 
     _server.begin();
     Serial.println("HTTP Server started");
-    _server.addHandler(&_ws);
+    
 }
 
 void BoardWifi::SendData(String msg) {
-    if (_ws.count() > 0) {
-        if (_ws.availableForWriteAll()) { _ws.textAll(msg); }
+    if (_ws.count() > 0 && _ws.availableForWriteAll()) {
+        _ws.textAll(msg);
     }
 }
 
@@ -53,6 +77,11 @@ void BoardWifi::onWsEvent(AsyncWebSocket*       server,
         Serial.print("Received Command: ");
         Serial.println(command);
     } else if (type == WS_EVT_CONNECT) {
+        for (auto& c : server->getClients()) {
+            if (server->count() > 3) {
+                server->cleanupClients(); 
+            }
+        }
         Serial.println("Client connected");
     } else if (type == WS_EVT_DISCONNECT) {
         Serial.println("Client disconnected");
@@ -64,3 +93,8 @@ uint64_t BoardWifi::getRealTime() {
     uint32_t elapsedMicros = micros() - localSyncMicros;
     return baseTimeMicros + (uint64_t)(elapsedMicros);
 }
+/*
+void BoardWifi::updateDNS() {
+    _dnsServer.processNextRequest();
+}
+*/

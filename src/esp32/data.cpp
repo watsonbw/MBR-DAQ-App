@@ -1,4 +1,5 @@
 #include "esp32/data.hpp"
+#include "core/log.hpp"
 
 void RPMData::Reserve(size_t size) {
     EngineRPM.reserve(size);

@@ -5,6 +5,7 @@
 #include <ESPAsyncWebServer.h>
 #include <ESPmDNS.h>
 #include <WiFi.h>
+//#include <DNSServer.h>
 
 class BoardWifi {
   public:
@@ -16,6 +17,7 @@ class BoardWifi {
     String        lastCommand = "";
     volatile bool newCommand  = false;
     uint64_t      getRealTime();
+    void          updateDNS();
 
   private:
     const char*   _ssid;
@@ -23,6 +25,8 @@ class BoardWifi {
     uint64_t      baseTimeMicros  = 0;
     uint32_t      localSyncMicros = 0;
     volatile bool isTimeSynced    = 0;
+    volatile bool timeCMD         = 0;
+    //DNSServer _dnsServer;
 
     AsyncWebServer _server;
     AsyncWebSocket _ws;
