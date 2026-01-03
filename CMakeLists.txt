@@ -138,37 +138,25 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
 
 # ffmpeg resolution
 set(_ffmpeg_libs avcodec avformat avutil swscale swresample)
-set(FFMPEG_INC "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/include")
 
 if(APPLE)
     set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/mac")
-elseif(WIN32)
-    set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/win32")
-endif()
-
-set(FFMPEG_LIBRARIES "")
-
-foreach(_lib ${_ffmpeg_libs})
-    add_library(ffmpeg_${_lib} SHARED IMPORTED)
-
-    if(APPLE)
-        set_target_properties(ffmpeg_${_lib} PROPERTIES
-            IMPORTED_LOCATION "${FFMPEG_DIR}/lib${_lib}.dylib"
-        )
-    elseif(WIN32)
-        set_target_properties(ffmpeg_${_lib} PROPERTIES
-            IMPORTED_IMPLIB "${FFMPEG_DIR}/lib${_lib}.dll.a"
-            IMPORTED_LOCATION "${FFMPEG_DIR}/lib${_lib}.dll"
-        )
-    endif()
+    set(FFMPEG_INC "${CMAKE_SOURCE_DIR}/vendor/ffmpeg/include")
+    set(FFMPEG_LIBRARIES "")
     
-    set_target_properties(ffmpeg_${_lib} PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INC}"
-    )
-    list(APPEND FFMPEG_LIBRARIES ffmpeg_${_lib})
-endforeach()
+    foreach(_lib ${_ffmpeg_libs})
+        add_library(ffmpeg_${_lib} SHARED IMPORTED)
+    
+            set_target_properties(ffmpeg_${_lib} PROPERTIES
+                IMPORTED_LOCATION "${FFMPEG_DIR}/lib${_lib}.dylib"
+            )
+        
+        set_target_properties(ffmpeg_${_lib} PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INC}"
+        )
+        list(APPEND FFMPEG_LIBRARIES ffmpeg_${_lib})
+    endforeach()
 
-if(APPLE)
     set(WITH_FFMPEG ON CACHE BOOL "" FORCE)
     set(HAVE_FFMPEG ON CACHE BOOL "" FORCE)
     set(FFMPEG_INCLUDE_DIRS "${FFMPEG_INC}" CACHE PATH "" FORCE)
@@ -340,18 +328,6 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
             COMMAND bash -c "cd \"$<TARGET_FILE_DIR:baja_${TARGET_NAME}>\" && for lib in *.dylib; do [ -L \"$lib\" ] && continue; install_name_tool -id \"@rpath/$lib\" \"$lib\" 2>/dev/null; install_name_tool -change \"${FFMPEG_DIR}/$lib\" \"@rpath/$lib\" \"$<TARGET_FILE:baja_${TARGET_NAME}>\" 2>/dev/null || true; done"
             VERBATIM
             COMMENT "Remapping FFMPEG dylibs"
-        )
-    elseif(WIN32)
-        add_custom_command(TARGET baja_${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_BINARY_DIR}/bin"
-                "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
-            COMMENT "Copy FFMPEG to output directory"
-
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${FFMPEG_DIR}"
-                "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
-            COMMENT "Copying FFmpeg DLLs to executable directory"
         )
     endif()
 endfunction()
