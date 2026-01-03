@@ -1,0 +1,12 @@
+.DS_Store
+
+target/
+release/
+build/
+.cache
+
+.theia
+.vscode
+.zed
+
+__cmake*
