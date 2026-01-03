@@ -198,6 +198,19 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Separator();
 
+        static char buffer[128] = ""; 
+        ImGui::SetNextItemWidth(200.0f);
+        ImGui::InputText("##SmallBox", buffer, 128);
+        
+        ImGui::Separator();
+
+        if (ImGui::Button("Send CMD")){
+            m_Context->Backend->SendCMD(buffer);
+            buffer[0] = '\0';
+         }
+
+        ImGui::Separator();
+
         const std::string time_formatted =
             std::format("{}:{}:{}.{}", lt.Hour, lt.Minute, lt.Second, lt.Millisecond);
         ImGui::TextUnformatted(time_formatted.c_str());
