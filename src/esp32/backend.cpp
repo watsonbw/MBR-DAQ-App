@@ -14,8 +14,8 @@ TelemetryBackend::~TelemetryBackend() { Kill(); }
 void TelemetryBackend::Start() {
     LOG_INFO("Started Connection Attempt");
 
-    auto state = m_WebSocket.getReadyState();
-    if (state == ix::ReadyState::Open || state == ix::ReadyState::Connecting) { return; }
+    //auto state = m_WebSocket.getReadyState();
+    //if (state == ix::ReadyState::Open || state == ix::ReadyState::Connecting) { return; }
     LOG_INFO("Start Function Success");
     Kill();
 
@@ -23,10 +23,10 @@ void TelemetryBackend::Start() {
 
     m_WebSocket.setUrl("ws://192.168.4.1:80/ws");
 
-    m_WebSocket.setMaxWaitBetweenReconnectionRetries(2000);  
-    m_WebSocket.setMinWaitBetweenReconnectionRetries(200);  
+    m_WebSocket.setMaxWaitBetweenReconnectionRetries(5000);  
+    m_WebSocket.setMinWaitBetweenReconnectionRetries(1000);  
     m_WebSocket.enableAutomaticReconnection();
-    m_WebSocket.setPingInterval(30);
+    //m_WebSocket.setPingInterval(30);
     m_WebSocket.setHandshakeTimeout(10); 
  
 
@@ -82,11 +82,14 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
         std::string identifier;
         std::string value;
         if (IsLogging) {
-            Data.WriteRawLine(msg->str);
             while (ss >> identifier >> value) {
                 //LOG_INFO("Parsed: Key='{}' Val='{}'", identifier, value);
+                if (identifier == "T" && std::stoull(value) == 0){
+                return;
+                }
                 Data.WriteData(identifier, value);
             }
+            Data.WriteRawLine(msg->str);
         }
     }
 }

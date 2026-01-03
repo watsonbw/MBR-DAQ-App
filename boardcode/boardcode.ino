@@ -12,8 +12,8 @@ void setup() {
 }
 
 void loop() {
-
-    if (millis() - lastCleanup > 1000) {
+    //wifi.updateDNS();
+    if (millis() - lastCleanup > 10000) {
         wifi.cleanupClients();
         lastCleanup = millis();
     }
@@ -26,3 +26,4 @@ void loop() {
         lastSend = micros();
     }
 }
+
