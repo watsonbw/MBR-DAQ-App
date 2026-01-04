@@ -233,6 +233,35 @@ add_library(stb_image_setup STATIC src/vendor/stb_impl.cpp)
 target_include_directories(stb_image_setup SYSTEM PUBLIC vendor/stb)
 target_compile_options(stb_image_setup PRIVATE ${WARNING_IGNORE})
 
+# taglib
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(WITH_ZLIB OFF CACHE BOOL "" FORCE)
+
+cmake_policy(PUSH)
+cmake_policy(SET CMP0077 NEW)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
+
+add_subdirectory(vendor/taglib)
+
+target_include_directories(tag 
+    PRIVATE 
+        "${CMAKE_SOURCE_DIR}/vendor/taglib/taglib"
+        "${CMAKE_SOURCE_DIR}/vendor/taglib/taglib/toolkit"
+    INTERFACE 
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor/taglib>"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor/taglib/taglib>"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor/taglib/taglib/toolkit>"
+)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_BACKUP}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
+
+cmake_policy(POP)
+
 function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
     target_link_libraries(baja_core_${TARGET_NAME} PUBLIC
@@ -248,6 +277,7 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         spdlog::spdlog
         ixwebsocket
         stb_image_setup
+        tag
     )
 
     target_include_directories(baja_core_${TARGET_NAME} PUBLIC
