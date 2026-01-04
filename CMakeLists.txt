@@ -329,6 +329,13 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
             VERBATIM
             COMMENT "Remapping FFMPEG dylibs"
         )
+    elseif(WIN32)
+        add_custom_command(TARGET baja_${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_BINARY_DIR}/bin"
+                "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
+            COMMENT "Copy FFMPEG to output directory"
+        )
     endif()
 endfunction()
 
