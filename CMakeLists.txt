@@ -47,6 +47,7 @@ set(DEBUG_FLAGS
     "-g"
     "-DDEBUG"
     "-UNDEBUG"
+    "-DLOGGING"
     "-DCV_IGNORE_DEBUG_BUILD_GUARD"
 )
 
@@ -147,9 +148,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
 if(APPLE)
     set(WITH_FFMPEG OFF CACHE BOOL "System dependencies instead" FORCE)
     set(HAVE_FFMPEG OFF CACHE BOOL "System dependencies instead" FORCE)
-    
+
     set(WITH_AVFOUNDATION ON CACHE BOOL "Apple framework is statically linked" FORCE)
-    
+
     unset(FFMPEG_LIBRARIES CACHE)
     unset(FFMPEG_INCLUDE_DIRS CACHE)
 endif()
@@ -235,11 +236,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
 
 add_subdirectory(vendor/taglib)
 
-target_include_directories(tag 
-    PRIVATE 
+target_include_directories(tag
+    PRIVATE
         "${CMAKE_SOURCE_DIR}/vendor/taglib/taglib"
         "${CMAKE_SOURCE_DIR}/vendor/taglib/taglib/toolkit"
-    INTERFACE 
+    INTERFACE
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor/taglib>"
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor/taglib/taglib>"
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor/taglib/taglib/toolkit>"
@@ -318,7 +319,15 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
         "${EXTRA_FLAGS}"
         "${CMAKE_BINARY_DIR}/${TARGET_NAME}")
 
-    add_executable(baja_${TARGET_NAME} src/main.cpp)
+    if(WIN32 AND NOT TARGET_NAME STREQUAL "debug")
+        add_executable(baja_${TARGET_NAME} WIN32 src/main.cpp)
+        if (NOT MINGW)
+            target_link_options(baja_${TARGET_NAME} PRIVATE "LINKER:/ENTRY:mainCRTStartup")
+        endif()
+    else()
+        add_executable(baja_${TARGET_NAME} src/main.cpp)
+    endif()
+
     target_link_libraries(baja_${TARGET_NAME} PRIVATE baja_core_${TARGET_NAME})
     add_custom_target(${TARGET_NAME} DEPENDS
         baja_tests_${TARGET_NAME} baja_${TARGET_NAME})
