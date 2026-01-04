@@ -212,7 +212,7 @@ void GUI::DrawMainMenuBar() {
         ImGui::Separator();
 
         const std::string time_formatted =
-            std::format("{}:{}:{}.{}", lt.Hour, lt.Minute, lt.Second, lt.Millisecond);
+            std::format("{:02}:{:02}:{:02}.{:03}", lt.Hour, lt.Minute, lt.Second, lt.Millisecond);
         ImGui::TextUnformatted(time_formatted.c_str());
 
         ImGui::EndMainMenuBar();

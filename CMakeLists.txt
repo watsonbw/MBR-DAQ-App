@@ -10,8 +10,6 @@ else()
     message(ERROR "Platform currently unsupported!")
 endif()
 
-set(CMAKE_BUILD_TYPE Release)
-
 project(baja_daq
     VERSION 0.1.0
     LANGUAGES ${LANGUAGES}
@@ -136,7 +134,7 @@ set(CMAKE_CXX_FLAGS_BACKUP "${CMAKE_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
 
-# We don't need ffmpeg on apple at all
+# We don't need ffmpeg on apple at all due to system dependencies
 if(APPLE)
     set(WITH_FFMPEG OFF CACHE BOOL "" FORCE)
     set(HAVE_FFMPEG OFF CACHE BOOL "" FORCE)
@@ -248,7 +246,6 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     target_link_libraries(baja_core_${TARGET_NAME} PUBLIC
         imgui_setup
         implot_setup
-        ${FFMPEG_LIBRARIES}
         tinyfiledialogs
         opencv_core
         opencv_imgproc
@@ -261,9 +258,7 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         tag
     )
 
-    target_include_directories(baja_core_${TARGET_NAME} PUBLIC
-        include)
-
+    target_include_directories(baja_core_${TARGET_NAME} PUBLIC include)
     target_include_directories(baja_core_${TARGET_NAME} SYSTEM PUBLIC
         ${CMAKE_BINARY_DIR}
         ${CMAKE_SOURCE_DIR}/vendor/opencv/include
@@ -275,7 +270,6 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     )
 
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
-
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
     if(APPLE)
         target_link_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS} "-static-libstdc++")
@@ -288,13 +282,10 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     # Fresh catch2 configuration per target
     add_library(catch2_${TARGET_NAME}
         STATIC tests/test_framework/catch_amalgamated.cpp)
-
     target_include_directories(catch2_${TARGET_NAME}
         PUBLIC tests/test_framework)
-
     target_compile_options(catch2_${TARGET_NAME}
         PRIVATE ${WARNING_IGNORE})
-
     set_target_properties(catch2_${TARGET_NAME}
         PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${OUT_DIR})
 
@@ -327,6 +318,7 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${TARGET_NAME}
         OUTPUT_NAME baja)
 
+    # Windows still depends on a custom ffmpeg dll provided by opencv
     if(WIN32)
         add_custom_command(TARGET baja_${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
