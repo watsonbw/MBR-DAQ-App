@@ -178,7 +178,7 @@ void ViewPage::DrawRHS() {
 }
 
 std::optional<std::string> ViewPage::OpenFile() {
-    const char* filters[] = {"*.mp4", "*.avi", "*.mov"};
+    const char* filters[] = {"*.mp4", "*.mov"};
     const char* path      = tinyfd_openFileDialog("Select a video file", "", 3, filters, NULL, 0);
     if (path == nullptr) {
         LOG_WARN("No file selected");

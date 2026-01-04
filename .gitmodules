@@ -26,10 +26,6 @@
 	path = vendor/ixwebsocket
 	url = https://github.com/machinezone/IXWebSocket
 
-[submodule "vendor/ffmpeg"]
-	path = vendor/ffmpeg
-	url = https://github.com/trevorswan11/ffmpeg
-
 [submodule "vendor/taglib"]
 	path = vendor/taglib
 	url = https://github.com/taglib/taglib
