@@ -3,7 +3,6 @@
 #include <atomic>
 #include <condition_variable>
 #include <deque>
-#include <future>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -36,8 +35,8 @@ class ViewPage : public Page {
     void DrawLHSControls();
     void DrawRHS();
 
-    std::optional<std::string> OpenFile();
-    void                       RequestSeek(int frame_index);
+    static std::optional<std::string> OpenFile();
+    void                              RequestSeek(int frame_index);
 
     void StartDecodingThread();
     void StopDecodingThread();
@@ -46,8 +45,11 @@ class ViewPage : public Page {
     void TryCleanupSokolResources();
 
   private:
-    std::string                             m_VideoPath;
-    std::future<std::optional<std::string>> m_FileDialogFuture;
+    std::string                m_VideoPath;
+    std::atomic<bool>          m_DialogRunning{false};
+    std::mutex                 m_PathMutex;
+    std::optional<std::string> m_SelectedPath;
+    std::shared_ptr<bool>      m_IsAlive;
 
     int    m_TotalFrames     = 0;
     double m_VideoFPS        = 0.0;

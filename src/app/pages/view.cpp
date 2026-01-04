@@ -18,10 +18,12 @@
 #include "app/pages/view.hpp"
 
 ViewPage::ViewPage(std::shared_ptr<AppContext> ctx)
-    : Page{ctx}, m_PlayButton{PlayButton_png, PlayButton_png_size},
+    : Page{ctx}, m_IsAlive{std::make_shared<bool>(true)},
+      m_PlayButton{PlayButton_png, PlayButton_png_size},
       m_PauseButton{PauseButton_png, PauseButton_png_size} {}
 
 ViewPage::~ViewPage() {
+    *m_IsAlive = false;
     Cleanup();
     LOG_INFO("Destroyed ViewPage");
 }
@@ -54,26 +56,34 @@ void ViewPage::DrawLHS() {
     ImGui::BeginChild("VideoPlayerColumn");
 
     // Check if the file is ready
-    if (m_FileDialogFuture.valid()) {
-        using namespace std::chrono_literals;
-        if (m_FileDialogFuture.wait_for(0s) == std::future_status::ready) {
-            const auto maybe_path = m_FileDialogFuture.get();
-            if (maybe_path.has_value()) {
-                StopDecodingThread();
-                TryCleanupSokolResources();
-                m_VideoPath = maybe_path.value();
-                StartDecodingThread();
-            }
+    {
+        std::lock_guard<std::mutex> lock(m_PathMutex);
+        if (m_SelectedPath.has_value()) {
+            StopDecodingThread();
+            TryCleanupSokolResources();
+            m_VideoPath    = m_SelectedPath.value();
+            m_SelectedPath = std::nullopt;
+            StartDecodingThread();
         }
     }
 
     // File selection can happen at any point during playback
-    const bool is_dialog_open = m_FileDialogFuture.valid();
-    if (is_dialog_open) { ImGui::BeginDisabled(); }
+    const bool is_disabled = m_DialogRunning.load();
+    if (is_disabled) { ImGui::BeginDisabled(); }
     if (ImGui::Button("Open Video")) {
-        m_FileDialogFuture = std::async(std::launch::async, [this]() { return this->OpenFile(); });
+        m_DialogRunning = true;
+        const auto alive = m_IsAlive;
+        
+        std::thread([this, alive]() {
+            const auto path = OpenFile();
+            if (*alive) {
+                std::lock_guard<std::mutex> lock(m_PathMutex);
+                m_SelectedPath = path;
+                m_DialogRunning = false;
+            }
+        }).detach();
     }
-    if (is_dialog_open) { ImGui::EndDisabled(); }
+    if (is_disabled) { ImGui::EndDisabled(); }
 
     // Playback logic and frame skipping can be ignored if paused
     bool is_timer_tick = false;
