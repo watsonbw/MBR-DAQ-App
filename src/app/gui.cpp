@@ -10,6 +10,8 @@
 #include <sokol_imgui.h>
 #include <sokol_log.h>
 
+#include "app/assets/images/app_icon.hpp"
+
 #include "core/time.hpp"
 
 #include "app/gui.hpp"
@@ -33,15 +35,20 @@ sapp_desc GUI::GetSokolDesc() {
     assert(s_Instance == nullptr);
     s_Instance = this;
 
-    sapp_desc desc          = {};
-    desc.init_cb            = GUI::SokolInitCB;
-    desc.frame_cb           = GUI::SokolFrameCB;
-    desc.cleanup_cb         = GUI::SokolCleanupCB;
-    desc.event_cb           = GUI::SokolEventCB;
-    desc.width              = 1920;
-    desc.height             = 1080;
-    desc.window_title       = "Michigan Baja Racing - Data Suite";
-    desc.icon.sokol_default = false;
+    sapp_desc desc    = {};
+    desc.init_cb      = GUI::SokolInitCB;
+    desc.frame_cb     = GUI::SokolFrameCB;
+    desc.cleanup_cb   = GUI::SokolCleanupCB;
+    desc.event_cb     = GUI::SokolEventCB;
+    desc.width        = 1920;
+    desc.height       = 1080;
+    desc.window_title = "Michigan Baja Racing - Data Suite";
+
+    desc.icon.sokol_default    = false;
+    m_AppIcon                  = {BajaLogo_png, BajaLogo_png_size};
+    desc.icon.images[0].width  = m_AppIcon.Width;
+    desc.icon.images[0].height = m_AppIcon.Height;
+    desc.icon.images[0].pixels = {m_AppIcon.Pixels, m_AppIcon.Size};
 
     return desc;
 }
@@ -178,7 +185,7 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Separator();
 
-        if (ImGui::Button("Clear Data")) {m_Context->Backend->Data.Clear();}
+        if (ImGui::Button("Clear Data")) { m_Context->Backend->Data.Clear(); }
 
         ImGui::Separator();
 

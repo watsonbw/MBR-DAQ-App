@@ -70,6 +70,16 @@ uint64_t LocalTime::MicrosSinceMidnight() const {
     return acc;
 }
 
+double LocalTime::MinutesSinceMidnight() const {
+    double acc = 0;
+    acc += static_cast<double>(Hour) * 60.0;
+    acc += static_cast<double>(Minute);
+    acc += static_cast<double>(Second) / 60.0;
+    acc += static_cast<double>(Millisecond) / 60'000.0;
+    acc += static_cast<double>(Microsecond) / 60'000'000.0;
+    return acc;
+}
+
 std::string LocalTime::String() const {
     return std::format("{:02}:{:02}:{:02}.{:03}", Hour, Minute, Second, Millisecond);
 }

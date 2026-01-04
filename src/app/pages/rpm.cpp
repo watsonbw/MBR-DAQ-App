@@ -1,8 +1,8 @@
+#include <format>
+#include <fstream>
+
 #include <imgui.h>
 #include <implot.h>
-
-#include <fstream>
-#include <format>
 
 #include "core/log.hpp"
 #include "core/time.hpp"
@@ -102,16 +102,23 @@ void RPMPage::Update() {
 
     ImGui::BeginChild("Graph Child", {0, 0});
 
-    const auto plot_title = m_Context->Backend->Data.IsSynced ? std::format("RPM from {}", m_Context->Backend->Data.SyncLT.String()): "RPM from No Synced Time";
+    const auto plot_title =
+        m_Context->Backend->Data.IsSynced
+            ? std::format("RPM from {}", m_Context->Backend->Data.SyncLT.String())
+            : "RPM from No Synced Time";
 
     if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
         if (!time.empty()) {
             if (!wheel.empty()) {
-                ImPlot::PlotLine("Wheel Speed", time.data(), wheel.data(), std::min(time.size(), wheel.size()));
+                ImPlot::PlotLine(
+                    "Wheel Speed", time.data(), wheel.data(), std::min(time.size(), wheel.size()));
             }
 
             if (!engine.empty()) {
-                ImPlot::PlotLine("Engine Speed", time.data(), engine.data(), std::min(time.size(), engine.size()));
+                ImPlot::PlotLine("Engine Speed",
+                                 time.data(),
+                                 engine.data(),
+                                 std::min(time.size(), engine.size()));
             }
         }
         ImPlot::EndPlot();

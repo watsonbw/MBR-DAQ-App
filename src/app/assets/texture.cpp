@@ -5,10 +5,7 @@
 #include "app/assets/texture.hpp"
 
 ButtonTexture::ButtonTexture(const unsigned char* data, size_t size) {
-    int width  = 0;
-    int height = 0;
-    int comp   = 0;
-
+    int   width, height, comp;
     auto* pixels = stbi_load_from_memory(data, static_cast<int>(size), &width, &height, &comp, 4);
     assert(pixels);
 
@@ -43,4 +40,20 @@ ButtonTexture::~ButtonTexture() {
         m_Image.id = SG_INVALID_ID;
         m_ImTexID  = 0;
     }
+}
+
+IconTexture::IconTexture(const unsigned char* data, size_t size) {
+    int   width, height, comp;
+    auto* pixels = stbi_load_from_memory(data, static_cast<int>(size), &width, &height, &comp, 4);
+    assert(pixels);
+
+    Width  = width;
+    Height = height;
+    Pixels = pixels;
+    Size   = width * height * 4;
+}
+
+void IconTexture::Free() {
+    stbi_image_free(Pixels);
+    *this = {};
 }

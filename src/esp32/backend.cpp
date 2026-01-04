@@ -103,7 +103,7 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
             std::lock_guard<std::mutex> lock{DataMutex};
             for (const auto& [ident, value] : parsed.value()) {
                 Data.WriteData(std::string{ident}, std::string{value});
-                //LOG_INFO("{} {}", ident, value);
+                // LOG_INFO("{} {}", ident, value);
             }
             Data.WriteRawLine(line);
         }

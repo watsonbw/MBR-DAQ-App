@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include "assets/texture.hpp"
+
 #include "app/context.hpp"
 #include "app/pages/page.hpp"
 
@@ -36,4 +38,5 @@ class GUI {
 
     std::unique_ptr<Page>       m_CurrentPage;
     std::shared_ptr<AppContext> m_Context;
+    IconTexture                 m_AppIcon;
 };
