@@ -50,6 +50,8 @@ This software builds the following from source:
 - [Sokol](https://github.com/floooh/sokol)
 - [spdlog](https://github.com/gabime/spdlog)
 - [stb](https://github.com/nothings/stb)
+- [taglib](https://github.com/taglib/taglib)
+- [utfcpp](https://github.com/nemtrif/utfcpp)
 
 All third-party libraries listed above are licensed under terms compatible with the GNU GPL.
 
