@@ -10,6 +10,7 @@ else()
     message(ERROR "Platform currently unsupported!")
 endif()
 
+set(CMAKE_BUILD_TYPE Release)
 project(baja_daq
     VERSION 0.1.0
     LANGUAGES ${LANGUAGES}
