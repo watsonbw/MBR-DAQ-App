@@ -17,6 +17,8 @@
 #include "app/assets/images/image_buttons.hpp"
 #include "app/pages/view.hpp"
 
+static constexpr size_t MAX_QUEUE_SIZE = 10;
+
 ViewPage::ViewPage(std::shared_ptr<AppContext> ctx)
     : Page{ctx}, m_IsAlive{std::make_shared<bool>(true)},
       m_PlayButton{PlayButton_png, PlayButton_png_size},
@@ -57,7 +59,7 @@ void ViewPage::DrawLHS() {
 
     // Check if the file is ready
     {
-        std::lock_guard<std::mutex> lock(m_PathMutex);
+        std::lock_guard<std::mutex> lock{m_PathMutex};
         if (m_SelectedPath.has_value()) {
             StopDecodingThread();
             TryCleanupSokolResources();
@@ -71,14 +73,14 @@ void ViewPage::DrawLHS() {
     const bool is_disabled = m_DialogRunning.load();
     if (is_disabled) { ImGui::BeginDisabled(); }
     if (ImGui::Button("Open Video")) {
-        m_DialogRunning = true;
+        m_DialogRunning  = true;
         const auto alive = m_IsAlive;
-        
+
         std::thread([this, alive]() {
             const auto path = OpenFile();
             if (*alive) {
-                std::lock_guard<std::mutex> lock(m_PathMutex);
-                m_SelectedPath = path;
+                std::lock_guard<std::mutex> lock{m_PathMutex};
+                m_SelectedPath  = path;
                 m_DialogRunning = false;
             }
         }).detach();
@@ -96,7 +98,7 @@ void ViewPage::DrawLHS() {
             m_TimeAccumulator -= (frames_to_advance * m_FrameDuration);
 
             if (frames_to_advance > 1) {
-                std::lock_guard<std::mutex> lock(m_FrameMutex);
+                std::lock_guard<std::mutex> lock{m_FrameMutex};
 
                 const auto recoverable_frames =
                     std::min(static_cast<int>(m_FrameQueue.size()) - 1, frames_to_advance - 1);
@@ -211,7 +213,7 @@ std::optional<std::string> ViewPage::OpenFile() {
 
 void ViewPage::RequestSeek(int frame_index) {
     {
-        std::lock_guard<std::mutex> lock(m_FrameMutex);
+        std::lock_guard<std::mutex> lock{m_FrameMutex};
         m_FrameQueue.clear();
     }
 
@@ -241,7 +243,7 @@ void ViewPage::StartDecodingThread() {
         while (m_ThreadRunning) {
             // Keep the buffer from becoming too large
             {
-                std::unique_lock<std::mutex> lock(m_FrameMutex);
+                std::unique_lock<std::mutex> lock{m_FrameMutex};
                 m_QueueCV.wait(lock, [this] {
                     return m_FrameQueue.size() < MAX_QUEUE_SIZE || !m_ThreadRunning;
                 });
@@ -254,7 +256,7 @@ void ViewPage::StartDecodingThread() {
 
             if (seek_req != -1) {
                 cap.set(cv::CAP_PROP_POS_FRAMES, seek_req);
-                std::lock_guard<std::mutex> lock(m_FrameMutex);
+                std::lock_guard<std::mutex> lock{m_FrameMutex};
                 m_FrameQueue.clear();
                 just_sought = true;
             }
@@ -270,7 +272,7 @@ void ViewPage::StartDecodingThread() {
                 cv::cvtColor(raw_frame, rgba_frame, cv::COLOR_BGR2RGBA);
                 cv::Mat frame_copy = rgba_frame.clone();
 
-                std::lock_guard<std::mutex> lock(m_FrameMutex);
+                std::lock_guard<std::mutex> lock{m_FrameMutex};
                 m_FrameQueue.push_back({frame_copy, current_frame_index});
             } else {
                 if (m_IsLooping) {
@@ -288,7 +290,7 @@ void ViewPage::StopDecodingThread() {
     m_QueueCV.notify_all();
     if (m_DecodeThread.joinable()) { m_DecodeThread.join(); }
 
-    std::lock_guard<std::mutex> lock(m_FrameMutex);
+    std::lock_guard<std::mutex> lock{m_FrameMutex};
     m_FrameQueue.clear();
 }
 
@@ -296,7 +298,7 @@ void ViewPage::UpdateTexture(bool is_timer_tick) {
     cv::Mat frame_to_upload;
     bool    frame_ready = false;
     {
-        std::lock_guard<std::mutex> lock(m_FrameMutex);
+        std::lock_guard<std::mutex> lock{m_FrameMutex};
         bool                        should_consume = is_timer_tick || m_ForceUpdateFrame;
 
         if (should_consume && !m_FrameQueue.empty()) {

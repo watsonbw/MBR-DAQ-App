@@ -70,6 +70,10 @@ uint64_t LocalTime::MicrosSinceMidnight() const {
     return acc;
 }
 
+std::string LocalTime::String() const {
+    return std::format("{:02}:{:02}:{:02}.{:03}", Hour, Minute, Second, Millisecond);
+}
+
 DateTime::DateTime() {
     auto now      = system_clock::now();
     auto duration = now.time_since_epoch();
@@ -177,24 +181,27 @@ std::optional<DateTime> DateTime::FromVideoMetadata(const std::string& path) {
     return std::nullopt;
 }
 
-std::string DateTime::String() const {
-    return std::format("{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}{:03}",
-                       Year,
-                       Month,
-                       Day,
-                       Local.Hour,
-                       Local.Minute,
-                       Local.Second,
-                       Local.Millisecond,
-                       Local.Microsecond);
-}
-
-std::string DateTime::txtString() const {
-    return std::format("{:04}-{:02}-{:02}_{:02}-{:02}-{:02}",
-                       Year,
-                       Month,
-                       Day,
-                       Local.Hour,
-                       Local.Minute,
-                       Local.Second);
+std::string DateTime::String(StringFormat fmt) const {
+    switch (fmt) {
+    case StringFormat::DISPLAY:
+        return std::format("{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}{:03}",
+                           Year,
+                           Month,
+                           Day,
+                           Local.Hour,
+                           Local.Minute,
+                           Local.Second,
+                           Local.Millisecond,
+                           Local.Microsecond);
+    case StringFormat::TEXT_FILE:
+        return std::format("{:04}-{:02}-{:02}_{:02}-{:02}-{:02}",
+                           Year,
+                           Month,
+                           Day,
+                           Local.Hour,
+                           Local.Minute,
+                           Local.Second);
+    default:
+        return std::string{};
+    }
 }

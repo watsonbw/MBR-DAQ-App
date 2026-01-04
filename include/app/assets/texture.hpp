@@ -16,7 +16,7 @@ class ButtonTexture {
     bool        IsValid() const { return m_ImTexID != 0; }
 
   private:
-    sg_image    m_Image   = {SG_INVALID_ID};
-    sg_view     m_View    = {SG_INVALID_ID};
-    ImTextureID m_ImTexID = 0;
+    sg_image    m_Image{SG_INVALID_ID};
+    sg_view     m_View{SG_INVALID_ID};
+    ImTextureID m_ImTexID{0};
 };

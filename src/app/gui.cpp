@@ -1,5 +1,4 @@
 #include <cassert>
-#include <format>
 #include <sstream>
 
 #include <imgui.h>
@@ -188,8 +187,9 @@ void GUI::DrawMainMenuBar() {
         ImVec2 pos    = ImGui::GetCursorScreenPos();
         ImVec2 center = ImVec2(pos.x + radius, pos.y + ImGui::GetFrameHeight() * 0.5f);
 
-        ImU32 color = connected && receiving ? IM_COL32(0, 200, 0, 255) : connected && !receiving ?  IM_COL32(255, 255, 0, 255)
-        : IM_COL32(200, 0, 0, 255);
+        ImU32 color = connected && receiving    ? IM_COL32(0, 200, 0, 255)
+                      : connected && !receiving ? IM_COL32(255, 255, 0, 255)
+                                                : IM_COL32(200, 0, 0, 255);
 
         ImDrawList* draw = ImGui::GetWindowDrawList();
         draw->AddCircleFilled(center, radius, color);
@@ -213,8 +213,7 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Separator();
 
-        const std::string time_formatted =
-            std::format("{:02}:{:02}:{:02}.{:03}", lt.Hour, lt.Minute, lt.Second, lt.Millisecond);
+        const std::string time_formatted = lt.String();
         ImGui::TextUnformatted(time_formatted.c_str());
 
         ImGui::EndMainMenuBar();

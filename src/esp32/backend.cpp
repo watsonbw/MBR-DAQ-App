@@ -1,4 +1,4 @@
-#include <sstream>
+#include <charconv>
 #include <string>
 
 #include <ixwebsocket/IXNetSystem.h>
@@ -8,6 +8,11 @@
 #include "esp32/backend.hpp"
 
 #include "core/log.hpp"
+
+TelemetryBackend::TelemetryBackend(std::vector<std::string> packet_fields) {
+    m_PacketFields = std::move(packet_fields);
+    m_Buffer.reserve(4096);
+}
 
 TelemetryBackend::~TelemetryBackend() { Kill(); }
 
@@ -37,10 +42,10 @@ void TelemetryBackend::Start() {
         }
 
         if (msg->type == ix::WebSocketMessageType::Close ||
-            msg->type == ix::WebSocketMessageType::Error){
+            msg->type == ix::WebSocketMessageType::Error) {
             IsConnected = false;
             IsReceiving = false;
-            }
+        }
         if (msg->type == ix::WebSocketMessageType::Close) { LOG_WARN("WebSocket closed"); }
 
         if (msg->type == ix::WebSocketMessageType::Error) {
@@ -48,9 +53,9 @@ void TelemetryBackend::Start() {
             LOG_ERROR("HTTP Status: {}", msg->errorInfo.http_status);
         }
 
-        if (msg->type == ix::WebSocketMessageType::Message){
+        if (msg->type == ix::WebSocketMessageType::Message) {
             IsReceiving = true;
-            this->OnMessage(msg); 
+            this->OnMessage(msg);
         }
     });
 
@@ -68,34 +73,6 @@ void TelemetryBackend::Kill() {
     }
 }
 
-void TelemetryBackend::WorkerLoop() {
-    while (!m_ShouldKill) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        if (m_WebSocket.getReadyState() != ix::ReadyState::Open) { IsConnected = false; }
-    }
-}
-
-void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
-    if (msg->type == ix::WebSocketMessageType::Message) {
-        std::lock_guard<std::mutex> lock(DataMutex);
-        std::stringstream           ss(msg->str);
-       
-        
-
-
-        std::string identifier;
-        std::string value;
-        if (IsLogging) {
-            while (ss >> identifier >> value) {
-                // LOG_INFO("Parsed: Key='{}' Val='{}'", identifier, value);
-                if (identifier == "T" && std::stoull(value) == 0) { return; }
-                Data.WriteData(identifier, value);
-            }
-            Data.WriteRawLine(msg->str);
-        }
-    }
-}
-
 void TelemetryBackend::SendCMD(const std::string& text) {
     if (m_WebSocket.getReadyState() == ix::ReadyState::Open) {
         ix::WebSocketSendInfo info = m_WebSocket.send(text);
@@ -104,4 +81,83 @@ void TelemetryBackend::SendCMD(const std::string& text) {
             IsConnected = false;
         }
     }
+}
+
+void TelemetryBackend::WorkerLoop() {
+    while (!m_ShouldKill) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        if (m_WebSocket.getReadyState() != ix::ReadyState::Open) { IsConnected = false; }
+    }
+}
+
+void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
+    if (IsLogging && msg->type == ix::WebSocketMessageType::Message) {
+        m_Buffer.append(msg->str);
+        size_t newline_pos;
+
+        while ((newline_pos = m_Buffer.find('\n')) != std::string::npos) {
+            const auto line = m_Buffer.substr(0, newline_pos);
+            m_Buffer.erase(0, newline_pos + 1);
+
+            const auto parsed = ValidatePacket(line);
+            if (!parsed.has_value()) { continue; }
+
+            // Now we can safely unpack the packet
+            std::lock_guard<std::mutex> lock{DataMutex};
+            for (const auto& [ident, value] : parsed.value()) {
+                Data.WriteData(std::string{ident}, std::string{value});
+            }
+            Data.WriteRawLine(line);
+        }
+    }
+}
+
+std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
+TelemetryBackend::ValidatePacket(std::string_view str) const {
+    std::vector<std::pair<std::string_view, std::string_view>> parsed;
+    parsed.reserve(m_PacketFields.size());
+
+    size_t pos = 0;
+
+    for (const auto& field : m_PacketFields) {
+        // IDENT
+        size_t ident_start = pos;
+        while (pos < str.size() && str[pos] != ' ') {
+            pos += 1;
+        }
+        if (str.substr(ident_start, pos - ident_start) != field) { return std::nullopt; }
+
+        // Consume any amount of spaces
+        if (pos >= str.size() || str[pos] != ' ') { return std::nullopt; }
+        while (pos < str.size() && str[pos] == ' ') {
+            pos += 1;
+        }
+
+        // VALUE
+        size_t value_start = pos;
+        while (pos < str.size() && str[pos] != ' ') {
+            pos += 1;
+        }
+        if (value_start == pos) { return std::nullopt; }
+        const auto value = str.substr(value_start, pos - value_start);
+
+        // Uncalibrated packets or malformed times are invalid
+        if (field == "T") {
+            uint64_t t   = 0;
+            auto     res = std::from_chars(value.data(), value.data() + value.size(), t);
+            if (res.ec != std::errc{} || t == 0) { return std::nullopt; }
+        }
+
+        parsed.emplace_back(field, value);
+        while (pos < str.size() && str[pos] == ' ') {
+            pos += 1;
+        }
+    }
+
+    // Consume trailing whitespace just to be safe
+    while (pos < str.size() && str[pos] == ' ') {
+        pos += 1;
+    }
+    if (pos != str.size()) { return std::nullopt; }
+    return parsed;
 }

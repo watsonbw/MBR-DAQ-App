@@ -51,31 +51,30 @@ class ViewPage : public Page {
     std::optional<std::string> m_SelectedPath;
     std::shared_ptr<bool>      m_IsAlive;
 
-    int    m_TotalFrames     = 0;
-    double m_VideoFPS        = 0.0;
-    double m_FrameDuration   = 0.0;
-    double m_TimeAccumulator = 0.0;
-    int    m_CurrentFrameUI  = 0;
+    int    m_TotalFrames{0};
+    double m_VideoFPS{0.0};
+    double m_FrameDuration{0.0};
+    double m_TimeAccumulator{0.0};
+    int    m_CurrentFrameUI{0};
 
-    std::atomic<bool> m_IsPlaying        = false;
-    std::atomic<bool> m_IsLooping        = false;
-    std::atomic<int>  m_SeekTarget       = -1;
-    std::atomic<bool> m_ForceUpdateFrame = false;
+    std::atomic<bool> m_IsPlaying{false};
+    std::atomic<bool> m_IsLooping{false};
+    std::atomic<int>  m_SeekTarget{-1};
+    std::atomic<bool> m_ForceUpdateFrame{false};
 
     std::thread                         m_DecodeThread;
-    std::atomic<bool>                   m_ThreadRunning = false;
+    std::atomic<bool>                   m_ThreadRunning{false};
     std::mutex                          m_FrameMutex;
     std::deque<std::pair<cv::Mat, int>> m_FrameQueue;
     std::condition_variable             m_QueueCV;
-    const size_t                        MAX_QUEUE_SIZE = 10;
 
-    ImVec2        m_ButtonSize = {24, 24};
+    ImVec2        m_ButtonSize{24, 24};
     ButtonTexture m_PlayButton;
     ButtonTexture m_PauseButton;
 
-    sg_image    m_VideoTexture   = {SG_INVALID_ID};
-    sg_view     m_VideoView      = {SG_INVALID_ID};
-    ImTextureID m_VideoTextureID = 0;
-    int         m_TexWidth       = 0;
-    int         m_TexHeight      = 0;
+    sg_image    m_VideoTexture{SG_INVALID_ID};
+    sg_view     m_VideoView{SG_INVALID_ID};
+    ImTextureID m_VideoTextureID{0};
+    int         m_TexWidth{0};
+    int         m_TexHeight{0};
 };

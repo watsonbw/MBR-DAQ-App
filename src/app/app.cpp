@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <sokol_app.h>
 #include <sokol_gfx.h>
 #include <sokol_glue.h>
@@ -17,8 +19,10 @@
 App::App() : m_Context{std::make_shared<AppContext>()} {
     Log::Init();
     ix::initNetSystem();
-    m_GUI              = std::make_unique<GUI>(m_Context);
-    m_Context->Backend = std::make_unique<TelemetryBackend>();
+
+    const std::vector<std::string> packet_fields = {"T", "W", "E", "fr", "fl", "br", "bl"};
+    m_GUI                                        = std::make_unique<GUI>(m_Context);
+    m_Context->Backend = std::make_unique<TelemetryBackend>(packet_fields);
 }
 
 App::~App() { ix::uninitNetSystem(); }

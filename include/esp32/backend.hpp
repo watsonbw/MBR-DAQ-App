@@ -1,17 +1,22 @@
 #pragma once
 
 #include <atomic>
-#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <thread>
+#include <vector>
 
-#include "data.hpp"
 #include <ixwebsocket/IXWebSocket.h>
+
+#include "esp32/data.hpp"
 
 struct AppContext;
 
 class TelemetryBackend {
   public:
-    explicit TelemetryBackend() = default;
+    TelemetryBackend() = delete;
+    explicit TelemetryBackend(std::vector<std::string> packet_fields);
     ~TelemetryBackend();
 
     void Start();
@@ -29,10 +34,14 @@ class TelemetryBackend {
     void WorkerLoop();
     void OnMessage(const ix::WebSocketMessagePtr& msg);
 
-  private:
-    std::thread   m_Worker;
-    ix::WebSocket m_WebSocket;
-    std::string   m_Buffer;
+    std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
+    ValidatePacket(std::string_view str) const;
 
-    std::atomic<bool> m_ShouldKill = false;
+  private:
+    std::thread              m_Worker;
+    ix::WebSocket            m_WebSocket;
+    std::string              m_Buffer;
+    std::vector<std::string> m_PacketFields;
+
+    std::atomic<bool> m_ShouldKill{false};
 };

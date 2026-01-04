@@ -15,11 +15,18 @@ struct LocalTime {
     uint64_t Second;
     uint64_t Millisecond;
     uint64_t Microsecond;
+
+    std::string String() const;
 };
 
 struct DateTime {
     explicit DateTime();
     explicit DateTime(uint64_t creation_time_seconds);
+
+    enum class StringFormat {
+        DISPLAY,
+        TEXT_FILE,
+    };
 
     uint64_t  Year;
     uint64_t  Month;
@@ -27,6 +34,5 @@ struct DateTime {
     LocalTime Local;
 
     static std::optional<DateTime> FromVideoMetadata(const std::string& path);
-    std::string                    String() const;
-    std::string                    txtString() const;
+    std::string                    String(StringFormat fmt = StringFormat::DISPLAY) const;
 };
