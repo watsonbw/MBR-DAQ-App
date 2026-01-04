@@ -2,11 +2,14 @@ cmake_minimum_required(VERSION 3.20)
 set(CMAKE_COLOR_MAKEFILE OFF)
 
 # Global configuration
-if(NOT APPLE AND NOT WIN32)
+if(APPLE)
+    set(LANGUAGES C CXX OBJCXX)
+elseif(WIN32)
+    set(LANGUAGES C CXX)
+else()
     message(ERROR "Platform currently unsupported!")
 endif()
 
-set(LANGUAGES C CXX OBJCXX)
 set(CMAKE_BUILD_TYPE Release)
 
 project(baja_daq
@@ -274,7 +277,11 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
 
     target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
-    target_link_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
+    if(APPLE)
+        target_link_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS} "-static-libstdc++")
+    elseif(WIN32)
+        target_link_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
+    endif()
     set_target_properties(baja_core_${TARGET_NAME}
         PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${OUT_DIR})
 
@@ -312,8 +319,7 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
         "${CMAKE_BINARY_DIR}/${TARGET_NAME}")
 
     add_executable(baja_${TARGET_NAME} src/main.cpp)
-    target_link_libraries(baja_${TARGET_NAME}
-        PRIVATE baja_core_${TARGET_NAME} imgui_setup tinyfiledialogs)
+    target_link_libraries(baja_${TARGET_NAME} PRIVATE baja_core_${TARGET_NAME})
     add_custom_target(${TARGET_NAME} DEPENDS
         baja_tests_${TARGET_NAME} baja_${TARGET_NAME})
 
