@@ -1,4 +1,6 @@
 #include "esp32/data.hpp"
+#include "core/log.hpp"
+#include "core/time.hpp"
 
 void RPMData::Reserve(size_t size) {
     EngineRPM.reserve(size);
@@ -24,14 +26,22 @@ void ShockData::Clear() {
     BackLeft.clear();
 }
 
-TelemetryData::TelemetryData() : m_Time{0.0f} {
+TelemetryData::TelemetryData() {
     m_RPMData.Reserve();
     m_ShockData.Reserve();
 }
 
 void TelemetryData::WriteData(std::string identifier, std::string value) {
     if (identifier == "T") {
-        m_Time.push_back(std::stod(value));
+        LocalTime lt(std::stoull(value));
+        double minutes_from_mid = lt.Hour * 60.0 + static_cast<double>(lt.Minute) + lt.Second/60.0 + lt.Millisecond/60000.0;
+        if (!IsSynced){
+            SyncLT = lt;
+            m_SyncStart = minutes_from_mid;
+            IsSynced = true;
+        }
+        m_Time.push_back(minutes_from_mid-m_SyncStart);
+        LOG_INFO("{}", minutes_from_mid);
     } else if (identifier == "W") {
         m_RPMData.WheelRPM.push_back(std::stod(value));
     } else if (identifier == "E") {
@@ -45,8 +55,17 @@ void TelemetryData::WriteData(std::string identifier, std::string value) {
     } else if (identifier == "bl") {
         m_ShockData.BackLeft.push_back(std::stod(value));
     }
+    //LOG_INFO("{}{}{}", m_RPMData.WheelRPM.size(), m_RPMData.EngineRPM.size(), m_Time.size());
 }
 
 void TelemetryData::WriteRawLine(const std::string& full_message) {
     m_RawLines.push_back(full_message);
+}
+
+void TelemetryData::Clear(){
+    m_RawLines.clear();
+    m_RPMData.Clear();
+    m_ShockData.Clear();
+    m_Time.clear();
+    IsSynced = false;
 }

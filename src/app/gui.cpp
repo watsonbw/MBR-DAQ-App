@@ -178,6 +178,10 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Separator();
 
+        if (ImGui::Button("Clear Data")) {m_Context->Backend->Data.Clear();}
+
+        ImGui::Separator();
+
         // Connection indicator
 
         bool connected = m_Context->Backend->IsConnected;

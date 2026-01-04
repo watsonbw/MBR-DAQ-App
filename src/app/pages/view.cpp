@@ -204,6 +204,7 @@ std::optional<std::string> ViewPage::OpenFile() {
     auto dt = DateTime::FromVideoMetadata(real_path);
     if (dt.has_value()) {
         LOG_INFO("Selected video with creation timestamp: {}", dt.value().String());
+        LOG_INFO("{}", dt.value().Local.MicrosSinceMidnight());
     } else {
         LOG_WARN("Could not detect datetime metadata from selected video.");
     }

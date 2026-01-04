@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include "core/time.hpp"
 
 struct AppContext;
 
@@ -34,10 +35,14 @@ class TelemetryData {
     const std::vector<std::string>& GetRawLines() const { return m_RawLines; };
     void                            WriteData(std::string identifier, std::string value);
     void                            WriteRawLine(const std::string& message);
+    void                            Clear();
+    bool                            IsSynced{false};
+    LocalTime                       SyncLT;
 
   private:
     std::vector<double>      m_Time;
     RPMData                  m_RPMData;
     ShockData                m_ShockData;
     std::vector<std::string> m_RawLines;
+    double                   m_SyncStart;
 };

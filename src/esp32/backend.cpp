@@ -94,18 +94,16 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
     if (IsLogging && msg->type == ix::WebSocketMessageType::Message) {
         m_Buffer.append(msg->str);
         size_t newline_pos;
-
         while ((newline_pos = m_Buffer.find('\n')) != std::string::npos) {
             const auto line = m_Buffer.substr(0, newline_pos);
             m_Buffer.erase(0, newline_pos + 1);
-
             const auto parsed = ValidatePacket(line);
             if (!parsed.has_value()) { continue; }
-
             // Now we can safely unpack the packet
             std::lock_guard<std::mutex> lock{DataMutex};
             for (const auto& [ident, value] : parsed.value()) {
                 Data.WriteData(std::string{ident}, std::string{value});
+                //LOG_INFO("{} {}", ident, value);
             }
             Data.WriteRawLine(line);
         }
