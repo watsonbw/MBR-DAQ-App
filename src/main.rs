@@ -1,9 +1,11 @@
-use crate::app::MBRApp;
+use anyhow::Result;
 
 mod app;
 mod esp32;
 mod util;
 
-fn main() -> Result<(), eframe::Error> {
+use crate::app::MBRApp;
+
+fn main() -> Result<()> {
     MBRApp::launch()
 }

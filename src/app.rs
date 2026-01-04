@@ -1,4 +1,5 @@
 use eframe::egui;
+use anyhow::{anyhow, Result};
 
 mod assets;
 mod context;
@@ -13,13 +14,13 @@ impl MBRApp {
         Self::default()
     }
 
-    pub fn launch() -> Result<(), eframe::Error> {
+    pub fn launch() -> Result<()> {
         let native_options = eframe::NativeOptions::default();
         eframe::run_native(
             "Michigan Baja Racing - Data Suite",
             native_options,
             Box::new(|cc| Ok(Box::new(Self::new(cc)))),
-        )
+        ).map_err(|e| anyhow!("{:?}", e))
     }
 }
 
