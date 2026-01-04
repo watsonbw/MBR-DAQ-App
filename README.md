@@ -1,5 +1,5 @@
 # MBR-DAQ-App [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue?logo=c%2B%2B&logoColor=white)](https://en.cppreference.com/w/cpp/20.html) [![License](https://img.shields.io/github/license/watsonbw/MBR-DAQ-App)](LICENSE)
-Data visualization and ESP32 interface for the University of Michigan's baja team.
+Data visualization and ESP32 interface for the University of Michigan's Baja team.
 
 ## License
 This project is licensed under the GNU General Public License v3.0 or later.
