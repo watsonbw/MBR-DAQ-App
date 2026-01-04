@@ -28,4 +28,5 @@ struct DateTime {
 
     static std::optional<DateTime> FromVideoMetadata(const std::string& path);
     std::string                    String() const;
+    std::string                    txtString() const;
 };

@@ -32,13 +32,15 @@ void TelemetryBackend::Start() {
     m_WebSocket.setOnMessageCallback([this](const ix::WebSocketMessagePtr& msg) {
         if (msg->type == ix::WebSocketMessageType::Open) {
             IsConnected = true;
+            IsReceiving = false;
             LOG_INFO("Connected to ESP32");
         }
 
         if (msg->type == ix::WebSocketMessageType::Close ||
-            msg->type == ix::WebSocketMessageType::Error)
+            msg->type == ix::WebSocketMessageType::Error){
             IsConnected = false;
-
+            IsReceiving = false;
+            }
         if (msg->type == ix::WebSocketMessageType::Close) { LOG_WARN("WebSocket closed"); }
 
         if (msg->type == ix::WebSocketMessageType::Error) {
@@ -46,7 +48,10 @@ void TelemetryBackend::Start() {
             LOG_ERROR("HTTP Status: {}", msg->errorInfo.http_status);
         }
 
-        if (msg->type == ix::WebSocketMessageType::Message) { this->OnMessage(msg); }
+        if (msg->type == ix::WebSocketMessageType::Message){
+            IsReceiving = true;
+            this->OnMessage(msg); 
+        }
     });
 
     m_WebSocket.start();
@@ -74,6 +79,9 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
     if (msg->type == ix::WebSocketMessageType::Message) {
         std::lock_guard<std::mutex> lock(DataMutex);
         std::stringstream           ss(msg->str);
+       
+        
+
 
         std::string identifier;
         std::string value;

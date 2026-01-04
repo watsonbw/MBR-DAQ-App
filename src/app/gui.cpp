@@ -182,12 +182,14 @@ void GUI::DrawMainMenuBar() {
         // Connection indicator
 
         bool connected = m_Context->Backend->IsConnected;
+        bool receiving = m_Context->Backend->IsReceiving;
 
         float  radius = 10.0f;
         ImVec2 pos    = ImGui::GetCursorScreenPos();
         ImVec2 center = ImVec2(pos.x + radius, pos.y + ImGui::GetFrameHeight() * 0.5f);
 
-        ImU32 color = connected ? IM_COL32(0, 200, 0, 255) : IM_COL32(200, 0, 0, 255);
+        ImU32 color = connected && receiving ? IM_COL32(0, 200, 0, 255) : connected && !receiving ?  IM_COL32(255, 255, 0, 255)
+        : IM_COL32(200, 0, 0, 255);
 
         ImDrawList* draw = ImGui::GetWindowDrawList();
         draw->AddCircleFilled(center, radius, color);

@@ -1,7 +1,10 @@
 #include <imgui.h>
 #include <implot.h>
 
+#include <fstream>
+
 #include "core/log.hpp"
+#include "core/time.hpp"
 
 #include "app/pages/rpm.hpp"
 
@@ -9,6 +12,8 @@ void RPMPage::OnEnter() { LOG_INFO("Entered RPMPage"); }
 void RPMPage::OnExit() { LOG_INFO("Exited RPMPage"); }
 
 void RPMPage::Update() {
+    DateTime dt;
+    static char extraTextBuffer[256] = "";
     // LOG_INFO("Began Update RPM");
     const auto window_flags = DefaultWindowFlags();
     ImGui::Begin("RPM Data Collection", nullptr, window_flags);
@@ -29,6 +34,47 @@ void RPMPage::Update() {
 
         ImGui::PopFont();
     }
+
+    ImGui::SameLine();
+
+    {
+        ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
+        if (ImGui::Button("Download Data")){
+            std::string extra = extraTextBuffer;
+            std::string final;
+            std::vector<std::string> rawlines;
+
+            if(!extra.empty()){
+                final = dt.txtString() + "_ " + extra + ".txt"; 
+            } else {
+                final = dt.txtString();
+            }
+
+            rawlines = m_Context->Backend->Data.GetRawLines();
+            std::ofstream out(final);
+            if(!out.is_open()) {LOG_ERROR("OFSTREAM DIDN'T OPEN", std::strerror(errno));}
+            
+            for (const auto& line : rawlines)
+            out << line << "\n";
+
+            extraTextBuffer[0] = '\0';
+        }
+        ImGui::PopFont();
+    }
+
+    ImGui::SameLine();
+
+    {
+    ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
+    
+    ImGui::SetNextItemWidth(200.0f); 
+    
+    ImGui::InputText("##extra", extraTextBuffer, IM_ARRAYSIZE(extraTextBuffer));
+    
+    ImGui::PopFont();
+}
+
+
 
     ImGui::Separator();
     // LOG_INFO("3");

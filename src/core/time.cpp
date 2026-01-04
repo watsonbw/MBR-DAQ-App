@@ -188,3 +188,13 @@ std::string DateTime::String() const {
                        Local.Millisecond,
                        Local.Microsecond);
 }
+
+std::string DateTime::txtString() const {
+    return std::format("{:04}-{:02}-{:02}_{:02}-{:02}-{:02}",
+                       Year,
+                       Month,
+                       Day,
+                       Local.Hour,
+                       Local.Minute,
+                       Local.Second);
+}

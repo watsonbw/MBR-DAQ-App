@@ -23,6 +23,7 @@ class TelemetryBackend {
     std::atomic<bool> TryConnection{false};
     std::atomic<bool> IsConnected{false};
     std::atomic<bool> IsLogging{false};
+    std::atomic<bool> IsReceiving{false};
 
   private:
     void WorkerLoop();
@@ -31,6 +32,7 @@ class TelemetryBackend {
   private:
     std::thread   m_Worker;
     ix::WebSocket m_WebSocket;
+    std::string   m_Buffer;
 
     std::atomic<bool> m_ShouldKill = false;
 };

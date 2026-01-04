@@ -22,7 +22,7 @@ void loop() {
     if (micros() - lastSend > 50000) {
         uint64_t realTime = wifi.getRealTime();
 
-        wifi.SendData("T " + String(realTime) + " W 2300 E 300 fr 0 fl 0 br 0 bl 0");
+        wifi.SendData("T " + String(realTime) + " W 2300 E 300 fr 0 fl 0 br 0 bl 0\n");
         lastSend = micros();
     }
 }
