@@ -12,6 +12,7 @@
 #include <sokol_imgui.h>
 
 #include "core/log.hpp"
+#include "core/time.hpp"
 
 #include "app/assets/images/image_buttons.hpp"
 #include "app/pages/view.hpp"
@@ -186,6 +187,14 @@ std::optional<std::string> ViewPage::OpenFile() {
 
     const std::string real_path{path};
     LOG_INFO("Selected file: {}", real_path);
+
+    auto dt = DateTime::FromVideoMetadata(real_path);
+    if (dt.has_value()) {
+        LOG_INFO("Selected video with creation timestamp: {}", dt.value().String());
+    } else {
+        LOG_WARN("Could not detect datetime metadata from selected video.");
+    }
+
     return path;
 }
 

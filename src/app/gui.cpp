@@ -198,16 +198,16 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Separator();
 
-        static char buffer[128] = ""; 
+        static char buffer[128] = "";
         ImGui::SetNextItemWidth(200.0f);
         ImGui::InputText("##SmallBox", buffer, 128);
-        
+
         ImGui::Separator();
 
-        if (ImGui::Button("Send CMD")){
+        if (ImGui::Button("Send CMD")) {
             m_Context->Backend->SendCMD(buffer);
             buffer[0] = '\0';
-         }
+        }
 
         ImGui::Separator();
 

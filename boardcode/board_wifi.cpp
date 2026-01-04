@@ -13,9 +13,9 @@ void BoardWifi::Start() {
     WiFi.mode(WIFI_AP);
     delay(100);
 
-    IPAddress local_IP(192,168,4,1);
-    IPAddress gateway(192,168,4,1);
-    IPAddress subnet(255,255,255,0);
+    IPAddress local_IP(192, 168, 4, 1);
+    IPAddress gateway(192, 168, 4, 1);
+    IPAddress subnet(255, 255, 255, 0);
     WiFi.softAPConfig(local_IP, gateway, subnet);
 
     if (WiFi.softAP(_ssid, _password, 1, 0, 4)) {
@@ -26,30 +26,23 @@ void BoardWifi::Start() {
     Serial.print("WiFi IP address: ");
     Serial.println(WiFi.softAPIP());
 
-
-
     if (MDNS.begin("telemetry")) { Serial.println("mDNS responder started"); }
 
     _ws.onEvent(onWsEvent);
     _server.addHandler(&_ws);
 
-    _server.on("/connecttest.txt", [](AsyncWebServerRequest *request){
+    _server.on("/connecttest.txt", [](AsyncWebServerRequest* request) {
         request->send(200, "text/plain", "Microsoft NCSI");
     });
-    
-    _server.on("/generate_204", [](AsyncWebServerRequest *request){
-        request->send(204);
-    });
+
+    _server.on("/generate_204", [](AsyncWebServerRequest* request) { request->send(204); });
 
     _server.begin();
     Serial.println("HTTP Server started");
-    
 }
 
 void BoardWifi::SendData(String msg) {
-    if (_ws.count() > 0 && _ws.availableForWriteAll()) {
-        _ws.textAll(msg);
-    }
+    if (_ws.count() > 0 && _ws.availableForWriteAll()) { _ws.textAll(msg); }
 }
 
 void BoardWifi::onWsEvent(AsyncWebSocket*       server,
@@ -78,9 +71,7 @@ void BoardWifi::onWsEvent(AsyncWebSocket*       server,
         Serial.println(command);
     } else if (type == WS_EVT_CONNECT) {
         for (auto& c : server->getClients()) {
-            if (server->count() > 3) {
-                server->cleanupClients(); 
-            }
+            if (server->count() > 3) { server->cleanupClients(); }
         }
         Serial.println("Client connected");
     } else if (type == WS_EVT_DISCONNECT) {

@@ -5,7 +5,7 @@
 #include <ESPAsyncWebServer.h>
 #include <ESPmDNS.h>
 #include <WiFi.h>
-//#include <DNSServer.h>
+// #include <DNSServer.h>
 
 class BoardWifi {
   public:
@@ -26,7 +26,7 @@ class BoardWifi {
     uint32_t      localSyncMicros = 0;
     volatile bool isTimeSynced    = 0;
     volatile bool timeCMD         = 0;
-    //DNSServer _dnsServer;
+    // DNSServer _dnsServer;
 
     AsyncWebServer _server;
     AsyncWebSocket _ws;

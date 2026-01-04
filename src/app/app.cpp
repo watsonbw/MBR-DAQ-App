@@ -21,7 +21,7 @@ App::App() : m_Context{std::make_shared<AppContext>()} {
     m_Context->Backend = std::make_unique<TelemetryBackend>();
 }
 
-App::~App() = default;
+App::~App() { ix::uninitNetSystem(); }
 
 void App::Run() {
     auto app_desc = m_GUI->GetSokolDesc();

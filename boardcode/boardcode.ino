@@ -1,10 +1,10 @@
 #include "board_wifi.hpp"
 
-const char* ssid     = "esp32Wifi";
-const char* password = "MBRdatacollect";
-BoardWifi   wifi(ssid, password);
+const char*            ssid     = "esp32Wifi";
+const char*            password = "MBRdatacollect";
+BoardWifi              wifi(ssid, password);
 volatile unsigned long lastCleanup;
-void setup() {
+void                   setup() {
     // put your setup code here, to run once:
     Serial.begin(115200);
     wifi.Start();
@@ -12,7 +12,7 @@ void setup() {
 }
 
 void loop() {
-    //wifi.updateDNS();
+    // wifi.updateDNS();
     if (millis() - lastCleanup > 10000) {
         wifi.cleanupClients();
         lastCleanup = millis();
@@ -26,4 +26,3 @@ void loop() {
         lastSend = micros();
     }
 }
-
