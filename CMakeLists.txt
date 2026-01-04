@@ -89,7 +89,7 @@ if(APPLE)
     )
 elseif(WIN32)
     target_compile_definitions(sokol_setup PUBLIC SOKOL_D3D11)
-    target_link_libraries(sokol_setup INTERFACE d3d11 dxgi)
+    target_link_libraries(sokol_setup INTERFACE d3d11 dxgi dwmapi)
 endif()
 
 # Dear ImGUI

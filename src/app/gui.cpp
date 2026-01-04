@@ -1,6 +1,10 @@
 #include <cassert>
 #include <sstream>
 
+#ifdef _WIN32
+#include <dwmapi.h>
+#endif
+
 #include <imgui.h>
 #include <implot.h>
 
@@ -62,6 +66,12 @@ void GUI::OnInit() {
     simgui_desc_t si_desc   = {};
     si_desc.no_default_font = true;
     simgui_setup(&si_desc);
+
+#ifdef _WIN32
+    HWND hwnd          = (HWND)sapp_win32_get_hwnd();
+    BOOL use_dark_mode = TRUE;
+    DwmSetWindowAttribute(hwnd, 20, &use_dark_mode, sizeof(use_dark_mode));
+#endif
 
     auto& io         = ImGui::GetIO();
     m_Context->Fonts = LoadFonts();
