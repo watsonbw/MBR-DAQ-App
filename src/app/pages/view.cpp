@@ -42,12 +42,13 @@ void ViewPage::Update() {
     auto window_flags = DefaultWindowFlags();
     ImGui::Begin("View Data", nullptr, window_flags);
 
-    if (ImGui::BeginTable("ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) { 
-        ImGui::TableNextColumn(); 
-        DrawLHS(); 
-        ImGui::TableNextColumn(); 
-        DrawRHS(); 
-        ImGui::EndTable(); 
+    if (ImGui::BeginTable(
+            "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
+        ImGui::TableNextColumn();
+        DrawLHS();
+        ImGui::TableNextColumn();
+        DrawRHS();
+        ImGui::EndTable();
     }
 
     ImGui::End();
@@ -177,13 +178,13 @@ void ViewPage::DrawRHS() {
     if (ImGui::Button("Open Text File")) {
         m_TxtDialogRunning = true;
         const auto alive   = m_IsAlive;
-
         std::thread([this, alive]() {
             const auto path = OpenTextFile();
             if (*alive) {
                 std::lock_guard<std::mutex> lock{m_TxtPathMutex};
-                m_SelectedTxt      = path;
-                m_TxtDialogRunning = false;
+                m_SelectedTxt                 = path;
+                m_TxtDialogRunning            = false;
+                m_Context->Backend->IsLogging = false;
             }
         }).detach();
     }
@@ -487,4 +488,22 @@ void ViewPage::TryCleanupSokolResources() {
 
     m_TexWidth  = 0;
     m_TexHeight = 0;
+}
+
+std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<double>& time) {
+    if (!m_VideoCreationTimestamp.has_value()) { return std::nullopt; }
+
+    const auto     creation_timestamp = m_VideoCreationTimestamp.value();
+    const uint64_t micros_to_sync     = creation_timestamp.Local.MicrosSinceMidnight();
+    const auto     it                 = std::lower_bound(time.begin(), time.end(), micros_to_sync);
+    if (it != time.end()) { return static_cast<size_t>(it - time.begin()); }
+
+    return std::nullopt;
+}
+
+void ViewPage::DeleteExtra(size_t erase_pos) {
+    std::lock_guard<std::mutex> lock{m_Context->Backend->DataMutex};
+    auto&                       wheel_rpm = m_Context->Backend->Data.m_RPMData.WheelRPM;
+    if (wheel_rpm.empty() || wheel_rpm.size() < erase_pos) { return; }
+    .erase(, it);
 }

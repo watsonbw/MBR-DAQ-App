@@ -45,4 +45,6 @@ class TelemetryData {
     ShockData                m_ShockData;
     std::vector<std::string> m_RawLines;
     double                   m_SyncStart;
+
+    friend class ViewPage;
 };

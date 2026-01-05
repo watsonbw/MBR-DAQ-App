@@ -13,7 +13,7 @@ void RPMPage::OnEnter() { LOG_INFO("Entered RPMPage"); }
 void RPMPage::OnExit() { LOG_INFO("Exited RPMPage"); }
 
 void RPMPage::Update() {
-    const auto window_flags = DefaultWindowFlags();
+    const auto               window_flags = DefaultWindowFlags();
     std::vector<std::string> raw_data;
     std::vector<double>      time, wheel, engine;
 
@@ -28,19 +28,19 @@ void RPMPage::Update() {
     }
     ImGui::Begin("RPM Data Collection", nullptr, window_flags);
 
-    if (ImGui::BeginTable("ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) { 
-        ImGui::TableNextColumn(); 
-        DrawLHS(); 
-        ImGui::TableNextColumn(); 
-        DrawRHS(); 
+    if (ImGui::BeginTable(
+            "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
+        ImGui::TableNextColumn();
+        DrawLHS(raw_data);
+        ImGui::TableNextColumn();
+        DrawRHS(time, wheel, engine);
         ImGui::EndTable();
     }
 
     ImGui::End();
 }
 
-
-void RPMPage::DrawLHS(){
+void RPMPage::DrawLHS(std::vector<std::string> raw_data) {
     DateTime    dt;
     static char extraTextBuffer[256] = "";
     ImGui::BeginChild("Data Log Child");
@@ -96,19 +96,6 @@ void RPMPage::DrawLHS(){
     }
 
     ImGui::Separator();
-    // LOG_INFO("3");
-    std::vector<std::string> raw_data;
-    std::vector<double>      time, wheel, engine;
-
-    {
-        std::lock_guard lock{m_Context->Backend->DataMutex};
-        time = m_Context->Backend->Data.GetTime();
-
-        const auto& rpm_data = m_Context->Backend->Data.GetRPMData();
-        raw_data             = m_Context->Backend->Data.GetRawLines();
-        wheel                = rpm_data.WheelRPM;
-        engine               = rpm_data.EngineRPM;
-    }
 
     for (const auto& msg : raw_data) {
         ImGui::TextUnformatted(msg.c_str());
@@ -117,7 +104,9 @@ void RPMPage::DrawLHS(){
     ImGui::EndChild();
 }
 
-void RPMPage::DrawRHS(){
+void RPMPage::DrawRHS(std::vector<double> time,
+                      std::vector<double> wheel,
+                      std::vector<double> engine) {
 
     ImGui::BeginChild("Graph Child", {0, 0});
 

@@ -1,4 +1,6 @@
+#include <format>
 #include <fstream>
+
 #include <imgui.h>
 #include <implot.h>
 
@@ -10,18 +12,44 @@ void ShockPage::OnEnter() { LOG_INFO("Entered ShockPage"); }
 void ShockPage::OnExit() { LOG_INFO("Exited ShockPage"); }
 
 void ShockPage::Update() {
-    const auto  window_flags         = DefaultWindowFlags();
+    const auto window_flags = DefaultWindowFlags();
+
+    std::vector<std::string> raw_data;
+    std::vector<double>      time, fr, fl, br, bl;
+
+    {
+        std::lock_guard lock{m_Context->Backend->DataMutex};
+        time = m_Context->Backend->Data.GetTime();
+
+        raw_data               = m_Context->Backend->Data.GetRawLines();
+        const auto& shock_data = m_Context->Backend->Data.GetShockData();
+        fr                     = shock_data.FrontRight;
+        fl                     = shock_data.FrontLeft;
+        br                     = shock_data.BackRight;
+        bl                     = shock_data.BackRight;
+    }
+
+    ImGui::Begin("Shock Data Collection", nullptr, window_flags);
+
+    if (ImGui::BeginTable(
+            "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
+        ImGui::TableNextColumn();
+        DrawLHS(raw_data);
+        ImGui::TableNextColumn();
+        DrawRHS(time, fr, fl, br, bl);
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+}
+
+void ShockPage::DrawLHS(std::vector<std::string> raw_data) {
     static char extraTextBuffer[256] = "";
     DateTime    dt;
-    ImGui::Begin("Shock Data Collection", nullptr, window_flags);
-    ImGui::Columns(2);
 
-    // Left Side
     ImGui::BeginChild("Data Log Child");
     ImGui::Text("Data Log");
     ImGui::Separator();
-
-    // Logging Button
     {
         ImGui::PushFont(m_Context->Style.DefaultFonts.Regular, 36.0f);
 
@@ -73,29 +101,18 @@ void ShockPage::Update() {
 
     ImGui::Separator();
 
-    std::vector<std::string> raw_data;
-    std::vector<double>      time, fr, fl, br, bl;
-
-    {
-        std::lock_guard lock{m_Context->Backend->DataMutex};
-        time = m_Context->Backend->Data.GetTime();
-
-        raw_data               = m_Context->Backend->Data.GetRawLines();
-        const auto& shock_data = m_Context->Backend->Data.GetShockData();
-        fr                     = shock_data.FrontRight;
-        fl                     = shock_data.FrontLeft;
-        br                     = shock_data.BackRight;
-        bl                     = shock_data.BackRight;
-    }
-
     for (const auto& msg : raw_data) {
         ImGui::TextUnformatted(msg.c_str());
     }
 
     ImGui::EndChild();
+}
 
-    // Right Side
-
+void ShockPage::DrawRHS(std::vector<double> time,
+                        std::vector<double> fr,
+                        std::vector<double> fl,
+                        std::vector<double> br,
+                        std::vector<double> bl) {
     ImGui::NextColumn();
 
     ImGui::BeginChild("Graph Child");
@@ -136,6 +153,4 @@ void ShockPage::Update() {
     }
 
     ImGui::EndChild();
-
-    ImGui::End();
 }

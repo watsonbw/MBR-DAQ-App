@@ -161,7 +161,7 @@ void GUI::DrawMainMenuBar() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("Menu")) {
             ImGui::PushFont(m_Context->Style.DefaultFonts.Regular, 28.0f);
-            
+
             if (ImGui::MenuItem("Home")) { ChangePage(PageType::HOME); }
             if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
             if (ImGui::MenuItem("Shock")) { ChangePage(PageType::SHOCK); }
@@ -174,7 +174,7 @@ void GUI::DrawMainMenuBar() {
                 }
             }
             if (ImGui::MenuItem("Exit")) { sapp_request_quit(); }
-            
+
             ImGui::PopFont();
             ImGui::EndMenu();
         }

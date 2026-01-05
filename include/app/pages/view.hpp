@@ -53,6 +53,8 @@ class ViewPage : public Page {
     static SelectedTxtFile OpenTextFile();
     void                   LoadData(const std::string& path);
     const char*            DataTypeString(DataView type);
+    std::optional<size_t>  SyncDataVideo(const std::vector<double>& time);
+    void                   DeleteExtra(size_t erase_pos);
 
     void StartDecodingThread();
     void StopDecodingThread();
