@@ -138,10 +138,9 @@ void ViewPage::DrawOpenVideo() {
         if (m_SelectedVideo.has_value()) {
             StopDecodingThread();
             TryCleanupSokolResources();
-            m_VideoPath              = m_SelectedVideo.value().first;
-            m_VideoCreationTimestamp = m_SelectedVideo.value().second;
-            m_SelectedVideo          = std::nullopt;
-            m_VideoLoaded            = true;
+            m_VideoPath     = m_SelectedVideo.value().first;
+            m_SelectedVideo = std::nullopt;
+            m_VideoLoaded   = true;
             StartDecodingThread();
         }
     }
@@ -150,10 +149,10 @@ void ViewPage::DrawOpenVideo() {
     const bool is_disabled_by_video = m_VideoDialogRunning.load();
     if (is_disabled_by_video) { ImGui::BeginDisabled(); }
     if (ImGui::Button("Open Video")) {
-        m_VideoDialogRunning     = true;
-        m_VideoLoaded            = false;
-        m_VideoCreationTimestamp = std::nullopt;
-        const auto alive         = m_IsAlive;
+        m_VideoDialogRunning = true;
+        m_VideoLoaded        = false;
+        m_DynamicPlotting    = false;
+        const auto alive     = m_IsAlive;
 
         std::thread([this, alive]() {
             const auto path = OpenVideoFile();
@@ -214,47 +213,50 @@ void ViewPage::DrawRHS() {
     }
 
     const auto plot_title =
-        m_Context->Backend->Data.IsSynced
+        m_Context->Backend->Data.IsSyncedToZero
             ? std::format("Data View from {}", m_Context->Backend->Data.SyncLT.String())
             : "Data View from No Synced Time";
 
+    ViewPage::DynamicPlotLoop();
     if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
         if (!time.empty()) {
             if (!wheel.empty() &&
                 (m_DataShow == DataView::ALL || m_DataShow == DataView::RPMDATA)) {
-                ImPlot::PlotLine(
-                    "Wheel Speed", time.data(), wheel.data(), std::min(time.size(), wheel.size()));
+                ImPlot::PlotLine("Wheel Speed",
+                                 time.data(),
+                                 wheel.data(),
+                                 std::min(time.size(), wheel.size()) - m_PlotPercent);
             }
             if (!engine.empty() &&
                 (m_DataShow == DataView::ALL || m_DataShow == DataView::RPMDATA)) {
                 ImPlot::PlotLine("Engine Speed",
                                  time.data(),
                                  engine.data(),
-                                 std::min(time.size(), engine.size()));
+                                 std::min(time.size(), engine.size()) - m_PlotPercent);
             }
             if (!fr.empty() && (m_DataShow == DataView::ALL || m_DataShow == DataView::SHOCKDATA)) {
                 ImPlot::PlotLine("Front Right Shock Travel",
                                  time.data(),
                                  fr.data(),
-                                 std::min(time.size(), fr.size()));
+                                 std::min(time.size(), fr.size()) - m_PlotPercent);
             }
             if (!fl.empty() && (m_DataShow == DataView::ALL || m_DataShow == DataView::SHOCKDATA)) {
                 ImPlot::PlotLine("Front Left Shock Travel",
                                  time.data(),
                                  fl.data(),
-                                 std::min(time.size(), fl.size()));
+                                 std::min(time.size(), fl.size()) - m_PlotPercent);
             }
             if (!br.empty() && (m_DataShow == DataView::ALL || m_DataShow == DataView::SHOCKDATA)) {
                 ImPlot::PlotLine("Rear Right Shock Travel",
                                  time.data(),
                                  br.data(),
-                                 std::min(time.size(), br.size()));
+                                 std::min(time.size(), br.size()) - m_PlotPercent);
             }
             if (!bl.empty() && (m_DataShow == DataView::ALL || m_DataShow == DataView::SHOCKDATA)) {
                 ImPlot::PlotLine("Rear Left Shock Travel",
                                  time.data(),
                                  bl.data(),
-                                 std::min(time.size(), bl.size()));
+                                 std::min(time.size(), bl.size()) - m_PlotPercent);
             }
         }
         ImPlot::EndPlot();
@@ -281,6 +283,7 @@ void ViewPage::DrawOpenText() {
     if (ImGui::Button("Open Text File")) {
         m_TxtDialogRunning = true;
         m_TxtLoaded        = false;
+        m_DynamicPlotting  = false;
         const auto alive   = m_IsAlive;
 
         std::thread([this, alive]() {
@@ -297,7 +300,11 @@ void ViewPage::DrawOpenText() {
 }
 
 void ViewPage::DrawSyncVideoButtons() {
+    static char extraTextBuffer[256] = "";
     if (ImGui::Button("Sync Data/Video")) {
+        m_DataAndTimeSync = false;
+        m_DynamicPlotting = false;
+
         LoadData();
         if (!m_TxtLoaded || !m_VideoLoaded) {
             LOG_ERROR("Could not sync data with video:");
@@ -306,11 +313,14 @@ void ViewPage::DrawSyncVideoButtons() {
             return;
         }
 
+        m_VideoCreationTimestamp = LocalTime::InputStringLT(extraTextBuffer);
+        if (!m_VideoCreationTimestamp.has_value()) { LOG_ERROR("Time could NOT be found"); }
+        extraTextBuffer[0] = '\0';
+
         std::optional<size_t> sync_time_pos;
         {
-            // ta
             std::lock_guard<std::mutex> lock{m_Context->Backend->DataMutex};
-            sync_time_pos = SyncDataVideo(m_Context->Backend->Data.GetTime());
+            sync_time_pos = SyncDataVideo(m_Context->Backend->Data.GetTimeNoNormal());
         }
 
         if (!sync_time_pos.has_value()) {
@@ -322,6 +332,12 @@ void ViewPage::DrawSyncVideoButtons() {
         DeleteExtra(sync_time_pos.value());
         RequestSeek(0);
     }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(120.0f);
+    ImGui::InputTextWithHint(
+        "##extra", "Hour:Min:Sec", extraTextBuffer, IM_ARRAYSIZE(extraTextBuffer));
+    ImGui::SameLine();
+    if (ImGui::Checkbox("Dynamic Plotting", &m_DynamicPlotting)) { ViewPage::DynamicPlotStart(); }
 }
 
 ViewPage::SelectedVideo ViewPage::OpenVideoFile() {
@@ -339,7 +355,6 @@ ViewPage::SelectedVideo ViewPage::OpenVideoFile() {
     auto dt = DateTime::FromVideoMetadata(real_path);
     if (dt.has_value()) {
         LOG_INFO("Selected video with creation timestamp: {}", dt.value().String());
-        LOG_INFO("{}", dt.value().Local.MicrosSinceMidnight());
     } else {
         LOG_WARN("Could not detect datetime metadata from selected video.");
     }
@@ -455,7 +470,7 @@ void ViewPage::StartDecodingThread() {
                 if (m_IsLooping) {
                     cap.set(cv::CAP_PROP_POS_FRAMES, 0);
                 } else {
-                    m_IsPlaying = false;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
             }
         }
@@ -538,13 +553,14 @@ void ViewPage::TryCleanupSokolResources() {
     m_TexHeight = 0;
 }
 
-std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<double>& time) {
+std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<uint64_t>& micros_times) {
     if (!m_VideoCreationTimestamp.has_value()) { return std::nullopt; }
 
+    m_DataAndTimeSync                 = true;
     const auto     creation_timestamp = m_VideoCreationTimestamp.value();
-    const uint64_t micros_to_sync     = creation_timestamp.Local.MicrosSinceMidnight();
-    const auto     it                 = std::lower_bound(time.begin(), time.end(), micros_to_sync);
-    if (it != time.end()) { return static_cast<size_t>(it - time.begin()); }
+    const uint64_t micros_to_sync     = creation_timestamp.MicrosSinceMidnight();
+    const auto     it = std::lower_bound(micros_times.begin(), micros_times.end(), micros_to_sync);
+    if (it != micros_times.end()) { return static_cast<size_t>(it - micros_times.begin()); }
 
     return std::nullopt;
 }
@@ -552,6 +568,7 @@ std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<double>& time) {
 void ViewPage::DeleteExtra(size_t erase_pos) {
     std::lock_guard<std::mutex> lock{m_Context->Backend->DataMutex};
     std::vector<double>*        data[] = {
+        &m_Context->Backend->Data.m_Time,
         &m_Context->Backend->Data.m_RPMData.WheelRPM,
         &m_Context->Backend->Data.m_RPMData.EngineRPM,
         &m_Context->Backend->Data.m_ShockData.FrontRight,
@@ -567,4 +584,31 @@ void ViewPage::DeleteExtra(size_t erase_pos) {
     for (auto& datum : data) {
         datum->erase(datum->begin(), datum->begin() + erase_pos);
     }
+}
+
+void ViewPage::DynamicPlotStart() {
+    if (m_DynamicPlotting) {
+        std::lock_guard<std::mutex> lock{m_Context->Backend->DataMutex};
+        const auto&                 time_vec = m_Context->Backend->Data.m_Time;
+        if (time_vec.empty()) { return; }
+        const auto begin_time_min = m_Context->Backend->Data.m_Time[0];
+
+        const double video_duration_min = (static_cast<double>(m_TotalFrames) / m_VideoFPS) / 60.0;
+        const double target_end_time    = begin_time_min + video_duration_min;
+
+        const auto end_it = std::lower_bound(time_vec.begin(), time_vec.end(), target_end_time);
+
+        const size_t end_idx = std::distance(time_vec.begin(), end_it);
+        const size_t end_idy = std::distance(end_it, time_vec.end());
+        m_DataFromEnd        = static_cast<double>(end_idy);
+        m_DataCount          = end_idx;
+        m_PointsPer          = static_cast<double>(end_idx) / m_TotalFrames;
+    }
+}
+
+void ViewPage::DynamicPlotLoop() {
+    m_PlotPercent =
+        m_DynamicPlotting
+            ? std::max(m_DataCount - m_PointsPer * m_CurrentFrameUI + m_DataFromEnd, m_DataFromEnd)
+            : 0.0;
 }

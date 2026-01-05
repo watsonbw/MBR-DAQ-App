@@ -68,6 +68,22 @@ std::string LocalTime::String() const {
     return std::format("{:02}:{:02}:{:02}.{:03}", Hour, Minute, Second, Millisecond);
 }
 
+std::optional<LocalTime> LocalTime::InputStringLT(std::string input) {
+    int h, m, s;
+
+    if (sscanf(input.c_str(), "%d:%d:%d", &h, &m, &s) == 3) {
+        if (h >= 0 && h < 24 && m >= 0 && m < 60 && s >= 0 && s < 60) {
+            LocalTime lt;
+            lt.Hour        = h;
+            lt.Minute      = m;
+            lt.Second      = s;
+            lt.Millisecond = 0;
+            lt.Microsecond = 0;
+            return lt;
+        }
+    }
+    return std::nullopt;
+}
 DateTime::DateTime() {
     auto now      = system_clock::now();
     auto duration = now.time_since_epoch();

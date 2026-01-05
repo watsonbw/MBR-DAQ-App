@@ -70,7 +70,7 @@ void ShockPage::DrawLHS(std::vector<std::string> raw_data) {
             std::vector<std::string> rawlines;
 
             if (!extra.empty()) {
-                final = dt.String(DateTime::StringFormat::TEXT_FILE) + "_ " + extra + ".txt";
+                final = dt.String(DateTime::StringFormat::TEXT_FILE) + "_" + extra + ".txt";
             } else {
                 final = dt.String(DateTime::StringFormat::TEXT_FILE) + ".txt";
             }
@@ -118,7 +118,7 @@ void ShockPage::DrawRHS(std::vector<double> time,
     ImGui::BeginChild("Graph Child");
 
     const auto plot_title =
-        m_Context->Backend->Data.IsSynced
+        m_Context->Backend->Data.IsSyncedToZero
             ? std::format("Shock Travel from {}", m_Context->Backend->Data.SyncLT.String())
             : "Shock Travel from No Synced Time";
 

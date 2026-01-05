@@ -30,17 +30,19 @@ class TelemetryData {
     ~TelemetryData() = default;
 
     const std::vector<double>&      GetTime() const { return m_Time; }
+    const std::vector<uint64_t>&    GetTimeNoNormal() const { return m_TimeNoNormalMicros; }
     const RPMData&                  GetRPMData() const { return m_RPMData; }
     const ShockData&                GetShockData() const { return m_ShockData; }
     const std::vector<std::string>& GetRawLines() const { return m_RawLines; };
     void                            WriteData(std::string identifier, std::string value);
     void                            WriteRawLine(const std::string& message);
     void                            Clear();
-    bool                            IsSynced{false};
+    bool                            IsSyncedToZero{false};
     LocalTime                       SyncLT;
 
   private:
     std::vector<double>      m_Time;
+    std::vector<uint64_t>    m_TimeNoNormalMicros;
     RPMData                  m_RPMData;
     ShockData                m_ShockData;
     std::vector<std::string> m_RawLines;

@@ -66,7 +66,7 @@ void RPMPage::DrawLHS(std::vector<std::string> raw_data) {
             std::vector<std::string> rawlines;
 
             if (!extra.empty()) {
-                final = dt.String(DateTime::StringFormat::TEXT_FILE) + "_ " + extra + ".txt";
+                final = dt.String(DateTime::StringFormat::TEXT_FILE) + "_" + extra + ".txt";
             } else {
                 final = dt.String(DateTime::StringFormat::TEXT_FILE) + ".txt";
             }
@@ -107,11 +107,10 @@ void RPMPage::DrawLHS(std::vector<std::string> raw_data) {
 void RPMPage::DrawRHS(std::vector<double> time,
                       std::vector<double> wheel,
                       std::vector<double> engine) {
-
     ImGui::BeginChild("Graph Child", {0, 0});
 
     const auto plot_title =
-        m_Context->Backend->Data.IsSynced
+        m_Context->Backend->Data.IsSyncedToZero
             ? std::format("RPM from {}", m_Context->Backend->Data.SyncLT.String())
             : "RPM from No Synced Time";
 

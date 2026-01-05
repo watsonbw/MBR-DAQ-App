@@ -57,8 +57,10 @@ class ViewPage : public Page {
     static SelectedTxtFile OpenTextFile();
     void                   LoadData();
     const char*            DataTypeString(DataView type);
-    std::optional<size_t>  SyncDataVideo(const std::vector<double>& time);
+    std::optional<size_t>  SyncDataVideo(const std::vector<uint64_t>& micros_times);
     void                   DeleteExtra(size_t erase_pos);
+    void                   DynamicPlotStart();
+    void                   DynamicPlotLoop();
 
     void StartDecodingThread();
     void StopDecodingThread();
@@ -69,18 +71,26 @@ class ViewPage : public Page {
   private:
     std::shared_ptr<bool> m_IsAlive;
 
-    std::string             m_VideoPath;
-    std::optional<DateTime> m_VideoCreationTimestamp;
-    std::atomic<bool>       m_VideoDialogRunning{false};
-    std::mutex              m_VideoPathMutex;
-    SelectedVideo           m_SelectedVideo;
-    bool                    m_VideoLoaded{false};
+    std::string              m_VideoPath;
+    std::optional<LocalTime> m_VideoCreationTimestamp;
+    std::atomic<bool>        m_VideoDialogRunning{false};
+    std::mutex               m_VideoPathMutex;
+    SelectedVideo            m_SelectedVideo;
+    std::string              m_InputTime;
+    bool                     m_VideoLoaded{false};
+
+    bool   m_DynamicPlotting{false};
+    size_t m_PlotPercent;
+    double m_PointsPer{0.0};
+    double m_DataCount{0.0};
+    double m_DataFromEnd{0.0};
 
     std::string       m_TxtPath;
     std::atomic<bool> m_TxtDialogRunning{false};
     std::mutex        m_TxtPathMutex;
     SelectedTxtFile   m_SelectedTxt;
     bool              m_TxtLoaded{false};
+    bool              m_DataAndTimeSync{false};
 
     int    m_TotalFrames{0};
     double m_VideoFPS{0.0};
