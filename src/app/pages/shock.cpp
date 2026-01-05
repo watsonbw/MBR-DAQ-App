@@ -1,6 +1,6 @@
+#include <fstream>
 #include <imgui.h>
 #include <implot.h>
-#include <fstream>
 
 #include "core/log.hpp"
 
@@ -10,7 +10,7 @@ void ShockPage::OnEnter() { LOG_INFO("Entered ShockPage"); }
 void ShockPage::OnExit() { LOG_INFO("Exited ShockPage"); }
 
 void ShockPage::Update() {
-    const auto window_flags = DefaultWindowFlags();
+    const auto  window_flags         = DefaultWindowFlags();
     static char extraTextBuffer[256] = "";
     DateTime    dt;
     ImGui::Begin("Shock Data Collection", nullptr, window_flags);
@@ -108,16 +108,28 @@ void ShockPage::Update() {
     if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
         if (!time.empty()) {
             if (!fr.empty()) {
-                ImPlot::PlotLine("Front Right Shock Travel", time.data(), fr.data(), std::min(time.size(), fr.size()));
+                ImPlot::PlotLine("Front Right Shock Travel",
+                                 time.data(),
+                                 fr.data(),
+                                 std::min(time.size(), fr.size()));
             }
             if (!fl.empty()) {
-                ImPlot::PlotLine("Front Left Shock Travel", time.data(), fl.data(), std::min(time.size(), fl.size()));
+                ImPlot::PlotLine("Front Left Shock Travel",
+                                 time.data(),
+                                 fl.data(),
+                                 std::min(time.size(), fl.size()));
             }
             if (!br.empty()) {
-                ImPlot::PlotLine("Rear Right Shock Travel", time.data(), br.data(), std::min(time.size(), br.size()));
+                ImPlot::PlotLine("Rear Right Shock Travel",
+                                 time.data(),
+                                 br.data(),
+                                 std::min(time.size(), br.size()));
             }
             if (!bl.empty()) {
-                ImPlot::PlotLine("Rear Left Shock Travel", time.data(), bl.data(), std::min(time.size(), bl.size()));
+                ImPlot::PlotLine("Rear Left Shock Travel",
+                                 time.data(),
+                                 bl.data(),
+                                 std::min(time.size(), bl.size()));
             }
         }
         ImPlot::EndPlot();

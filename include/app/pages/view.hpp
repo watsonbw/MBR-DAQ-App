@@ -16,17 +16,22 @@
 
 #include <sokol_gfx.h>
 
+#include "core/time.hpp"
+
 #include "app/assets/texture.hpp"
 #include "app/pages/page.hpp"
 
-
-enum DataView {
-    ALL,
-    RPMDATA,
-    SHOCKDATA,
-};
-
 class ViewPage : public Page {
+  public:
+    using SelectedVideo   = std::optional<std::pair<std::string, std::optional<DateTime>>>;
+    using SelectedTxtFile = std::optional<std::string>;
+
+    enum class DataView {
+        ALL,
+        RPMDATA,
+        SHOCKDATA,
+    };
+
   public:
     ViewPage(std::shared_ptr<AppContext> ctx);
     virtual ~ViewPage();
@@ -42,10 +47,12 @@ class ViewPage : public Page {
     void DrawLHSControls();
     void DrawRHS();
 
-    static std::optional<std::string> OpenVideoFile();
-    static std::optional<std::string> OpenTextFile();
-    void                              RequestSeek(int frame_index);
-    void                              LoadData(std::string path);
+    static SelectedVideo OpenVideoFile();
+    void                 RequestSeek(int frame_index);
+
+    static SelectedTxtFile OpenTextFile();
+    void                   LoadData(const std::string& path);
+    const char*            DataTypeString(DataView type);
 
     void StartDecodingThread();
     void StopDecodingThread();
@@ -53,15 +60,19 @@ class ViewPage : public Page {
 
     void TryCleanupSokolResources();
 
-    const char* DataTypeString(DataView type);
-
   private:
-    std::string                m_VideoPath;
-    std::atomic<bool>          m_DialogRunning{false};
-    std::mutex                 m_PathMutex;
-    std::optional<std::string> m_SelectedPath;
-    std::shared_ptr<bool>      m_IsAlive;
-    std::string                m_OpenPath;
+    std::shared_ptr<bool> m_IsAlive;
+
+    std::string             m_VideoPath;
+    std::optional<DateTime> m_VideoCreationTimestamp;
+    std::atomic<bool>       m_VideoDialogRunning{false};
+    std::mutex              m_VideoPathMutex;
+    SelectedVideo           m_SelectedVideo;
+
+    std::string       m_TxtPath;
+    std::atomic<bool> m_TxtDialogRunning{false};
+    std::mutex        m_TxtPathMutex;
+    SelectedTxtFile   m_SelectedTxt;
 
     int    m_TotalFrames{0};
     double m_VideoFPS{0.0};
@@ -73,7 +84,7 @@ class ViewPage : public Page {
     std::atomic<bool> m_IsLooping{false};
     std::atomic<int>  m_SeekTarget{-1};
     std::atomic<bool> m_ForceUpdateFrame{false};
-    DataView          m_DataShow{ALL};
+    DataView          m_DataShow{DataView::ALL};
 
     std::thread                         m_DecodeThread;
     std::atomic<bool>                   m_ThreadRunning{false};
