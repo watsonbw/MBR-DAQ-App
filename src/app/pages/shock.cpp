@@ -23,7 +23,7 @@ void ShockPage::Update() {
 
     // Logging Button
     {
-        ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
+        ImGui::PushFont(m_Context->Style.DefaultFonts.Regular, 36.0f);
 
         if (ImGui::Button(m_Context->Backend->IsLogging ? "Stop Logging" : "Start Logging")) {
             m_Context->Backend->IsLogging = !m_Context->Backend->IsLogging;
@@ -35,7 +35,7 @@ void ShockPage::Update() {
     ImGui::SameLine();
 
     {
-        ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
+        ImGui::PushFont(m_Context->Style.DefaultFonts.Regular, 36.0f);
         if (ImGui::Button("Download Data")) {
             std::string              extra = extraTextBuffer;
             std::string              final;
@@ -62,7 +62,7 @@ void ShockPage::Update() {
     ImGui::SameLine();
 
     {
-        ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
+        ImGui::PushFont(m_Context->Style.DefaultFonts.Regular, 36.0f);
 
         ImGui::SetNextItemWidth(200.0f);
 

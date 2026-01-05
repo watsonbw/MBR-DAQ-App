@@ -1,4 +1,12 @@
+#ifdef _WIN32
+#include <dwmapi.h>
+#endif
+
+#include <sokol_app.h>
+
 #include <imgui.h>
+
+#include "core/log.hpp"
 
 #include "app/assets/fonts/OpenSans.hpp"
 #include "app/style.hpp"
@@ -30,7 +38,14 @@ AppFonts LoadFonts() {
     return {.Regular = regular, .Bold = bold, .Italic = italic, .BoldItalic = bold_italic};
 }
 
-void SetDarkThemeColors() {
+void AppStyle::SetDarkThemeColors() {
+    LOG_INFO("Setting dark mode");
+#ifdef _WIN32
+    HWND hwnd          = (HWND)sapp_win32_get_hwnd();
+    BOOL use_dark_mode = TRUE;
+    DwmSetWindowAttribute(hwnd, 20, &use_dark_mode, sizeof(use_dark_mode));
+#endif
+
     // This is from my Game Engine
     auto& colors              = ImGui::GetStyle().Colors;
     colors[ImGuiCol_WindowBg] = ImVec4{0.1f, 0.105f, 0.11f, 1.0f};
@@ -61,4 +76,17 @@ void SetDarkThemeColors() {
     colors[ImGuiCol_TitleBg]          = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
     colors[ImGuiCol_TitleBgActive]    = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
     colors[ImGuiCol_TitleBgCollapsed] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+
+    DarkMode = true;
+}
+
+void AppStyle::SetLightThemeColors() {
+    LOG_INFO("Setting light mode");
+#ifdef _WIN32
+    HWND hwnd          = (HWND)sapp_win32_get_hwnd();
+    BOOL use_dark_mode = FALSE;
+    DwmSetWindowAttribute(hwnd, 20, &use_dark_mode, sizeof(use_dark_mode));
+#endif
+
+    DarkMode = false;
 }

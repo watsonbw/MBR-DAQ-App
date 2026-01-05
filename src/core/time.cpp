@@ -10,12 +10,15 @@ using namespace std::chrono;
 const uint64_t UNIX_1904_DIFF = 2082844800ULL;
 
 LocalTime::LocalTime() {
-#ifdef __APPLE__
     const auto now = system_clock::now();
 
     auto    time_now = system_clock::to_time_t(now);
     std::tm lt{};
+#ifdef _WIN32
+    localtime_s(&lt, &time_now);
+#else
     localtime_r(&time_now, &lt);
+#endif
 
     Hour   = static_cast<uint64_t>(lt.tm_hour);
     Minute = static_cast<uint64_t>(lt.tm_min);
@@ -27,25 +30,6 @@ LocalTime::LocalTime() {
 
     auto us     = duration_cast<microseconds>(duration) % 1000;
     Microsecond = static_cast<uint64_t>(us.count());
-#else
-    // https://stackoverflow.com/questions/61273498/number-of-seconds-since-midnight
-    auto now            = current_zone()->to_local(system_clock::now());
-    auto today          = floor<days>(now);
-    auto since_midnight = duration_cast<milliseconds>(now - today);
-
-    Hour = static_cast<uint64_t>(duration_cast<hours>(since_midnight).count());
-    since_midnight -= hours{Hour};
-
-    Minute = static_cast<uint64_t>(duration_cast<minutes>(since_midnight).count());
-    since_midnight -= minutes{Minute};
-
-    Second = static_cast<uint64_t>(duration_cast<seconds>(since_midnight).count());
-    since_midnight -= seconds{Second};
-
-    const auto total_us = duration_cast<microseconds>(now.time_since_epoch());
-    Millisecond         = static_cast<uint64_t>((total_us.count() / 1000) % 1000);
-    Microsecond         = static_cast<uint64_t>(total_us.count() % 1000);
-#endif
 }
 
 LocalTime::LocalTime(uint64_t micros) {
@@ -88,33 +72,21 @@ DateTime::DateTime() {
     auto now      = system_clock::now();
     auto duration = now.time_since_epoch();
 
-#ifdef __APPLE__
     time_t  time_now = system_clock::to_time_t(now);
-    std::tm lt_struct{};
-    localtime_r(&time_now, &lt_struct);
-
-    Year  = lt_struct.tm_year + 1900;
-    Month = lt_struct.tm_mon + 1;
-    Day   = lt_struct.tm_mday;
-
-    Local.Hour   = lt_struct.tm_hour;
-    Local.Minute = lt_struct.tm_min;
-    Local.Second = lt_struct.tm_sec;
+    std::tm lt{};
+#ifdef _WIN32
+    localtime_s(&lt, &time_now);
 #else
-    auto           local_now = current_zone()->to_local(now);
-    auto           day_point = floor<days>(local_now);
-    year_month_day ymd{day_point};
-
-    Year  = static_cast<int>(ymd.year());
-    Month = static_cast<unsigned>(ymd.month());
-    Day   = static_cast<unsigned>(ymd.day());
-
-    auto tod     = local_now - day_point;
-    auto hms     = hh_mm_ss(tod);
-    Local.Hour   = hms.hours().count();
-    Local.Minute = hms.minutes().count();
-    Local.Second = hms.seconds().count();
+    localtime_r(&time_now, &lt);
 #endif
+
+    Year  = lt.tm_year + 1900;
+    Month = lt.tm_mon + 1;
+    Day   = lt.tm_mday;
+
+    Local.Hour   = lt.tm_hour;
+    Local.Minute = lt.tm_min;
+    Local.Second = lt.tm_sec;
 
     // Platform independent time points
     auto total_us     = duration_cast<microseconds>(duration).count();
@@ -125,31 +97,21 @@ DateTime::DateTime() {
 DateTime::DateTime(uint64_t creation_time_seconds) {
     uint64_t unix_seconds = creation_time_seconds - UNIX_1904_DIFF;
 
-#ifdef __APPLE__
-    time_t  t = static_cast<time_t>(unix_seconds);
-    std::tm lt_struct{};
-    localtime_r(&t, &lt_struct);
-
-    Year  = lt_struct.tm_year + 1900;
-    Month = lt_struct.tm_mon + 1;
-    Day   = lt_struct.tm_mday;
-
-    Local.Hour   = lt_struct.tm_hour;
-    Local.Minute = lt_struct.tm_min;
-    Local.Second = lt_struct.tm_sec;
+    time_t  time_now = static_cast<time_t>(unix_seconds);
+    std::tm lt{};
+#ifdef _WIN32
+    localtime_s(&lt, &time_now);
 #else
-    auto           tp_utc    = sys_seconds{seconds(unix_seconds)};
-    auto           local_tp  = current_zone()->to_local(tp_utc);
-    auto           day_point = floor<days>(local_tp);
-    year_month_day ymd{day_point};
-
-    Year  = static_cast<int>(ymd.year());
-    Month = static_cast<unsigned>(ymd.month());
-    Day   = static_cast<unsigned>(ymd.day());
-
-    auto tod = duration_cast<microseconds>(local_tp - day_point);
-    Local    = LocalTime{static_cast<uint64_t>(tod.count())};
+    localtime_r(&time_now, &lt);
 #endif
+
+    Year  = lt.tm_year + 1900;
+    Month = lt.tm_mon + 1;
+    Day   = lt.tm_mday;
+
+    Local.Hour   = lt.tm_hour;
+    Local.Minute = lt.tm_min;
+    Local.Second = lt.tm_sec;
 
     // Accuracy is restricted to seconds
     Local.Millisecond = 0;

@@ -19,7 +19,7 @@ const char* PageTypeString(PageType type);
 class TelemetryBackend;
 
 struct AppContext {
-    AppFonts                          Fonts;
+    AppStyle                          Style;
     PageType                          CurrentPageType;
     std::atomic<bool>                 ShouldExit{false};
     std::unique_ptr<TelemetryBackend> Backend;

@@ -12,4 +12,11 @@ struct AppFonts {
 };
 
 AppFonts LoadFonts();
-void     SetDarkThemeColors();
+
+struct AppStyle {
+    void SetDarkThemeColors();
+    void SetLightThemeColors();
+
+    AppFonts DefaultFonts;
+    bool     DarkMode{true};
+};

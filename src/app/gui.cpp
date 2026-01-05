@@ -1,10 +1,6 @@
 #include <cassert>
 #include <sstream>
 
-#ifdef _WIN32
-#include <dwmapi.h>
-#endif
-
 #include <imgui.h>
 #include <implot.h>
 
@@ -14,9 +10,9 @@
 #include <sokol_imgui.h>
 #include <sokol_log.h>
 
-#include "app/assets/images/app_icon.hpp"
-
 #include "core/time.hpp"
+
+#include "app/assets/images/app_icon.hpp"
 
 #include "app/gui.hpp"
 #include "app/style.hpp"
@@ -30,10 +26,14 @@ using namespace std::chrono;
 
 GUI* GUI::s_Instance = nullptr;
 
-void GUI::SokolInitCB() { s_Instance->OnInit(); }
-void GUI::SokolCleanupCB() { s_Instance->OnCleanup(); }
-void GUI::SokolFrameCB() { s_Instance->OnFrame(); }
-void GUI::SokolEventCB(const sapp_event* e) { s_Instance->OnEvent(e); }
+#define SAFE_SOKOL_CB(F) \
+    assert(s_Instance);  \
+    s_Instance->F
+
+void GUI::SokolInitCB() { SAFE_SOKOL_CB(OnInit()); }
+void GUI::SokolCleanupCB() { SAFE_SOKOL_CB(OnCleanup()); }
+void GUI::SokolFrameCB() { SAFE_SOKOL_CB(OnFrame()); }
+void GUI::SokolEventCB(const sapp_event* e) { SAFE_SOKOL_CB(OnEvent(e)); }
 
 sapp_desc GUI::GetSokolDesc() {
     assert(s_Instance == nullptr);
@@ -67,18 +67,12 @@ void GUI::OnInit() {
     si_desc.no_default_font = true;
     simgui_setup(&si_desc);
 
-#ifdef _WIN32
-    HWND hwnd          = (HWND)sapp_win32_get_hwnd();
-    BOOL use_dark_mode = TRUE;
-    DwmSetWindowAttribute(hwnd, 20, &use_dark_mode, sizeof(use_dark_mode));
-#endif
-
-    auto& io         = ImGui::GetIO();
-    m_Context->Fonts = LoadFonts();
-    io.FontDefault   = m_Context->Fonts.Regular;
+    auto& io                      = ImGui::GetIO();
+    m_Context->Style.DefaultFonts = LoadFonts();
+    io.FontDefault                = m_Context->Style.DefaultFonts.Regular;
 
     ImPlot::CreateContext();
-    SetDarkThemeColors();
+    m_Context->Style.SetDarkThemeColors();
 
     ChangePage(PageType::HOME);
 }
@@ -162,16 +156,26 @@ void GUI::ChangePage(PageType type) {
 }
 
 void GUI::DrawMainMenuBar() {
-    ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
+    ImGui::PushFont(m_Context->Style.DefaultFonts.Regular, 36.0f);
 
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("Menu")) {
+            ImGui::PushFont(m_Context->Style.DefaultFonts.Regular, 28.0f);
+            
             if (ImGui::MenuItem("Home")) { ChangePage(PageType::HOME); }
             if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
             if (ImGui::MenuItem("Shock")) { ChangePage(PageType::SHOCK); }
             if (ImGui::MenuItem("View")) { ChangePage(PageType::VIEW); }
+            if (ImGui::MenuItem("Toggle Dark Mode")) {
+                if (m_Context->Style.DarkMode) {
+                    m_Context->Style.SetLightThemeColors();
+                } else {
+                    m_Context->Style.SetDarkThemeColors();
+                }
+            }
             if (ImGui::MenuItem("Exit")) { sapp_request_quit(); }
-
+            
+            ImGui::PopFont();
             ImGui::EndMenu();
         }
 
