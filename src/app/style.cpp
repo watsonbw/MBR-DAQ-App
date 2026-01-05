@@ -1,5 +1,4 @@
 #include <array>
-#include <span>
 
 #ifdef _WIN32
 #include <dwmapi.h>

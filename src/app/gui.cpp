@@ -156,7 +156,7 @@ void GUI::ChangePage(PageType type) {
 }
 
 void GUI::DrawMainMenuBar() {
-    ImGui::PushFont(m_Context->Style.DefaultFonts.Regular, 36.0f);
+    ImGui::PushFont(m_Context->Style.DefaultFonts.Regular, 30.0f);
 
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("Menu")) {
