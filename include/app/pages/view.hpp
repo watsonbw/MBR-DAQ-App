@@ -45,13 +45,17 @@ class ViewPage : public Page {
 
     void DrawLHS();
     void DrawLHSControls();
+    void DrawOpenVideo();
+
     void DrawRHS();
+    void DrawOpenText();
+    void DrawSyncVideoButtons();
 
     static SelectedVideo OpenVideoFile();
     void                 RequestSeek(int frame_index);
 
     static SelectedTxtFile OpenTextFile();
-    void                   LoadData(const std::string& path);
+    void                   LoadData();
     const char*            DataTypeString(DataView type);
     std::optional<size_t>  SyncDataVideo(const std::vector<double>& time);
     void                   DeleteExtra(size_t erase_pos);
@@ -70,11 +74,13 @@ class ViewPage : public Page {
     std::atomic<bool>       m_VideoDialogRunning{false};
     std::mutex              m_VideoPathMutex;
     SelectedVideo           m_SelectedVideo;
+    bool                    m_VideoLoaded{false};
 
     std::string       m_TxtPath;
     std::atomic<bool> m_TxtDialogRunning{false};
     std::mutex        m_TxtPathMutex;
     SelectedTxtFile   m_SelectedTxt;
+    bool              m_TxtLoaded{false};
 
     int    m_TotalFrames{0};
     double m_VideoFPS{0.0};

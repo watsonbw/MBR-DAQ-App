@@ -62,36 +62,9 @@ void ViewPage::Cleanup() {
 void ViewPage::DrawLHS() {
     ImGui::BeginChild("VideoPlayerColumn");
 
-    // Check if the file is ready
-    {
-        std::lock_guard<std::mutex> lock{m_VideoPathMutex};
-        if (m_SelectedVideo.has_value()) {
-            StopDecodingThread();
-            TryCleanupSokolResources();
-            m_VideoPath              = m_SelectedVideo.value().first;
-            m_VideoCreationTimestamp = m_SelectedVideo.value().second;
-            m_SelectedVideo          = std::nullopt;
-            StartDecodingThread();
-        }
-    }
+    DrawOpenVideo();
 
-    // File selection can happen at any point during playback
-    const bool is_disabled_by_video = m_VideoDialogRunning.load();
-    if (is_disabled_by_video) { ImGui::BeginDisabled(); }
-    if (ImGui::Button("Open Video")) {
-        m_VideoDialogRunning = true;
-        const auto alive     = m_IsAlive;
-
-        std::thread([this, alive]() {
-            const auto path = OpenVideoFile();
-            if (*alive) {
-                std::lock_guard<std::mutex> lock{m_VideoPathMutex};
-                m_SelectedVideo      = path;
-                m_VideoDialogRunning = false;
-            }
-        }).detach();
-    }
-    if (is_disabled_by_video) { ImGui::EndDisabled(); }
+    ImGui::SameLine();
 
     // Playback logic and frame skipping can be ignored if paused
     bool is_timer_tick = false;
@@ -158,37 +131,51 @@ void ViewPage::DrawLHSControls() {
     }
 }
 
-void ViewPage::DrawRHS() {
-    ImGui::BeginChild("Data");
-    ImGui::SetWindowFontScale(1.3f);
-
+void ViewPage::DrawOpenVideo() {
     // Check if the file is ready
     {
-        std::lock_guard<std::mutex> lock{m_TxtPathMutex};
-        if (m_SelectedTxt.has_value()) {
-            m_TxtPath     = m_SelectedTxt.value();
-            m_SelectedTxt = std::nullopt;
-            LoadData(m_TxtPath);
+        std::lock_guard<std::mutex> lock{m_VideoPathMutex};
+        if (m_SelectedVideo.has_value()) {
+            StopDecodingThread();
+            TryCleanupSokolResources();
+            m_VideoPath              = m_SelectedVideo.value().first;
+            m_VideoCreationTimestamp = m_SelectedVideo.value().second;
+            m_SelectedVideo          = std::nullopt;
+            m_VideoLoaded            = true;
+            StartDecodingThread();
         }
     }
 
     // File selection can happen at any point during playback
-    const bool is_disabled_by_txt = m_TxtDialogRunning.load();
-    if (is_disabled_by_txt) { ImGui::BeginDisabled(); }
-    if (ImGui::Button("Open Text File")) {
-        m_TxtDialogRunning = true;
-        const auto alive   = m_IsAlive;
+    const bool is_disabled_by_video = m_VideoDialogRunning.load();
+    if (is_disabled_by_video) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Open Video")) {
+        m_VideoDialogRunning     = true;
+        m_VideoLoaded            = false;
+        m_VideoCreationTimestamp = std::nullopt;
+        const auto alive         = m_IsAlive;
+
         std::thread([this, alive]() {
-            const auto path = OpenTextFile();
+            const auto path = OpenVideoFile();
             if (*alive) {
-                std::lock_guard<std::mutex> lock{m_TxtPathMutex};
-                m_SelectedTxt                 = path;
-                m_TxtDialogRunning            = false;
-                m_Context->Backend->IsLogging = false;
+                std::lock_guard<std::mutex> lock{m_VideoPathMutex};
+                m_SelectedVideo      = path;
+                m_VideoDialogRunning = false;
             }
         }).detach();
     }
-    if (is_disabled_by_txt) { ImGui::EndDisabled(); }
+    if (is_disabled_by_video) { ImGui::EndDisabled(); }
+}
+
+void ViewPage::DrawRHS() {
+    ImGui::BeginChild("Data");
+    ImGui::SetWindowFontScale(1.3f);
+
+    DrawOpenText();
+
+    ImGui::SameLine();
+
+    DrawSyncVideoButtons();
 
     ImGui::Separator();
 
@@ -276,6 +263,67 @@ void ViewPage::DrawRHS() {
     ImGui::EndChild();
 }
 
+void ViewPage::DrawOpenText() {
+    // Check if the file is ready
+    {
+        std::lock_guard<std::mutex> lock{m_TxtPathMutex};
+        if (m_SelectedTxt.has_value()) {
+            m_TxtPath     = m_SelectedTxt.value();
+            m_SelectedTxt = std::nullopt;
+            m_TxtLoaded   = true;
+            LoadData();
+        }
+    }
+
+    // File selection can happen at any point during playback
+    const bool is_disabled_by_txt = m_TxtDialogRunning.load();
+    if (is_disabled_by_txt) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Open Text File")) {
+        m_TxtDialogRunning = true;
+        m_TxtLoaded        = false;
+        const auto alive   = m_IsAlive;
+
+        std::thread([this, alive]() {
+            const auto path = OpenTextFile();
+            if (*alive) {
+                std::lock_guard<std::mutex> lock{m_TxtPathMutex};
+                m_SelectedTxt                 = path;
+                m_TxtDialogRunning            = false;
+                m_Context->Backend->IsLogging = false;
+            }
+        }).detach();
+    }
+    if (is_disabled_by_txt) { ImGui::EndDisabled(); }
+}
+
+void ViewPage::DrawSyncVideoButtons() {
+    if (ImGui::Button("Sync Data/Video")) {
+        LoadData();
+        if (!m_TxtLoaded || !m_VideoLoaded) {
+            LOG_ERROR("Could not sync data with video:");
+            LOG_ERROR("  Text Loaded: {}", m_TxtLoaded);
+            LOG_ERROR("  Video Loaded: {}", m_VideoLoaded);
+            return;
+        }
+
+        std::optional<size_t> sync_time_pos;
+        {
+            // ta
+            std::lock_guard<std::mutex> lock{m_Context->Backend->DataMutex};
+            sync_time_pos = SyncDataVideo(m_Context->Backend->Data.GetTime());
+        }
+
+        if (!sync_time_pos.has_value()) {
+            LOG_ERROR("Could not get trim position from data/video");
+            return;
+        }
+
+        // This is probably mega unsafe...
+        DeleteExtra(sync_time_pos.value());
+        RequestSeek(0);
+    }
+}
+
 ViewPage::SelectedVideo ViewPage::OpenVideoFile() {
     const char* filters[] = {"*.mp4", "*.mov"};
     const char* path =
@@ -312,10 +360,10 @@ ViewPage::SelectedTxtFile ViewPage::OpenTextFile() {
     return path;
 }
 
-void ViewPage::LoadData(const std::string& path) {
-    std::ifstream file{path};
+void ViewPage::LoadData() {
+    std::ifstream file{m_TxtPath};
     if (!file.is_open()) {
-        LOG_ERROR("Failed to open file: {}", path);
+        LOG_ERROR("Failed to open file: {}", m_TxtPath);
         return;
     }
 
@@ -503,7 +551,20 @@ std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<double>& time) {
 
 void ViewPage::DeleteExtra(size_t erase_pos) {
     std::lock_guard<std::mutex> lock{m_Context->Backend->DataMutex};
-    auto&                       wheel_rpm = m_Context->Backend->Data.m_RPMData.WheelRPM;
-    if (wheel_rpm.empty() || wheel_rpm.size() < erase_pos) { return; }
-    .erase(, it);
+    std::vector<double>*        data[] = {
+        &m_Context->Backend->Data.m_RPMData.WheelRPM,
+        &m_Context->Backend->Data.m_RPMData.EngineRPM,
+        &m_Context->Backend->Data.m_ShockData.FrontRight,
+        &m_Context->Backend->Data.m_ShockData.FrontLeft,
+        &m_Context->Backend->Data.m_ShockData.BackRight,
+        &m_Context->Backend->Data.m_ShockData.BackLeft,
+    };
+
+    for (const auto& datum : data) {
+        if (datum->size() < erase_pos) { return; }
+    }
+
+    for (auto& datum : data) {
+        datum->erase(datum->begin(), datum->begin() + erase_pos);
+    }
 }
