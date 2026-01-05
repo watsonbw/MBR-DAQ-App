@@ -1,9 +1,12 @@
 #include <cassert>
 #include <chrono>
+#include <fstream>
+#include <sstream>
 
 #include <tinyfiledialogs.h>
 
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <implot.h>
 
 #include <sokol_app.h>
@@ -77,7 +80,7 @@ void ViewPage::DrawLHS() {
         const auto alive = m_IsAlive;
 
         std::thread([this, alive]() {
-            const auto path = OpenFile();
+            const auto path = OpenVideoFile();
             if (*alive) {
                 std::lock_guard<std::mutex> lock{m_PathMutex};
                 m_SelectedPath  = path;
@@ -154,8 +157,39 @@ void ViewPage::DrawLHSControls() {
 
 void ViewPage::DrawRHS() {
     ImGui::BeginChild("Data");
+    ImGui::SetWindowFontScale(1.3F);
 
-    std::vector<double> time, fr, fl, br, bl;
+    if (ImGui::Button("Open Text File")){
+        const auto maybe_path = OpenTextFile();
+        if (maybe_path.has_value()) {
+            m_OpenPath = maybe_path.value();
+            LoadData(m_OpenPath);
+    } else {
+        LOG_ERROR("COULD NOT OPEN FILE");
+    }
+    }
+    
+
+    ImGui::Separator();
+
+    if (ImGui::BeginMenu("Data Selection")) {
+            if (ImGui::MenuItem("All Data")) { m_DataShow = DataView(ALL); }
+            if (ImGui::MenuItem("RPM")) { m_DataShow = DataView(RPM); }
+            if (ImGui::MenuItem("Shock")) {  m_DataShow = DataView(SHOCK);}
+            ImGui::EndMenu();
+        }
+
+    ImGui::SameLine();
+
+    ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical, 1.0f);
+
+    ImGui::SameLine();
+
+    ImGui::TextUnformatted(DataTypeString(m_DataShow));
+
+    ImGui::SetWindowFontScale(1.0F);
+
+    std::vector<double> time, fr, fl, br, bl, wheel, engine;
 
     {
         std::lock_guard lock{m_Context->Backend->DataMutex};
@@ -166,21 +200,36 @@ void ViewPage::DrawRHS() {
         fl                     = shock_data.FrontLeft;
         br                     = shock_data.BackRight;
         bl                     = shock_data.BackRight;
+        
+        const auto& rpm_data   = m_Context->Backend->Data.GetRPMData();
+        wheel                  = rpm_data.WheelRPM;
+        engine                 = rpm_data.EngineRPM;
     }
 
-    if (ImPlot::BeginPlot("RPM Over Time", {-1, -1})) {
+    const auto plot_title =
+        m_Context->Backend->Data.IsSynced
+            ? std::format("Data View from {}", m_Context->Backend->Data.SyncLT.String())
+            : "Data View from No Synced Time";
+
+    if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
         if (!time.empty()) {
-            if (!fr.empty()) {
-                ImPlot::PlotLine("Wheel Speed", time.data(), fr.data(), time.size());
+            if (!wheel.empty() && (m_DataShow == ALL || m_DataShow == RPMDATA)) {
+                ImPlot::PlotLine("Wheel Speed", time.data(), wheel.data(), std::min(time.size(), wheel.size()));
             }
-            if (!fr.empty()) {
-                ImPlot::PlotLine("Wheel Speed", time.data(), fl.data(), time.size());
+            if (!engine.empty() && (m_DataShow == ALL || m_DataShow == RPMDATA)) {
+                ImPlot::PlotLine("Engine Speed", time.data(), engine.data(), std::min(time.size(), engine.size()));
             }
-            if (!fr.empty()) {
-                ImPlot::PlotLine("Wheel Speed", time.data(), br.data(), time.size());
+            if (!fr.empty() && (m_DataShow == ALL || m_DataShow == SHOCKDATA)) {
+                ImPlot::PlotLine("Front Right Shock Travel", time.data(), fr.data(), std::min(time.size(), fr.size()));
             }
-            if (!fr.empty()) {
-                ImPlot::PlotLine("Wheel Speed", time.data(), bl.data(), time.size());
+            if (!fl.empty() && (m_DataShow == ALL || m_DataShow == SHOCKDATA)) {
+                ImPlot::PlotLine("Front Left Shock Travel", time.data(), fl.data(), std::min(time.size(), fl.size()));
+            }
+            if (!br.empty() && (m_DataShow == ALL || m_DataShow == SHOCKDATA)) {
+                ImPlot::PlotLine("Rear Right Shock Travel", time.data(), br.data(), std::min(time.size(), br.size()));
+            }
+            if (!bl.empty() && (m_DataShow == ALL || m_DataShow == SHOCKDATA)) {
+                ImPlot::PlotLine("Rear Left Shock Travel", time.data(), bl.data(), std::min(time.size(), bl.size()));
             }
         }
         ImPlot::EndPlot();
@@ -189,7 +238,7 @@ void ViewPage::DrawRHS() {
     ImGui::EndChild();
 }
 
-std::optional<std::string> ViewPage::OpenFile() {
+std::optional<std::string> ViewPage::OpenVideoFile() {
     const char* filters[] = {"*.mp4", "*.mov"};
     const char* path =
         tinyfd_openFileDialog("Select a video file", "", std::size(filters), filters, NULL, 0);
@@ -210,6 +259,34 @@ std::optional<std::string> ViewPage::OpenFile() {
     }
 
     return path;
+}
+
+std::optional<std::string> ViewPage::OpenTextFile() {
+    const char* filters[] = {"*.txt"};
+    const char* path =
+        tinyfd_openFileDialog("Select a text file", "", std::size(filters), filters, NULL, 0);
+    if (path == nullptr) {
+        LOG_WARN("No file selected");
+        return std::nullopt;
+    }
+    LOG_INFO("Selected file: {}", path);
+    
+    return path;
+}
+
+void ViewPage::LoadData(std::string path){
+    const std::string real_path{path};
+
+    std::ifstream file(real_path);
+    if (!file.is_open()) {
+        LOG_ERROR("Failed to open file: {}", real_path);
+        return;
+    }
+    m_Context->Backend->Data.Clear();
+    std::string ident, value;
+    while (file >> ident >> value){
+        m_Context->Backend->Data.WriteData(ident, value);
+    }
 }
 
 void ViewPage::RequestSeek(int frame_index) {
@@ -360,4 +437,17 @@ void ViewPage::TryCleanupSokolResources() {
 
     m_TexWidth  = 0;
     m_TexHeight = 0;
+}
+
+const char* ViewPage::DataTypeString(DataView type) {
+    switch (type) {
+    case DataView::ALL:
+        return "All Data Shown";
+    case DataView::RPMDATA:
+        return "RPM Data Shown";
+    case DataView::SHOCKDATA:
+        return "Shock Data Shown";
+    default:
+        return "Unknown";
+    }
 }

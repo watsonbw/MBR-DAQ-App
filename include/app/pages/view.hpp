@@ -19,6 +19,13 @@
 #include "app/assets/texture.hpp"
 #include "app/pages/page.hpp"
 
+
+enum DataView {
+    ALL,
+    RPMDATA,
+    SHOCKDATA,
+};
+
 class ViewPage : public Page {
   public:
     ViewPage(std::shared_ptr<AppContext> ctx);
@@ -35,8 +42,10 @@ class ViewPage : public Page {
     void DrawLHSControls();
     void DrawRHS();
 
-    static std::optional<std::string> OpenFile();
+    static std::optional<std::string> OpenVideoFile();
+    static std::optional<std::string> OpenTextFile();
     void                              RequestSeek(int frame_index);
+    void                              LoadData(std::string path);
 
     void StartDecodingThread();
     void StopDecodingThread();
@@ -44,12 +53,15 @@ class ViewPage : public Page {
 
     void TryCleanupSokolResources();
 
+    const char* DataTypeString(DataView type);
+
   private:
     std::string                m_VideoPath;
     std::atomic<bool>          m_DialogRunning{false};
     std::mutex                 m_PathMutex;
     std::optional<std::string> m_SelectedPath;
     std::shared_ptr<bool>      m_IsAlive;
+    std::string                m_OpenPath;
 
     int    m_TotalFrames{0};
     double m_VideoFPS{0.0};
@@ -61,6 +73,7 @@ class ViewPage : public Page {
     std::atomic<bool> m_IsLooping{false};
     std::atomic<int>  m_SeekTarget{-1};
     std::atomic<bool> m_ForceUpdateFrame{false};
+    DataView          m_DataShow{ALL};
 
     std::thread                         m_DecodeThread;
     std::atomic<bool>                   m_ThreadRunning{false};

@@ -1,5 +1,6 @@
 #include <imgui.h>
 #include <implot.h>
+#include <fstream>
 
 #include "core/log.hpp"
 
@@ -10,6 +11,8 @@ void ShockPage::OnExit() { LOG_INFO("Exited ShockPage"); }
 
 void ShockPage::Update() {
     const auto window_flags = DefaultWindowFlags();
+    static char extraTextBuffer[256] = "";
+    DateTime    dt;
     ImGui::Begin("Shock Data Collection", nullptr, window_flags);
     ImGui::Columns(2);
 
@@ -22,10 +25,48 @@ void ShockPage::Update() {
     {
         ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
 
-        bool logging = m_Context->Backend->IsLogging;
-        if (ImGui::Button(logging ? "Stop Logging" : "Start Logging")) {
-            m_Context->Backend->IsLogging = !logging;
+        if (ImGui::Button(m_Context->Backend->IsLogging ? "Stop Logging" : "Start Logging")) {
+            m_Context->Backend->IsLogging = !m_Context->Backend->IsLogging;
         }
+
+        ImGui::PopFont();
+    }
+
+    ImGui::SameLine();
+
+    {
+        ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
+        if (ImGui::Button("Download Data")) {
+            std::string              extra = extraTextBuffer;
+            std::string              final;
+            std::vector<std::string> rawlines;
+
+            if (!extra.empty()) {
+                final = dt.String(DateTime::StringFormat::TEXT_FILE) + "_ " + extra + ".txt";
+            } else {
+                final = dt.String(DateTime::StringFormat::TEXT_FILE) + ".txt";
+            }
+
+            rawlines = m_Context->Backend->Data.GetRawLines();
+            std::ofstream out(final);
+            if (!out.is_open()) { LOG_ERROR("OFSTREAM DIDN'T OPEN", std::strerror(errno)); }
+
+            for (const auto& line : rawlines)
+                out << line << "\n";
+
+            extraTextBuffer[0] = '\0';
+        }
+        ImGui::PopFont();
+    }
+
+    ImGui::SameLine();
+
+    {
+        ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
+
+        ImGui::SetNextItemWidth(200.0f);
+
+        ImGui::InputText("##extra", extraTextBuffer, IM_ARRAYSIZE(extraTextBuffer));
 
         ImGui::PopFont();
     }
@@ -59,19 +100,24 @@ void ShockPage::Update() {
 
     ImGui::BeginChild("Graph Child");
 
-    if (ImPlot::BeginPlot("RPM Over Time", {-1, -1})) {
+    const auto plot_title =
+        m_Context->Backend->Data.IsSynced
+            ? std::format("Shock Travel from {}", m_Context->Backend->Data.SyncLT.String())
+            : "Shock Travel from No Synced Time";
+
+    if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
         if (!time.empty()) {
             if (!fr.empty()) {
-                ImPlot::PlotLine("Wheel Speed", time.data(), fr.data(), time.size());
+                ImPlot::PlotLine("Front Right Shock Travel", time.data(), fr.data(), std::min(time.size(), fr.size()));
             }
-            if (!fr.empty()) {
-                ImPlot::PlotLine("Wheel Speed", time.data(), fl.data(), time.size());
+            if (!fl.empty()) {
+                ImPlot::PlotLine("Front Left Shock Travel", time.data(), fl.data(), std::min(time.size(), fl.size()));
             }
-            if (!fr.empty()) {
-                ImPlot::PlotLine("Wheel Speed", time.data(), br.data(), time.size());
+            if (!br.empty()) {
+                ImPlot::PlotLine("Rear Right Shock Travel", time.data(), br.data(), std::min(time.size(), br.size()));
             }
-            if (!fr.empty()) {
-                ImPlot::PlotLine("Wheel Speed", time.data(), bl.data(), time.size());
+            if (!bl.empty()) {
+                ImPlot::PlotLine("Rear Left Shock Travel", time.data(), bl.data(), std::min(time.size(), bl.size()));
             }
         }
         ImPlot::EndPlot();
