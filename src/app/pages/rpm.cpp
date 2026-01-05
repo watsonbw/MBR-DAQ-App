@@ -13,19 +13,39 @@ void RPMPage::OnEnter() { LOG_INFO("Entered RPMPage"); }
 void RPMPage::OnExit() { LOG_INFO("Exited RPMPage"); }
 
 void RPMPage::Update() {
+    const auto window_flags = DefaultWindowFlags();
+    std::vector<std::string> raw_data;
+    std::vector<double>      time, wheel, engine;
+
+    {
+        std::lock_guard lock{m_Context->Backend->DataMutex};
+        time = m_Context->Backend->Data.GetTime();
+
+        const auto& rpm_data = m_Context->Backend->Data.GetRPMData();
+        raw_data             = m_Context->Backend->Data.GetRawLines();
+        wheel                = rpm_data.WheelRPM;
+        engine               = rpm_data.EngineRPM;
+    }
+    ImGui::Begin("RPM Data Collection", nullptr, window_flags);
+
+    if (ImGui::BeginTable("ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) { 
+        ImGui::TableNextColumn(); 
+        DrawLHS(); 
+        ImGui::TableNextColumn(); 
+        DrawRHS(); 
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+}
+
+
+void RPMPage::DrawLHS(){
     DateTime    dt;
     static char extraTextBuffer[256] = "";
-    // LOG_INFO("Began Update RPM");
-    const auto window_flags = DefaultWindowFlags();
-    ImGui::Begin("RPM Data Collection", nullptr, window_flags);
-    ImGui::Columns(2);
-    // LOG_INFO("1");
-    //  Left Side
     ImGui::BeginChild("Data Log Child");
     ImGui::Text("Data Log");
     ImGui::Separator();
-    // LOG_INFO("2");
-    //  Logging Button
     {
         ImGui::PushFont(m_Context->Fonts.Regular, 36.0f);
 
@@ -95,10 +115,9 @@ void RPMPage::Update() {
     }
 
     ImGui::EndChild();
-    // LOG_INFO("4");
-    //  Right Side
+}
 
-    ImGui::NextColumn();
+void RPMPage::DrawRHS(){
 
     ImGui::BeginChild("Graph Child", {0, 0});
 
@@ -125,6 +144,4 @@ void RPMPage::Update() {
     }
 
     ImGui::EndChild();
-
-    ImGui::End();
 }

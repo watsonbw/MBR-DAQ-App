@@ -42,10 +42,13 @@ void ViewPage::Update() {
     auto window_flags = DefaultWindowFlags();
     ImGui::Begin("View Data", nullptr, window_flags);
 
-    ImGui::Columns(2);
-    DrawLHS();
-    ImGui::NextColumn();
-    DrawRHS();
+    if (ImGui::BeginTable("ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) { 
+        ImGui::TableNextColumn(); 
+        DrawLHS(); 
+        ImGui::TableNextColumn(); 
+        DrawRHS(); 
+        ImGui::EndTable(); 
+    }
 
     ImGui::End();
 }
