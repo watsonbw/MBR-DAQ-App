@@ -59,7 +59,7 @@ void TelemetryData::WriteData(const std::string& identifier, const std::string& 
         } else if (identifier == "bl") {
             m_ShockData.BackLeft.push_back(std::stod(value));
         }
-    } catch (std::exception e) { LOG_ERROR("Failed to write data: {}", e.what()); }
+    } catch (const std::exception& e) { LOG_ERROR("Failed to write data: {}", e.what()); }
 }
 
 void TelemetryData::WriteRawLine(const std::string& full_message) {
