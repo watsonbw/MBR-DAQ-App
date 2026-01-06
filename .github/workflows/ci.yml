@@ -14,7 +14,7 @@ on:
     branches: [main, 'feature/**']
       
 jobs:
-  package:
+  build-test:
     permissions:
       contents: write
     strategy:
@@ -32,7 +32,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew update
-          brew install llvm clang-format cmake ninja
+          brew install llvm
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
           
@@ -43,12 +43,11 @@ jobs:
           update: true
           msystem: UCRT64
           install: >-
-            clang
-            mingw-w64-ucrt-x86_64-clang
+            mingw-w64-ucrt-x86_64-gcc
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
 
-      - name: Build and pack macOS
+      - name: Build and test macOS
         if: runner.os == 'macOS'
         run: |
             cmake -G Ninja -S . -B build
@@ -56,7 +55,7 @@ jobs:
             cmake --build build --target asan
             cd build && ctest --output-on-failure -R "run_tests_.*"
             
-      - name: Build and pack windows
+      - name: Build and test Windows
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: |
