@@ -11,3 +11,4 @@ build*/
 .zed
 
 __cmake*
+*.log
