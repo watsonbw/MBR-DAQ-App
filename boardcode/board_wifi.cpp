@@ -28,7 +28,7 @@ void BoardWifi::Start() {
     if (MDNS.begin("telemetry")) { Serial.println("mDNS responder started"); }
 
     m_WebSock.onEvent(BoardWifi::OnWsEvent);
-    
+
     m_AsyncServer.addHandler(&m_WebSock);
 
     m_AsyncServer.on("/connecttest.txt", [](AsyncWebServerRequest* request) {
@@ -41,7 +41,7 @@ void BoardWifi::Start() {
 }
 
 void BoardWifi::SendData(String msg) {
-    if (m_WebSock.count() > 0 ) { m_WebSock.textAll(msg); }
+    if (m_WebSock.count() > 0) { m_WebSock.textAll(msg); }
 }
 
 void BoardWifi::OnWsEvent(AsyncWebSocket*       server,
@@ -57,7 +57,7 @@ void BoardWifi::OnWsEvent(AsyncWebSocket*       server,
         }
 
         if (command.startsWith("SYNC")) {
-            String timeStr            = command.substring(4);
+            String timeStr                = command.substring(4);
             s_Instance->m_LocalSyncMicros = micros();
             s_Instance->m_BaseTimeMicros  = strtoull(timeStr.c_str(), NULL, 10);
             s_Instance->m_IsTimeSynced    = 1;
@@ -69,7 +69,7 @@ void BoardWifi::OnWsEvent(AsyncWebSocket*       server,
         Serial.print("Received Command: ");
         Serial.println(command);
     } else if (type == WS_EVT_CONNECT) {
-       server->cleanupClients();
+        server->cleanupClients();
         Serial.println("Client connected");
     } else if (type == WS_EVT_DISCONNECT) {
         Serial.println("Client disconnected");
@@ -77,7 +77,7 @@ void BoardWifi::OnWsEvent(AsyncWebSocket*       server,
 }
 
 uint64_t BoardWifi::GetRealTime() {
-    if (!s_Instance->m_IsTimeSynced) {return 0;}
+    if (!s_Instance->m_IsTimeSynced) { return 0; }
     uint32_t elapsedMicros = micros() - m_LocalSyncMicros;
     return m_BaseTimeMicros + (uint64_t)(elapsedMicros);
 }
