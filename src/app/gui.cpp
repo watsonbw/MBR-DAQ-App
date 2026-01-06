@@ -26,14 +26,14 @@ using namespace std::chrono;
 
 GUI* GUI::s_Instance = nullptr;
 
-#define SAFE_SOKOL_CB(F) \
-    assert(s_Instance);  \
+#define SOKOL_CB(F)     \
+    assert(s_Instance); \
     s_Instance->F
 
-void GUI::SokolInitCB() { SAFE_SOKOL_CB(OnInit()); }
-void GUI::SokolCleanupCB() { SAFE_SOKOL_CB(OnCleanup()); }
-void GUI::SokolFrameCB() { SAFE_SOKOL_CB(OnFrame()); }
-void GUI::SokolEventCB(const sapp_event* e) { SAFE_SOKOL_CB(OnEvent(e)); }
+void GUI::SokolInitCB() { SOKOL_CB(OnInit()); }
+void GUI::SokolCleanupCB() { SOKOL_CB(OnCleanup()); }
+void GUI::SokolFrameCB() { SOKOL_CB(OnFrame()); }
+void GUI::SokolEventCB(const sapp_event* e) { SOKOL_CB(OnEvent(e)); }
 
 sapp_desc GUI::GetSokolDesc() {
     assert(s_Instance == nullptr);
@@ -78,12 +78,7 @@ void GUI::OnInit() {
 }
 
 void GUI::OnFrame() {
-    simgui_frame_desc_t frame_desc = {};
-    frame_desc.width               = sapp_width();
-    frame_desc.height              = sapp_height();
-    frame_desc.delta_time          = sapp_frame_duration();
-    frame_desc.dpi_scale           = sapp_dpi_scale();
-    simgui_new_frame(&frame_desc);
+    SokolStartFrame();
 
     MAIN_MENU_BAR(DrawMainMenuBar());
 
@@ -91,19 +86,57 @@ void GUI::OnFrame() {
         const auto* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
+
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
-        m_CurrentPage->Update();
+        constexpr ImGuiWindowFlags window_flags =
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
+            ImGuiWindowFlags_NoNavFocus;
+        if (ImGui::Begin("##MainPage", nullptr, window_flags)) { m_CurrentPage->Update(); }
+        ImGui::End();
 
         ImGui::PopStyleVar(2);
     }
 
-    if (m_Context->Backend->TryConnection == true) {
-        m_Context->Backend->Start();
-        m_Context->Backend->TryConnection = false;
-    }
+    if (ImGui::IsKeyPressed(ImGuiKey_F11, false)) { sapp_toggle_fullscreen(); }
+    if (m_Context->Backend->TryConnection.exchange(false)) { m_Context->Backend->Start(); }
 
+    SokolEndFrame();
+}
+
+void GUI::OnEvent(const sapp_event* event) {
+    switch (event->type) {
+    case SAPP_EVENTTYPE_QUIT_REQUESTED:
+        sapp_quit();
+        break;
+    default:
+        break;
+    }
+    simgui_handle_event(event);
+}
+
+void GUI::OnCleanup() {
+    m_Context->ShouldExit = true;
+    if (m_CurrentPage) { m_CurrentPage->OnExit(); }
+    m_CurrentPage.reset();
+
+    simgui_shutdown();
+    sg_shutdown();
+    ImPlot::DestroyContext();
+}
+
+void GUI::SokolStartFrame() {
+    simgui_frame_desc_t frame_desc = {};
+    frame_desc.width               = sapp_width();
+    frame_desc.height              = sapp_height();
+    frame_desc.delta_time          = sapp_frame_duration();
+    frame_desc.dpi_scale           = sapp_dpi_scale();
+    simgui_new_frame(&frame_desc);
+}
+
+void GUI::SokolEndFrame() {
     sg_pass_action pass_action        = {};
     pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
     pass_action.colors[0].clear_value = {0.1f, 0.1f, 0.1f, 1.0f};
@@ -116,21 +149,6 @@ void GUI::OnFrame() {
     simgui_render();
     sg_end_pass();
     sg_commit();
-}
-
-void GUI::OnEvent(const sapp_event* event) {
-    if (event->type == SAPP_EVENTTYPE_QUIT_REQUESTED) { sapp_quit(); }
-    simgui_handle_event(event);
-}
-
-void GUI::OnCleanup() {
-    m_Context->ShouldExit = true;
-    if (m_CurrentPage) { m_CurrentPage->OnExit(); }
-    m_CurrentPage.reset();
-
-    simgui_shutdown();
-    sg_shutdown();
-    ImPlot::DestroyContext();
 }
 
 void GUI::ChangePage(PageType type) {

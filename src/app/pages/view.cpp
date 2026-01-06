@@ -45,18 +45,14 @@ void ViewPage::OnExit() {
 }
 
 void ViewPage::Update() {
-    auto window_flags = DefaultWindowFlags();
-    if (ImGui::Begin("View Data", nullptr, window_flags)) {
-        if (ImGui::BeginTable(
-                "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
-            ImGui::TableNextColumn();
-            DrawLHS();
-            ImGui::TableNextColumn();
-            DrawRHS();
-            ImGui::EndTable();
-        }
+    if (ImGui::BeginTable(
+            "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
+        ImGui::TableNextColumn();
+        DrawLHS();
+        ImGui::TableNextColumn();
+        DrawRHS();
+        ImGui::EndTable();
     }
-    ImGui::End();
 }
 
 void ViewPage::Cleanup() {
@@ -321,7 +317,7 @@ void ViewPage::DrawSyncVideoButtons() {
     }
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##extra_view", m_CreationMetadataTextBuf, "Hour:Min:Sec", 120.0f);
+    TextUtils::DrawInputBox("##extra_view", m_CreationMetadataTextBuf, "HH:MM:SS", 120.0f);
     ImGui::SameLine();
     if (ImGui::Checkbox("Dynamic Plotting", &m_DynamicPlotting)) { ViewPage::DynamicPlotStart(); }
 }

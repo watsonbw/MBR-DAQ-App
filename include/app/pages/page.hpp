@@ -17,5 +17,3 @@ class Page {
     explicit Page(std::shared_ptr<AppContext> ctx) : m_Context{ctx} {}
     std::shared_ptr<AppContext> m_Context;
 };
-
-int DefaultWindowFlags();

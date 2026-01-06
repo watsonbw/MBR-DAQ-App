@@ -28,6 +28,9 @@ class GUI {
     void OnEvent(const sapp_event* event);
     void OnCleanup();
 
+    static void SokolStartFrame();
+    static void SokolEndFrame();
+
   private:
     void ChangePage(PageType type);
 

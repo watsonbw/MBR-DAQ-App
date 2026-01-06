@@ -13,25 +13,21 @@ void ShockPage::OnEnter() { LOG_INFO("Entered ShockPage"); }
 void ShockPage::OnExit() { LOG_INFO("Exited ShockPage"); }
 
 void ShockPage::Update() {
-    const auto window_flags = DefaultWindowFlags();
-    if (ImGui::Begin("Shock Data Collection", nullptr, window_flags)) {
-        if (ImGui::BeginTable(
-                "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
-            const auto  data  = m_Context->Backend->PackData();
-            const auto& shock = data.Shock;
+    if (ImGui::BeginTable(
+            "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
+        const auto  data  = m_Context->Backend->PackData();
+        const auto& shock = data.Shock;
 
-            ImGui::TableNextColumn();
-            DrawLHS(data.RawLines);
-            ImGui::TableNextColumn();
-            DrawRHS(data.TimeMinutesNormalized,
-                    shock.FrontRight,
-                    shock.FrontLeft,
-                    shock.BackRight,
-                    shock.BackLeft);
-            ImGui::EndTable();
-        }
+        ImGui::TableNextColumn();
+        DrawLHS(data.RawLines);
+        ImGui::TableNextColumn();
+        DrawRHS(data.TimeMinutesNormalized,
+                shock.FrontRight,
+                shock.FrontLeft,
+                shock.BackRight,
+                shock.BackLeft);
+        ImGui::EndTable();
     }
-    ImGui::End();
 }
 
 void ShockPage::DrawLHS(const std::vector<std::string>& raw_lines) {

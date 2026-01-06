@@ -12,41 +12,37 @@ void HomePage::OnEnter() { LOG_INFO("Entered HomePage"); }
 void HomePage::OnExit() { LOG_INFO("Exited HomePage"); }
 
 void HomePage::Update() {
-    const auto window_flags = DefaultWindowFlags();
-    if (ImGui::Begin("Home Page", nullptr, window_flags)) {
-        const float full_height   = ImGui::GetContentRegionAvail().y;
-        const float top_height    = full_height * 0.66f;
-        const float bottom_height = full_height - top_height;
+    const float full_height   = ImGui::GetContentRegionAvail().y;
+    const float top_height    = full_height * 0.66f;
+    const float bottom_height = full_height - top_height;
 
-        if (ImGui::BeginChild("TopSection", {0, top_height})) {
-            if (ImGui::BeginTable("TopSplit", 2, ImGuiTableFlags_BordersInnerV)) {
-                ImGui::TableNextColumn();
-                DrawTopLHS();
-                ImGui::TableNextColumn();
-                DrawTopRHS();
+    if (ImGui::BeginChild("TopSection", {0, top_height})) {
+        if (ImGui::BeginTable("TopSplit", 2, ImGuiTableFlags_BordersInnerV)) {
+            ImGui::TableNextColumn();
+            DrawTopLHS();
+            ImGui::TableNextColumn();
+            DrawTopRHS();
 
-                ImGui::EndTable();
-            }
+            ImGui::EndTable();
         }
-        ImGui::EndChild();
-        ImGui::Separator();
-
-        if (ImGui::BeginChild("BottomSection", {0, bottom_height})) {
-            if (ImGui::BeginTable("BottomSplit", 2, ImGuiTableFlags_Resizable)) {
-                ImGui::TableSetupColumn("Errors", ImGuiTableColumnFlags_WidthStretch, 0.33f);
-                ImGui::TableSetupColumn("ActionPanel", ImGuiTableColumnFlags_WidthStretch, 0.66f);
-
-                ImGui::TableNextColumn();
-                DrawBottomLHS();
-                ImGui::TableNextColumn();
-                DrawBottomRHS();
-
-                ImGui::EndTable();
-            }
-        }
-        ImGui::EndChild();
     }
-    ImGui::End();
+    ImGui::EndChild();
+    ImGui::Separator();
+
+    if (ImGui::BeginChild("BottomSection", {0, bottom_height})) {
+        if (ImGui::BeginTable("BottomSplit", 2, ImGuiTableFlags_Resizable)) {
+            ImGui::TableSetupColumn("Errors", ImGuiTableColumnFlags_WidthStretch, 0.33f);
+            ImGui::TableSetupColumn("ActionPanel", ImGuiTableColumnFlags_WidthStretch, 0.66f);
+
+            ImGui::TableNextColumn();
+            DrawBottomLHS();
+            ImGui::TableNextColumn();
+            DrawBottomRHS();
+
+            ImGui::EndTable();
+        }
+    }
+    ImGui::EndChild();
 }
 
 void HomePage::DrawTopLHS() {

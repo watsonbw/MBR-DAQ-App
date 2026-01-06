@@ -14,21 +14,17 @@ void RPMPage::OnEnter() { LOG_INFO("Entered RPMPage"); }
 void RPMPage::OnExit() { LOG_INFO("Exited RPMPage"); }
 
 void RPMPage::Update() {
-    const auto window_flags = DefaultWindowFlags();
-    if (ImGui::Begin("RPM Data Collection", nullptr, window_flags)) {
-        if (ImGui::BeginTable(
-                "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
-            const auto  data = m_Context->Backend->PackData();
-            const auto& rpm  = data.RPM;
+    if (ImGui::BeginTable(
+            "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
+        const auto  data = m_Context->Backend->PackData();
+        const auto& rpm  = data.RPM;
 
-            ImGui::TableNextColumn();
-            DrawLHS(data.RawLines);
-            ImGui::TableNextColumn();
-            DrawRHS(data.TimeMinutesNormalized, rpm.WheelRPM, rpm.EngineRPM);
-            ImGui::EndTable();
-        }
+        ImGui::TableNextColumn();
+        DrawLHS(data.RawLines);
+        ImGui::TableNextColumn();
+        DrawRHS(data.TimeMinutesNormalized, rpm.WheelRPM, rpm.EngineRPM);
+        ImGui::EndTable();
     }
-    ImGui::End();
 }
 
 void RPMPage::DrawLHS(const std::vector<std::string>& raw_lines) {

@@ -12,7 +12,7 @@ else()
 endif()
 
 set(CMAKE_BUILD_TYPE Release)
-project(baja_daq
+project(MBR-DAQ
     VERSION 0.1.0
     LANGUAGES ${LANGUAGES}
 )
@@ -334,7 +334,7 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
 
     set_target_properties(baja_${TARGET_NAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${TARGET_NAME}
-        OUTPUT_NAME baja)
+        OUTPUT_NAME ${PROJECT_NAME})
 
     # Windows still depends on a custom ffmpeg dll provided by opencv
     if(WIN32)
