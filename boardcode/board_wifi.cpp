@@ -1,14 +1,13 @@
 #include "board_wifi.hpp"
 
-static BoardWifi* instance = nullptr;
+BoardWifi* BoardWifi::s_Instance = nullptr;
 
 BoardWifi::BoardWifi(const char* ssid, const char* password)
-    : _ssid(ssid), _password(password), _server(80), _ws("/ws") {
-    instance = this;
+    : m_SSID(ssid), m_Password(password), m_AsyncServer(80), m_WebSock("/ws") {
+    s_Instance = this;
 }
 
 void BoardWifi::Start() {
-
     WiFi.softAPdisconnect(true);
     WiFi.mode(WIFI_AP);
     delay(100);
@@ -18,7 +17,7 @@ void BoardWifi::Start() {
     IPAddress subnet(255, 255, 255, 0);
     WiFi.softAPConfig(local_IP, gateway, subnet);
 
-    if (WiFi.softAP(_ssid, _password, 1, 0, 4)) {
+    if (WiFi.softAP(m_SSID, m_Password, 1, 0, 4)) {
         Serial.println("SoftAP Started Successfully");
     } else {
         Serial.println("SoftAP Failed to Start");
@@ -28,30 +27,29 @@ void BoardWifi::Start() {
 
     if (MDNS.begin("telemetry")) { Serial.println("mDNS responder started"); }
 
-    _ws.onEvent(onWsEvent);
-    _server.addHandler(&_ws);
+    m_WebSock.onEvent(BoardWifi::OnWsEvent);
+    m_AsyncServer.addHandler(&m_WebSock);
 
-    _server.on("/connecttest.txt", [](AsyncWebServerRequest* request) {
+    m_AsyncServer.on("/connecttest.txt", [](AsyncWebServerRequest* request) {
         request->send(200, "text/plain", "Microsoft NCSI");
     });
 
-    _server.on("/generate_204", [](AsyncWebServerRequest* request) { request->send(204); });
-
-    _server.begin();
+    m_AsyncServer.on("/generate_204", [](AsyncWebServerRequest* request) { request->send(204); });
+    m_AsyncServer.begin();
     Serial.println("HTTP Server started");
 }
 
 void BoardWifi::SendData(String msg) {
-    if (_ws.count() > 0 && _ws.availableForWriteAll()) { _ws.textAll(msg); }
+    if (m_WebSock.count() > 0 && m_WebSock.availableForWriteAll()) { m_WebSock.textAll(msg); }
 }
 
-void BoardWifi::onWsEvent(AsyncWebSocket*       server,
+void BoardWifi::OnWsEvent(AsyncWebSocket*       server,
                           AsyncWebSocketClient* client,
                           AwsEventType          type,
                           void*                 arg,
                           uint8_t*              data,
                           size_t                len) {
-    if (type == WS_EVT_DATA && instance != nullptr) {
+    if (type == WS_EVT_DATA && s_Instance != nullptr) {
         String command = "";
         for (size_t i = 0; i < len; i++) {
             command += (char)data[i];
@@ -59,12 +57,12 @@ void BoardWifi::onWsEvent(AsyncWebSocket*       server,
 
         if (command.startsWith("SYNC")) {
             String timeStr            = command.substring(4);
-            instance->localSyncMicros = micros();
-            instance->baseTimeMicros  = strtoull(timeStr.c_str(), NULL, 10);
-            instance->isTimeSynced    = 1;
+            s_Instance->m_LocalSyncMicros = micros();
+            s_Instance->m_BaseTimeMicros  = strtoull(timeStr.c_str(), NULL, 10);
+            s_Instance->m_IsTimeSynced    = 1;
         } else {
-            instance->lastCommand = command;
-            instance->newCommand  = true;
+            s_Instance->m_LastCommand = command;
+            s_Instance->m_NewCommand  = true;
         }
 
         Serial.print("Received Command: ");
@@ -79,13 +77,8 @@ void BoardWifi::onWsEvent(AsyncWebSocket*       server,
     }
 }
 
-uint64_t BoardWifi::getRealTime() {
-    if (!instance->isTimeSynced) return 0;
-    uint32_t elapsedMicros = micros() - localSyncMicros;
-    return baseTimeMicros + (uint64_t)(elapsedMicros);
+uint64_t BoardWifi::GetRealTime() {
+    if (!s_Instance->m_IsTimeSynced) {return 0;}
+    uint32_t elapsedMicros = micros() - m_LocalSyncMicros;
+    return m_BaseTimeMicros + (uint64_t)(elapsedMicros);
 }
-/*
-void BoardWifi::updateDNS() {
-    _dnsServer.processNextRequest();
-}
-*/
