@@ -22,21 +22,21 @@ AppFonts LoadFonts() {
 
     auto* regular = io.Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(OpenSansRegular_ttf),
                                                    OpenSansRegular_ttf_size,
-                                                   DEFAULT_FONT_SIZE,
+                                                   default_font_size,
                                                    &cfg);
 
     auto* bold   = io.Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(OpenSansBold_ttf),
                                                 OpenSansBold_ttf_size,
-                                                DEFAULT_FONT_SIZE,
+                                                default_font_size,
                                                 &cfg);
     auto* italic = io.Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(OpenSansItalic_ttf),
                                                   OpenSansItalic_ttf_size,
-                                                  DEFAULT_FONT_SIZE,
+                                                  default_font_size,
                                                   &cfg);
     auto* bold_italic =
         io.Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(OpenSansBoldItalic_ttf),
                                        OpenSansBoldItalic_ttf_size,
-                                       DEFAULT_FONT_SIZE,
+                                       default_font_size,
                                        &cfg);
 
     return {.Regular = regular, .Bold = bold, .Italic = italic, .BoldItalic = bold_italic};
@@ -160,3 +160,10 @@ void AppStyle::SetLightThemeColors() {
 
     DarkMode = false;
 }
+
+float default_font_size        = 22.0f;
+float header_font_size         = 26.0f;
+float main_menu_bar_font_size  = 30.0f;
+float main_menu_item_font_size = 28.0f;
+float menu_bar_font_size       = 26.0f;
+float menu_item_font_size      = 24.0f;

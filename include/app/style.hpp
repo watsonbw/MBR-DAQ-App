@@ -22,12 +22,12 @@ struct AppStyle {
     bool m_CachedInital;
 };
 
-static float DEFAULT_FONT_SIZE        = 22.0f;
-static float HEADER_FONT_SIZE         = 26.0f;
-static float MAIN_MENU_BAR_FONT_SIZE  = 30.0f;
-static float MAIN_MENU_ITEM_FONT_SIZE = 28.0f;
-static float MENU_BAR_FONT_SIZE       = 26.0f;
-static float MENU_ITEM_FONT_SIZE      = 24.0f;
+extern float default_font_size;
+extern float header_font_size;
+extern float main_menu_bar_font_size;
+extern float main_menu_item_font_size;
+extern float menu_bar_font_size;
+extern float menu_item_font_size;
 
 #define WITH_FONT(font, size, code)  \
     do {                             \
@@ -36,10 +36,10 @@ static float MENU_ITEM_FONT_SIZE      = 24.0f;
         ImGui::PopFont();            \
     } while (0)
 
-#define BOLD_DEFAULT(B) WITH_FONT(m_Context->Style.DefaultFonts.Bold, DEFAULT_FONT_SIZE, B)
-#define HEADER(B) WITH_FONT(m_Context->Style.DefaultFonts.Regular, HEADER_FONT_SIZE, B)
-#define BOLD_HEADER(B) WITH_FONT(m_Context->Style.DefaultFonts.Bold, HEADER_FONT_SIZE, B)
+#define BOLD_DEFAULT(B) WITH_FONT(m_Context->Style.DefaultFonts.Bold, default_font_size, B)
+#define HEADER(B) WITH_FONT(m_Context->Style.DefaultFonts.Regular, header_font_size, B)
+#define BOLD_HEADER(B) WITH_FONT(m_Context->Style.DefaultFonts.Bold, header_font_size, B)
 #define MAIN_MENU_BAR(B) \
-    WITH_FONT(m_Context->Style.DefaultFonts.Regular, MAIN_MENU_BAR_FONT_SIZE, B)
+    WITH_FONT(m_Context->Style.DefaultFonts.Regular, main_menu_bar_font_size, B)
 #define MAIN_MENU_BAR_ITEM(B) \
-    WITH_FONT(m_Context->Style.DefaultFonts.Regular, MAIN_MENU_ITEM_FONT_SIZE, B)
+    WITH_FONT(m_Context->Style.DefaultFonts.Regular, main_menu_item_font_size, B)
