@@ -1,6 +1,6 @@
 #include "app/app.hpp"
 
-int main(int arc, char* argv[]) {
-    App app;
+int main(int argc, char* argv[]) {
+    App app{argc, argv};
     app.Run();
 }

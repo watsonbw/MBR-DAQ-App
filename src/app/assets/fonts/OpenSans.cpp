@@ -1,25 +1,25 @@
 #include "app/assets/fonts/OpenSans.hpp"
 
-const unsigned char OpenSansRegular_ttf[] = {
+const unsigned char OPEN_SANS_REGULAR_TTF[] = {
 #include "app/assets/fonts/OpenSans-Regular.ttf.inc"
 };
 
-const size_t OpenSansRegular_ttf_size = sizeof(OpenSansRegular_ttf);
+const size_t OPEN_SANS_REGULAR_TTF_SIZE = sizeof(OPEN_SANS_REGULAR_TTF);
 
-const unsigned char OpenSansBold_ttf[] = {
+const unsigned char OPEN_SANS_BOLD_TTF[] = {
 #include "app/assets/fonts/OpenSans-Bold.ttf.inc"
 };
 
-const size_t OpenSansBold_ttf_size = sizeof(OpenSansBold_ttf);
+const size_t OPEN_SANS_BOLD_TTF_SIZE = sizeof(OPEN_SANS_BOLD_TTF);
 
-const unsigned char OpenSansItalic_ttf[] = {
+const unsigned char OPEN_SANS_ITALIC_TTF[] = {
 #include "app/assets/fonts/OpenSans-Italic.ttf.inc"
 };
 
-const size_t OpenSansItalic_ttf_size = sizeof(OpenSansItalic_ttf);
+const size_t OPEN_SANS_ITALIC_TTF_SIZE = sizeof(OPEN_SANS_ITALIC_TTF);
 
-const unsigned char OpenSansBoldItalic_ttf[] = {
+const unsigned char OPEN_SANS_BOLD_ITALIC_TTF[] = {
 #include "app/assets/fonts/OpenSans-BoldItalic.ttf.inc"
 };
 
-const size_t OpenSansBoldItalic_ttf_size = sizeof(OpenSansBoldItalic_ttf);
+const size_t OPEN_SANS_BOLD_ITALIC_TTF_SIZE = sizeof(OPEN_SANS_BOLD_ITALIC_TTF);

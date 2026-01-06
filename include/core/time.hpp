@@ -8,11 +8,11 @@ struct LocalTime {
     explicit LocalTime();
     explicit LocalTime(uint64_t micros);
 
-    uint64_t MicrosSinceMidnight() const;
-    double   MinutesSinceMidnight() const;
+    [[nodiscard]] uint64_t MicrosSinceMidnight() const;
+    [[nodiscard]] double   MinutesSinceMidnight() const;
 
     // Tries to parse a string formatted as "HH:MM:SS".
-    static std::optional<LocalTime> FromString(const std::string& input);
+    [[nodiscard]] static std::optional<LocalTime> FromString(const std::string& input);
 
     uint64_t Hour;
     uint64_t Minute;
@@ -20,14 +20,14 @@ struct LocalTime {
     uint64_t Millisecond;
     uint64_t Microsecond;
 
-    std::string String() const;
+    [[nodiscard]] std::string String() const;
 };
 
 struct DateTime {
     explicit DateTime();
     explicit DateTime(uint64_t creation_time_seconds);
 
-    enum class StringFormat {
+    enum class StringFormat : uint8_t {
         DISPLAY,
         TEXT_FILE,
     };
@@ -37,6 +37,6 @@ struct DateTime {
     uint64_t  Day;
     LocalTime Local;
 
-    static std::optional<DateTime> FromVideoMetadata(const std::string& path);
-    std::string                    String(StringFormat fmt = StringFormat::DISPLAY) const;
+    [[nodiscard]] static std::optional<DateTime> FromVideoMetadata(const std::string& path);
+    [[nodiscard]] std::string String(StringFormat fmt = StringFormat::DISPLAY) const;
 };

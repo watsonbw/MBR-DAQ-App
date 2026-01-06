@@ -1,8 +1,19 @@
-# MBR-DAQ-App [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue?logo=c%2B%2B&logoColor=white)](https://en.cppreference.com/w/cpp/20.html) [![License](https://img.shields.io/github/license/watsonbw/MBR-DAQ-App)](LICENSE)
+<h1 align="center">MBR-DAQ</h1>
+
+<p align="center">
+<img src="https://img.shields.io/badge/C%2B%2B-20-blue?logo=c%2B%2B&logoColor=white" alt="C++20" /> <a href="LICENSE"><img src="https://img.shields.io/github/license/watsonbw/MBR-DAQ-App" alt="License" /></a> <img src="https://img.shields.io/github/last-commit/watsonbw/MBR-DAQ-App" alt="Last Commit" /> <a href="https://github.com/watsonbw/MBR-DAQ-App/actions/workflows/format.yml"><img src="https://github.com/watsonbw/MBR-DAQ-App/actions/workflows/format.yml/badge.svg" alt="Formatting" /></a> <a href="https://github.com/watsonbw/MBR-DAQ-App/actions/workflows/ci.yml"><img src="https://github.com/watsonbw/MBR-DAQ-App/actions/workflows/ci.yml/badge.svg" alt="CI" /></a></a>
+</p>
+
+#  [![License]()](LICENSE)
+
+<p align="center">
 Data visualization and ESP32 interface for the University of Michigan's Baja team.
+</p>
 
 ## Availablility
 This software is provided precompiled for x86-64 Windows and Apple Silicone macOS only. Other platforms require manual tweaking of the build process and are not guaranteed to work.
+
+On windows only, the app requires the included FFmpeg dll to be in its directory.
 
 ## Getting Started
 Precompiled releases for macOS and windows are available in the releases tab. You will likely have to fight your systems antivirus the first time you launch the app, since we are __not__ paying for code signing.
@@ -32,7 +43,7 @@ cmake -G Ninja ..
 cmake --build . --target dist
 ```
 
-This will build the fully optimized executable and place it in `build/dist` (relative to the project root). You must run the binary in the working directory it was shipped in! Please open an issue if you have any probles when compiling.
+This will build the fully optimized executable and place it in `build/dist` (relative to the project root). Please open an issue if you have any probles when compiling.
 
 ## Third-Party Software
 This software dynamically links against a custom LGPL FFmpeg distribution provided by OpenCV.

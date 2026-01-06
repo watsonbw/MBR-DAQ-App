@@ -1,0 +1,47 @@
+Checks: >
+  -*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  google-*,
+  bugprone-*,
+  -performance-no-int-to-ptr,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-function-cognitive-complexity,
+  -readability-implicit-bool-conversion,
+  -readability-redundant-access-specifiers,
+  -readability-isolate-declaration,
+  -misc-include-cleaner,
+  -misc-no-recursion,
+  -misc-use-anonymous-namespace,
+  -misc-non-private-member-variables-in-classes,
+  -modernize-use-trailing-return-type,
+  -modernize-avoid-c-arrays,
+  -google-build-using-namespace,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-unchecked-optional-access,
+
+WarningsAsErrors: "*"
+
+CheckOptions:
+  - { key: readability-function-cognitive-complexity.Threshold,    value: 300 }
+  - { key: readability-identifier-naming.StructCase,             value: CamelCase  }
+  - { key: readability-identifier-naming.FunctionCase,           value: CamelCase  }
+  - { key: readability-identifier-naming.VariableCase,           value: lower_case }
+  - { key: readability-identifier-naming.MacroDefinitionCase,    value: UPPER_CASE }
+  - { key: readability-identifier-naming.EnumConstantCase,         value: UPPER_CASE }
+  - { key: readability-identifier-naming.StaticConstantCase,       value: UPPER_CASE }
+  - { key: readability-identifier-naming.GlobalConstantCase,       value: UPPER_CASE }
+  
+  - { key: readability-identifier-naming.PublicMemberCase,     value: CamelCase }
+  - { key: readability-identifier-naming.PrivateMemberCase,    value: CamelCase }
+  - { key: readability-identifier-naming.StaticVariableCase,      value: CamelCase }
+  - { key: readability-identifier-naming.StaticVariablePrefix,    value: s_        }
+  
+  - { key: readability-identifier-naming.PrivateMemberPrefix,  value: m_        }
+  
+  - { key: readability-identifier-naming.ProtectedMemberCase,  value: CamelCase }
+  - { key: readability-identifier-naming.ProtectedMemberPrefix, value: m_       }

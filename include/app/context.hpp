@@ -1,13 +1,14 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 
 #include "app/style.hpp"
 
 #include "esp32/backend.hpp"
 
-enum class PageType {
+enum class PageType : uint8_t {
     HOME,
     RPM,
     SHOCK,

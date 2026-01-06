@@ -18,7 +18,7 @@ class GUI {
     static void SokolEventCB(const sapp_event* e);
 
   public:
-    explicit GUI(std::shared_ptr<AppContext> ctx) : m_Context{ctx} {};
+    explicit GUI(const std::shared_ptr<AppContext>& ctx) : m_Context{ctx} {};
     ~GUI() = default;
 
     sapp_desc GetSokolDesc();
@@ -37,7 +37,7 @@ class GUI {
     void DrawMainMenuBar();
 
   private:
-    static GUI* s_Instance;
+    static GUI* s_Instance; // NOLINT
 
     std::unique_ptr<Page>       m_CurrentPage;
     std::shared_ptr<AppContext> m_Context;

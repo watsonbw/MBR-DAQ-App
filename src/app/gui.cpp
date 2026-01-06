@@ -49,10 +49,10 @@ sapp_desc GUI::GetSokolDesc() {
     desc.window_title = "Michigan Baja Racing - Data Suite";
 
     desc.icon.sokol_default    = false;
-    m_AppIcon                  = {BajaLogo_png, BajaLogo_png_size};
+    m_AppIcon                  = {BAJA_LOGO_PNG, BAJA_LOGO_PNG_SIZE};
     desc.icon.images[0].width  = m_AppIcon.Width;
     desc.icon.images[0].height = m_AppIcon.Height;
-    desc.icon.images[0].pixels = {m_AppIcon.Pixels, m_AppIcon.Size};
+    desc.icon.images[0].pixels = {.ptr = m_AppIcon.Pixels, .size = m_AppIcon.Size};
 
     return desc;
 }
@@ -87,8 +87,8 @@ void GUI::OnFrame() {
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0F);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0F);
 
         constexpr ImGuiWindowFlags window_flags =
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
@@ -106,7 +106,7 @@ void GUI::OnFrame() {
     SokolEndFrame();
 }
 
-void GUI::OnEvent(const sapp_event* event) {
+void GUI::OnEvent(const sapp_event* event) { // NOLINT
     switch (event->type) {
     case SAPP_EVENTTYPE_QUIT_REQUESTED:
         sapp_quit();
@@ -139,7 +139,7 @@ void GUI::SokolStartFrame() {
 void GUI::SokolEndFrame() {
     sg_pass_action pass_action        = {};
     pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
-    pass_action.colors[0].clear_value = {0.1f, 0.1f, 0.1f, 1.0f};
+    pass_action.colors[0].clear_value = {.r = 0.1F, .g = 0.1F, .b = 0.1F, .a = 1.0F};
 
     sg_pass pass   = {};
     pass.action    = pass_action;
@@ -213,21 +213,24 @@ void GUI::DrawMainMenuBar() {
         ImGui::Separator();
 
         // Connection indicator
-        bool connected = m_Context->Backend->IsConnected;
-        bool receiving = m_Context->Backend->IsReceiving;
+        const bool connected = m_Context->Backend->IsConnected;
+        const bool receiving = m_Context->Backend->IsReceiving;
 
-        float  radius = 10.0f;
-        ImVec2 pos    = ImGui::GetCursorScreenPos();
-        ImVec2 center = ImVec2(pos.x + radius, pos.y + ImGui::GetFrameHeight() * 0.5f);
+        const float  radius = 10.0F;
+        const ImVec2 pos    = ImGui::GetCursorScreenPos();
+        const ImVec2 center = ImVec2(pos.x + radius, pos.y + (ImGui::GetFrameHeight() * 0.5F));
 
-        ImU32 color = connected && receiving    ? IM_COL32(0, 200, 0, 255)
-                      : connected && !receiving ? IM_COL32(255, 255, 0, 255)
-                                                : IM_COL32(200, 0, 0, 255);
+        ImU32 color;
+        if (connected) {
+            color = receiving ? IM_COL32(0, 200, 0, 255) : IM_COL32(255, 255, 0, 255);
+        } else {
+            color = IM_COL32(200, 0, 0, 255);
+        }
 
         ImDrawList* draw = ImGui::GetWindowDrawList();
         draw->AddCircleFilled(center, radius, color);
 
-        ImGui::Dummy({radius * 2.5f, radius * 2.0f});
+        ImGui::Dummy({radius * 2.5F, radius * 2.0F});
         ImGui::SameLine();
         ImGui::TextUnformatted(connected ? "Connected" : "Not Connected");
 

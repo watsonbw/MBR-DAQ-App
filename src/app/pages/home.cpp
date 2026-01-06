@@ -13,7 +13,7 @@ void HomePage::OnExit() { LOG_INFO("Exited HomePage"); }
 
 void HomePage::Update() {
     const float full_height   = ImGui::GetContentRegionAvail().y;
-    const float top_height    = full_height * 0.66f;
+    const float top_height    = full_height * 0.66F;
     const float bottom_height = full_height - top_height;
 
     if (ImGui::BeginChild("TopSection", {0, top_height})) {
@@ -31,8 +31,8 @@ void HomePage::Update() {
 
     if (ImGui::BeginChild("BottomSection", {0, bottom_height})) {
         if (ImGui::BeginTable("BottomSplit", 2, ImGuiTableFlags_Resizable)) {
-            ImGui::TableSetupColumn("Errors", ImGuiTableColumnFlags_WidthStretch, 0.33f);
-            ImGui::TableSetupColumn("ActionPanel", ImGuiTableColumnFlags_WidthStretch, 0.66f);
+            ImGui::TableSetupColumn("Errors", ImGuiTableColumnFlags_WidthStretch, 0.33F);
+            ImGui::TableSetupColumn("ActionPanel", ImGuiTableColumnFlags_WidthStretch, 0.66F);
 
             ImGui::TableNextColumn();
             DrawBottomLHS();
@@ -88,7 +88,7 @@ void HomePage::DrawBottomLHS() {
             "ErrorScrollingRegion", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
         const std::string all_errors = Log::GetStreamedLogs();
         ImGui::TextUnformatted(all_errors.c_str());
-        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) { ImGui::SetScrollHereY(1.0f); }
+        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) { ImGui::SetScrollHereY(1.0F); }
     }
     ImGui::EndChild();
 }
@@ -111,38 +111,38 @@ void HomePage::DrawIPControls() {
     }
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##ip_FIRST", m_IpBuf.First, m_PreviousIp.First.c_str(), 75.0f);
+    TextUtils::DrawInputBox("##ip_FIRST", m_IpBuf.First, m_PreviousIp.First.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##ip_SECOND", m_IpBuf.Second, m_PreviousIp.Second.c_str(), 75.0f);
+    TextUtils::DrawInputBox("##ip_SECOND", m_IpBuf.Second, m_PreviousIp.Second.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##ip_THIRD", m_IpBuf.Third, m_PreviousIp.Third.c_str(), 75.0f);
+    TextUtils::DrawInputBox("##ip_THIRD", m_IpBuf.Third, m_PreviousIp.Third.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##ip_FOURTH", m_IpBuf.Fourth, m_PreviousIp.Fourth.c_str(), 75.0f);
+    TextUtils::DrawInputBox("##ip_FOURTH", m_IpBuf.Fourth, m_PreviousIp.Fourth.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(":");
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##ip_PORT", m_IpBuf.Port, m_PreviousIp.Port.c_str(), 50.0f);
+    TextUtils::DrawInputBox("##ip_PORT", m_IpBuf.Port, m_PreviousIp.Port.c_str(), 50.0F);
 }
 
 void HomePage::DrawCredentialControls() {
-    // TODO: Do something with user/password
+    // TODO(blake): Do something with user/password
     if (ImGui::Button("Upload Credentials") && (!m_UsernameBuf.empty() && !m_PasswordBuf.empty())) {
         m_UsernameBuf = {};
         m_PasswordBuf = {};
     }
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##username", m_UsernameBuf, "Username", 150.0f);
+    TextUtils::DrawInputBox("##username", m_UsernameBuf, "Username", 150.0F);
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##password", m_PasswordBuf, "Password", 150.0f);
+    TextUtils::DrawInputBox("##password", m_PasswordBuf, "Password", 150.0F);
 }

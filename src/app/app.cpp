@@ -16,7 +16,8 @@
 #include "esp32/backend.hpp"
 #include "esp32/data.hpp"
 
-App::App() : m_Context{std::make_shared<AppContext>()} {
+App::App([[maybe_unused]] int arc, [[maybe_unused]] char* argv[])
+    : m_Context{std::make_shared<AppContext>()} {
     Log::Init();
     ix::initNetSystem();
 

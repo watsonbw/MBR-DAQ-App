@@ -9,7 +9,7 @@ struct AppContext;
 
 class TextUtils {
   public:
-    explicit TextUtils(std::shared_ptr<AppContext> ctx) : m_Context{ctx} {}
+    explicit TextUtils(const std::shared_ptr<AppContext>& ctx) : m_Context{ctx} {}
     ~TextUtils() = default;
 
     void DrawStartLoggingButton();
@@ -19,8 +19,8 @@ class TextUtils {
     static void DrawInputBox(const char*                label,
                              std::string&               buf,
                              std::optional<const char*> hint        = std::nullopt,
-                             float                      width_scale = 200.0f);
-    void        DrawDataLog(const std::vector<std::string>& raw_lines);
+                             float                      width_scale = 200.0F);
+    static void DrawDataLog(const std::vector<std::string>& raw_lines);
 
   private:
     std::shared_ptr<AppContext> m_Context;

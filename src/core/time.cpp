@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cstddef>
 #include <format>
 #include <sstream>
 
@@ -13,8 +14,8 @@ const uint64_t UNIX_1904_DIFF = 2082844800ULL;
 LocalTime::LocalTime() {
     const auto now = system_clock::now();
 
-    auto    time_now = system_clock::to_time_t(now);
-    std::tm lt{};
+    const auto time_now = system_clock::to_time_t(now);
+    std::tm    lt{};
 #ifdef _WIN32
     localtime_s(&lt, &time_now);
 #else
@@ -69,8 +70,8 @@ std::string LocalTime::String() const {
     return std::format("{:02}:{:02}:{:02}.{:03}", Hour, Minute, Second, Millisecond);
 }
 
-std::optional<LocalTime> LocalTime::FromString(const std::string& str) {
-    std::istringstream ss{str};
+std::optional<LocalTime> LocalTime::FromString(const std::string& input) {
+    std::istringstream ss{input};
     int                h, m, s;
     char               c1, c2;
 
@@ -94,8 +95,8 @@ DateTime::DateTime() {
     auto now      = system_clock::now();
     auto duration = now.time_since_epoch();
 
-    time_t  time_now = system_clock::to_time_t(now);
-    std::tm lt{};
+    const auto time_now = system_clock::to_time_t(now);
+    std::tm    lt{};
 #ifdef _WIN32
     localtime_s(&lt, &time_now);
 #else
@@ -117,10 +118,10 @@ DateTime::DateTime() {
 }
 
 DateTime::DateTime(uint64_t creation_time_seconds) {
-    uint64_t unix_seconds = creation_time_seconds - UNIX_1904_DIFF;
+    const uint64_t unix_seconds = creation_time_seconds - UNIX_1904_DIFF;
 
-    time_t  time_now = static_cast<time_t>(unix_seconds);
-    std::tm lt{};
+    const auto time_now = static_cast<time_t>(unix_seconds);
+    std::tm    lt{};
 #ifdef _WIN32
     localtime_s(&lt, &time_now);
 #else
@@ -146,14 +147,14 @@ std::optional<DateTime> DateTime::FromVideoMetadata(const std::string& path) {
 
     // Search the first 100KB for the desired metadata block
     f.seek(0);
-    TagLib::ByteVector data = f.readBlock(100 * 1024);
+    TagLib::ByteVector data = f.readBlock(static_cast<size_t>(100 * 1024));
 
-    int pos = data.find("mvhd");
+    const int pos = data.find("mvhd");
     if (pos == -1) { return std::nullopt; }
 
     // Decode the raw metadata based on header version
-    unsigned char version               = data[pos + 4];
-    uint64_t      creation_time_seconds = 0;
+    const unsigned char version               = data[pos + 4];
+    uint64_t            creation_time_seconds = 0;
 
     // v0 == 32 bit, v1 == 64 bit (different shift values too)
     if (version == 0) {

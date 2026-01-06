@@ -11,7 +11,7 @@ bool IpV4::Valid() const {
         if (sv.empty()) { return std::nullopt; }
 
         uint64_t value = 0;
-        for (char c : sv) {
+        for (const char& c : sv) {
             if (c < '0' || c > '9') { return std::nullopt; }
             value = value * 10 + (c - '0');
         }

@@ -10,9 +10,10 @@ struct IpV4 {
     std::string Fourth;
     std::string Port;
 
-    bool        Valid() const;
-    bool        AnyEmpty() const;
-    std::string String() const;
+    [[nodiscard]] bool        Valid() const;
+    [[nodiscard]] bool        AnyEmpty() const;
+    [[nodiscard]] std::string String() const;
 };
 
-static IpV4 DEFAULT_IP = {"192", "168", "4", "1", "80"};
+static const IpV4 DEFAULT_IP = {
+    .First = "192", .Second = "168", .Third = "4", .Fourth = "1", .Port = "80"};

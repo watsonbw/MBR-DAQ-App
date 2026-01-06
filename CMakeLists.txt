@@ -377,12 +377,12 @@ if(APPLE)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang")
         set(ASAN_FLAGS "-fsanitize=undefined" "-fno-sanitize-recover=all" "-g")
         set(ASAN_RUN_CMD leaks --atExit -- $<TARGET_FILE:baja_tests_asan>)
-    elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-        message(ERROR "The GNU Compiler is not supported on macOS")
+    else()
+        message(ERROR "Cannot run asan with non-clang compilers on macOS")
     endif()
-
-    create_baja_suite("asan" "${ASAN_FLAGS}" "${CMAKE_BINARY_DIR}/asan")
-    add_custom_target(asan
+    
+    create_standard_target("${ASAN_FLAGS}" "asan")
+    add_custom_target(test_asan
         COMMAND ${ASAN_RUN_CMD}
         DEPENDS baja_tests_asan
         USES_TERMINAL)
@@ -417,4 +417,27 @@ endif()
 find_program(CLOC cloc)
 if (CLOC)
     add_custom_target(cloc COMMAND ${CLOC} ${TOOLING_SOURCES})
+endif()
+
+# Static analysis
+file(GLOB_RECURSE TIDY_SOURCES
+    ${SRC_DIR}/*.cpp
+    ${INCLUDE_DIR}/*.hpp
+    ${TEST_DIR}/*.cpp
+    ${TEST_DIR}/*.hpp
+)
+list(FILTER TIDY_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
+
+find_program(RUN_CLANG_TIDY run-clang-tidy)
+find_program(CLANG_TIDY clang-tidy)
+if(RUN_CLANG_TIDY AND MACOS)
+    add_custom_target(tidy COMMAND
+        ${RUN_CLANG_TIDY}
+        -p ${CMAKE_BINARY_DIR}
+        ${TOOLING_SOURCES})
+elseif(CLANG_TIDY)
+    add_custom_target(tidy COMMAND
+        ${CLANG_TIDY}
+        -p ${CMAKE_BINARY_DIR}
+        ${TOOLING_SOURCES})
 endif()

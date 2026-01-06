@@ -37,7 +37,7 @@ TelemetryData::TelemetryData() {
 void TelemetryData::WriteData(const std::string& identifier, const std::string& value) {
     try {
         if (identifier == "T") {
-            LocalTime lt{std::stoull(value)};
+            const LocalTime lt{std::stoull(value)};
             m_TimeNoNormalMicros.push_back(lt.MicrosSinceMidnight());
 
             const auto minutes_from_mid = lt.MinutesSinceMidnight();

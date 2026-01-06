@@ -77,7 +77,7 @@ void TelemetryBackend::Kill() {
 
 void TelemetryBackend::SendCMD(const std::string& text) {
     if (m_WebSocket.getReadyState() == ix::ReadyState::Open) {
-        ix::WebSocketSendInfo info = m_WebSocket.send(text);
+        const ix::WebSocketSendInfo info = m_WebSocket.send(text);
         if (!info.success) {
             LOG_WARN("Send failed:");
             IsConnected = false;
@@ -109,7 +109,7 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
             if (!parsed.has_value()) { continue; }
 
             // Now we can safely unpack the packet
-            std::lock_guard<std::mutex> lock{DataMutex};
+            const std::lock_guard<std::mutex> lock{DataMutex};
             for (const auto& [ident, value] : parsed.value()) {
                 Data.WriteData(std::string{ident}, std::string{value});
             }
@@ -125,7 +125,7 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
 
     size_t pos = 0;
     for (const auto& field : m_PacketFields) {
-        size_t ident_start = pos;
+        const size_t ident_start = pos;
         while (pos < str.size() && str[pos] != ' ') {
             pos += 1;
         }
@@ -137,7 +137,7 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
             pos += 1;
         }
 
-        size_t value_start = pos;
+        const size_t value_start = pos;
         while (pos < str.size() && str[pos] != ' ') {
             pos += 1;
         }
@@ -166,12 +166,12 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
 }
 
 TelemetryData::PackedData TelemetryBackend::PackData() {
-    std::lock_guard<std::mutex> lock{DataMutex};
-    return {Data.GetTimeNoNormal(),
-            Data.GetTime(),
-            Data.GetRPMData(),
-            Data.GetShockData(),
-            Data.GetRawLines()};
+    const std::lock_guard<std::mutex> lock{DataMutex};
+    return {.TimeMicrosRaw         = Data.GetTimeNoNormal(),
+            .TimeMinutesNormalized = Data.GetTime(),
+            .RPM                   = Data.GetRPMData(),
+            .Shock                 = Data.GetShockData(),
+            .RawLines              = Data.GetRawLines()};
 }
 
 void TelemetryBackend::SetIp(const IpV4& ipv4) {

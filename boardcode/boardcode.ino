@@ -1,7 +1,7 @@
-//This is a skeleton for what the esp32 side of the wifi and collection should be
-//When compiling, it is necessary to have both AsyncTCP and AsyncWebServer by ESP32 Async
-//the string described below is how the app understands and interprets data
-//it is required that the calculations are handled on the esp32 side
+// This is a skeleton for what the esp32 side of the wifi and collection should be
+// When compiling, it is necessary to have both AsyncTCP and AsyncWebServer by ESP32 Async
+// the string described below is how the app understands and interprets data
+// it is required that the calculations are handled on the esp32 side
 
 #include "board_wifi.hpp"
 
@@ -15,8 +15,6 @@ void setup() {
     Serial.begin(115200);
     wifi.Start();
     wifi.CleanupClients();
-
-    
 }
 
 void loop() {

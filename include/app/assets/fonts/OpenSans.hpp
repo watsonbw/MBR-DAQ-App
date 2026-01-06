@@ -1,14 +1,14 @@
 #pragma once
 #include <cstddef>
 
-extern const unsigned char OpenSansRegular_ttf[];
-extern const size_t        OpenSansRegular_ttf_size;
+extern const unsigned char OPEN_SANS_REGULAR_TTF[];
+extern const size_t        OPEN_SANS_REGULAR_TTF_SIZE;
 
-extern const unsigned char OpenSansBold_ttf[];
-extern const size_t        OpenSansBold_ttf_size;
+extern const unsigned char OPEN_SANS_BOLD_TTF[];
+extern const size_t        OPEN_SANS_BOLD_TTF_SIZE;
 
-extern const unsigned char OpenSansItalic_ttf[];
-extern const size_t        OpenSansItalic_ttf_size;
+extern const unsigned char OPEN_SANS_ITALIC_TTF[];
+extern const size_t        OPEN_SANS_ITALIC_TTF_SIZE;
 
-extern const unsigned char OpenSansBoldItalic_ttf[];
-extern const size_t        OpenSansBoldItalic_ttf_size;
+extern const unsigned char OPEN_SANS_BOLD_ITALIC_TTF[];
+extern const size_t        OPEN_SANS_BOLD_ITALIC_TTF_SIZE;

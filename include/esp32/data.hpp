@@ -42,12 +42,14 @@ class TelemetryData {
     explicit TelemetryData();
     ~TelemetryData() = default;
 
-    const std::vector<double>&      GetTime() const { return m_Time; }
-    const std::vector<uint64_t>&    GetTimeNoNormal() const { return m_TimeNoNormalMicros; }
-    const RPMData&                  GetRPMData() const { return m_RPMData; }
-    const ShockData&                GetShockData() const { return m_ShockData; }
-    const std::vector<std::string>& GetRawLines() const { return m_RawLines; };
-    const std::optional<LocalTime>& GetSyncLT() const { return m_SyncLT; }
+    [[nodiscard]] const std::vector<double>&   GetTime() const { return m_Time; }
+    [[nodiscard]] const std::vector<uint64_t>& GetTimeNoNormal() const {
+        return m_TimeNoNormalMicros;
+    }
+    [[nodiscard]] const RPMData&                  GetRPMData() const { return m_RPMData; }
+    [[nodiscard]] const ShockData&                GetShockData() const { return m_ShockData; }
+    [[nodiscard]] const std::vector<std::string>& GetRawLines() const { return m_RawLines; };
+    [[nodiscard]] const std::optional<LocalTime>& GetSyncLT() const { return m_SyncLT; }
 
     void WriteData(const std::string& identifier, const std::string& value);
     void WriteRawLine(const std::string& message);

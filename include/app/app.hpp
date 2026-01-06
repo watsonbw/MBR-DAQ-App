@@ -7,7 +7,7 @@ class GUI;
 
 class App {
   public:
-    App();
+    explicit App(int arc, char* argv[]);
     ~App();
 
     void Run();

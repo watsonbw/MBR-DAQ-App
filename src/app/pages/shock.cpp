@@ -42,7 +42,7 @@ void ShockPage::DrawLHS(const std::vector<std::string>& raw_lines) {
 
         HEADER(TextUtils::DrawInputBox("##extra_shock", m_DownloadFDText, "File descriptor"));
         ImGui::Separator();
-        m_TextUtils.DrawDataLog(raw_lines);
+        TextUtils::DrawDataLog(raw_lines);
     }
     ImGui::EndChild();
 }

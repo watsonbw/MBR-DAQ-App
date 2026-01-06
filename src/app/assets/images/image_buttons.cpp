@@ -1,13 +1,13 @@
 #include "app/assets/images/image_buttons.hpp"
 
-const unsigned char PlayButton_png[] = {
+const unsigned char PLAY_BUTTON_PNG[] = {
 #include "app/assets/images/PlayButton.png.inc"
 };
 
-const size_t PlayButton_png_size = sizeof(PlayButton_png);
+const size_t PLAY_BUTTON_PNG_SIZE = sizeof(PLAY_BUTTON_PNG);
 
-const unsigned char PauseButton_png[] = {
+const unsigned char PAUSE_BUTTON_PNG[] = {
 #include "app/assets/images/PauseButton.png.inc"
 };
 
-const size_t PauseButton_png_size = sizeof(PauseButton_png);
+const size_t PAUSE_BUTTON_PNG_SIZE = sizeof(PAUSE_BUTTON_PNG);

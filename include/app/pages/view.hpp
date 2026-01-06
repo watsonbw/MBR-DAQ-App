@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstdint>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -26,19 +27,21 @@ class ViewPage : public Page {
     using SelectedVideo   = std::optional<std::pair<std::string, std::optional<DateTime>>>;
     using SelectedTxtFile = std::optional<std::string>;
 
-    enum class DataView {
+    enum class DataView : uint8_t {
         ALL,
         RPMDATA,
         SHOCKDATA,
     };
 
-  public:
-    ViewPage(std::shared_ptr<AppContext> ctx);
-    virtual ~ViewPage();
+    static const char* DataTypeString(DataView type);
 
-    virtual void OnEnter() override;
-    virtual void OnExit() override;
-    virtual void Update() override;
+  public:
+    explicit ViewPage(const std::shared_ptr<AppContext>& ctx);
+    ~ViewPage() override;
+
+    void OnEnter() override;
+    void OnExit() override;
+    void Update() override;
 
   private:
     void Cleanup();
@@ -56,7 +59,6 @@ class ViewPage : public Page {
 
     static SelectedTxtFile OpenTextFile(const std::string& previous_file);
     void                   LoadData();
-    const char*            DataTypeString(DataView type);
     std::optional<size_t>  SyncDataVideo(const std::vector<uint64_t>& micros_times);
     void                   DeleteExtra(size_t erase_pos);
     void                   DynamicPlotStart();

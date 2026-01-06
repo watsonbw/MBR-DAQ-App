@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
+#include <cstddef>
 #include <fstream>
 
 #include <tinyfiledialogs.h>
@@ -26,10 +27,23 @@ using namespace std::chrono_literals;
 
 static constexpr size_t MAX_QUEUE_SIZE = 10;
 
-ViewPage::ViewPage(std::shared_ptr<AppContext> ctx)
+const char* ViewPage::DataTypeString(DataView type) {
+    switch (type) {
+    case DataView::ALL:
+        return "All Data Shown";
+    case DataView::RPMDATA:
+        return "RPM Data Shown";
+    case DataView::SHOCKDATA:
+        return "Shock Data Shown";
+    default:
+        return "Unknown";
+    }
+}
+
+ViewPage::ViewPage(const std::shared_ptr<AppContext>& ctx)
     : Page{ctx}, m_IsAlive{std::make_shared<bool>(true)},
-      m_PlayButton{PlayButton_png, PlayButton_png_size},
-      m_PauseButton{PauseButton_png, PauseButton_png_size} {}
+      m_PlayButton{PLAY_BUTTON_PNG, PLAY_BUTTON_PNG_SIZE},
+      m_PauseButton{PAUSE_BUTTON_PNG, PAUSE_BUTTON_PNG_SIZE} {}
 
 ViewPage::~ViewPage() {
     *m_IsAlive = false;
@@ -67,7 +81,7 @@ void ViewPage::DrawLHS() {
 
         // Playback logic and frame skipping can be ignored if paused
         bool is_timer_tick = false;
-        if (m_IsPlaying && m_VideoFPS > 0.0f) {
+        if (m_IsPlaying && m_VideoFPS > 0.0F) {
             m_TimeAccumulator += ImGui::GetIO().DeltaTime;
             const auto frames_to_advance = static_cast<int>(m_TimeAccumulator / m_FrameDuration);
 
@@ -92,9 +106,9 @@ void ViewPage::DrawLHS() {
         UpdateTexture(is_timer_tick);
 
         if (m_VideoTexture.id != SG_INVALID_ID && m_TexWidth > 0) {
-            float aspect  = (float)m_TexWidth / (float)m_TexHeight;
-            float avail_w = ImGui::GetContentRegionAvail().x;
-            float h       = avail_w / aspect;
+            const float aspect  = static_cast<float>(m_TexWidth) / static_cast<float>(m_TexHeight);
+            const float avail_w = ImGui::GetContentRegionAvail().x;
+            const float h       = avail_w / aspect;
 
             ImGui::Image(m_VideoTextureID, ImVec2(avail_w, h));
         }
@@ -317,7 +331,7 @@ void ViewPage::DrawSyncVideoButtons() {
     }
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##extra_view", m_CreationMetadataTextBuf, "HH:MM:SS", 120.0f);
+    TextUtils::DrawInputBox("##extra_view", m_CreationMetadataTextBuf, "HH:MM:SS", 120.0F);
     ImGui::SameLine();
     if (ImGui::Checkbox("Dynamic Plotting", &m_DynamicPlotting)) { ViewPage::DynamicPlotStart(); }
 }
@@ -325,7 +339,7 @@ void ViewPage::DrawSyncVideoButtons() {
 ViewPage::SelectedVideo ViewPage::OpenVideoFile(const std::string& previous_file) {
     const char* filters[] = {"*.mp4", "*.mov"};
     const char* path      = tinyfd_openFileDialog(
-        "Select a video file", previous_file.c_str(), std::size(filters), filters, NULL, 0);
+        "Select a video file", previous_file.c_str(), std::size(filters), filters, nullptr, 0);
     if (path == nullptr) {
         LOG_WARN("No file selected");
         return std::nullopt;
@@ -347,7 +361,7 @@ ViewPage::SelectedVideo ViewPage::OpenVideoFile(const std::string& previous_file
 ViewPage::SelectedTxtFile ViewPage::OpenTextFile(const std::string& previous_file) {
     const char* filters[] = {"*.txt"};
     const char* path      = tinyfd_openFileDialog(
-        "Select a text file", previous_file.c_str(), std::size(filters), filters, NULL, 0);
+        "Select a text file", previous_file.c_str(), std::size(filters), filters, nullptr, 0);
     if (path == nullptr) {
         LOG_WARN("No file selected");
         return std::nullopt;
@@ -369,19 +383,6 @@ void ViewPage::LoadData() {
     std::string ident, value;
     while (file >> ident >> value) {
         m_Context->Backend->Data.WriteData(ident, value);
-    }
-}
-
-const char* ViewPage::DataTypeString(DataView type) {
-    switch (type) {
-    case DataView::ALL:
-        return "All Data Shown";
-    case DataView::RPMDATA:
-        return "RPM Data Shown";
-    case DataView::SHOCKDATA:
-        return "Shock Data Shown";
-    default:
-        return "Unknown";
     }
 }
 
@@ -447,7 +448,7 @@ void ViewPage::StartDecodingThread() {
                 cv::Mat frame_copy = rgba_frame.clone();
 
                 std::lock_guard<std::mutex> lock{m_FrameMutex};
-                m_FrameQueue.push_back({frame_copy, current_frame_index});
+                m_FrameQueue.emplace_back(frame_copy, current_frame_index);
             } else {
                 if (m_IsLooping) {
                     cap.set(cv::CAP_PROP_POS_FRAMES, 0);
@@ -564,7 +565,7 @@ void ViewPage::DeleteExtra(size_t erase_pos) {
     }
 
     for (auto& datum : data) {
-        datum->erase(datum->begin(), datum->begin() + erase_pos);
+        datum->erase(datum->begin(), datum->begin() + static_cast<ptrdiff_t>(erase_pos));
     }
 }
 
@@ -583,14 +584,16 @@ void ViewPage::DynamicPlotStart() {
         const size_t end_idx = std::distance(time_vec.begin(), end_it);
         const size_t end_idy = std::distance(end_it, time_vec.end());
         m_DataFromEnd        = static_cast<double>(end_idy);
-        m_DataCount          = end_idx;
+        m_DataCount          = static_cast<double>(end_idx);
         m_PointsPer          = static_cast<double>(end_idx) / m_TotalFrames;
     }
 }
 
 void ViewPage::DynamicPlotLoop() {
-    m_PlotPercent =
-        m_DynamicPlotting
-            ? std::max(m_DataCount - m_PointsPer * m_CurrentFrameUI + m_DataFromEnd, m_DataFromEnd)
-            : 0.0;
+    if (m_DynamicPlotting) {
+        m_PlotPercent = static_cast<size_t>(std::max(
+            m_DataCount - (m_PointsPer * m_CurrentFrameUI) + m_DataFromEnd, m_DataFromEnd));
+        return;
+    }
+    m_PlotPercent = 0;
 }

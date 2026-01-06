@@ -17,9 +17,6 @@ struct AppStyle {
 
     AppFonts DefaultFonts;
     bool     DarkMode{true};
-
-  private:
-    bool m_CachedInital;
 };
 
 extern float default_font_size;

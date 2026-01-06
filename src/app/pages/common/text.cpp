@@ -1,9 +1,11 @@
 #include <format>
 #include <fstream>
 
+// clang-format off
 #include <imgui.h>
-#include <misc/cpp/imgui_stdlib.cpp>
 #include <misc/cpp/imgui_stdlib.h>
+#include <misc/cpp/imgui_stdlib.cpp> // NOLINT
+// clang-format on
 
 #include "core/log.hpp"
 #include "core/time.hpp"
@@ -66,5 +68,5 @@ void TextUtils::DrawDataLog(const std::vector<std::string>& raw_lines) {
     for (const auto& msg : raw_lines) {
         ImGui::TextUnformatted(msg.c_str());
     }
-    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) { ImGui::SetScrollHereY(1.0f); }
+    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) { ImGui::SetScrollHereY(1.0F); }
 }

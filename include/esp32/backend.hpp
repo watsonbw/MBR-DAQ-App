@@ -28,8 +28,8 @@ class TelemetryBackend {
     // Returns a safely accessible grouping of relevant data.
     //
     // This automatically manages the Data's mutex!
-    TelemetryData::PackedData PackData();
-    void                      SetIp(const IpV4& ipv4);
+    [[nodiscard]] TelemetryData::PackedData PackData();
+    void                                    SetIp(const IpV4& ipv4);
 
   public:
     std::mutex        DataMutex;

@@ -9,12 +9,13 @@
 
 class HomePage : public Page {
   public:
-    HomePage(std::shared_ptr<AppContext> ctx) : Page{ctx}, m_PreviousIp{DEFAULT_IP} {}
-    virtual ~HomePage() = default;
+    explicit HomePage(const std::shared_ptr<AppContext>& ctx)
+        : Page{ctx}, m_PreviousIp{DEFAULT_IP} {}
+    ~HomePage() override = default;
 
-    virtual void OnEnter() override;
-    virtual void OnExit() override;
-    virtual void Update() override;
+    void OnEnter() override;
+    void OnExit() override;
+    void Update() override;
 
   private:
     void DrawTopLHS();

@@ -12,8 +12,8 @@ class ButtonTexture {
     ButtonTexture(const unsigned char* data, size_t size);
     ~ButtonTexture();
 
-    ImTextureID GetID() const { return m_ImTexID; }
-    bool        IsValid() const { return m_ImTexID != 0; }
+    [[nodiscard]] ImTextureID GetID() const { return m_ImTexID; }
+    [[nodiscard]] bool        IsValid() const { return m_ImTexID != 0; }
 
   private:
     sg_image    m_Image{SG_INVALID_ID};

@@ -14,6 +14,6 @@ class Page {
     virtual void Update()  = 0;
 
   protected:
-    explicit Page(std::shared_ptr<AppContext> ctx) : m_Context{ctx} {}
-    std::shared_ptr<AppContext> m_Context;
+    explicit Page(const std::shared_ptr<AppContext>& ctx) : m_Context{ctx} {}
+    std::shared_ptr<AppContext> m_Context; // NOLINT
 };
