@@ -51,10 +51,10 @@ class ViewPage : public Page {
     void DrawOpenText();
     void DrawSyncVideoButtons();
 
-    static SelectedVideo OpenVideoFile();
+    static SelectedVideo OpenVideoFile(const std::string& previous_file);
     void                 RequestSeek(int frame_index);
 
-    static SelectedTxtFile OpenTextFile();
+    static SelectedTxtFile OpenTextFile(const std::string& previous_file);
     void                   LoadData();
     const char*            DataTypeString(DataView type);
     std::optional<size_t>  SyncDataVideo(const std::vector<uint64_t>& micros_times);
@@ -73,6 +73,7 @@ class ViewPage : public Page {
 
     std::string              m_VideoPath;
     std::optional<LocalTime> m_VideoCreationTimestamp;
+    std::string              m_CreationMetadataTextBuf;
     std::atomic<bool>        m_VideoDialogRunning{false};
     std::mutex               m_VideoPathMutex;
     SelectedVideo            m_SelectedVideo;

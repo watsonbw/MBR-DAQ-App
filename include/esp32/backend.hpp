@@ -9,6 +9,8 @@
 
 #include <ixwebsocket/IXWebSocket.h>
 
+#include "core/ip.hpp"
+
 #include "esp32/data.hpp"
 
 struct AppContext;
@@ -23,6 +25,13 @@ class TelemetryBackend {
     void Kill();
     void SendCMD(const std::string& text);
 
+    // Returns a safely accessible grouping of relevant data.
+    //
+    // This automatically manages the Data's mutex!
+    TelemetryData::PackedData PackData();
+    void                      SetIp(const IpV4& ipv4);
+
+  public:
     std::mutex        DataMutex;
     TelemetryData     Data;
     std::atomic<bool> TryConnection{false};
@@ -42,6 +51,7 @@ class TelemetryBackend {
     ix::WebSocket            m_WebSocket;
     std::string              m_Buffer;
     std::vector<std::string> m_PacketFields;
+    IpV4                     m_IpAddr;
 
     std::atomic<bool> m_ShouldKill{false};
 };

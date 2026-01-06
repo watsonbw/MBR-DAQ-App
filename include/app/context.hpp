@@ -7,7 +7,7 @@
 
 #include "esp32/backend.hpp"
 
-enum PageType {
+enum class PageType {
     HOME,
     RPM,
     SHOCK,
@@ -19,11 +19,11 @@ const char* PageTypeString(PageType type);
 class TelemetryBackend;
 
 struct AppContext {
-    AppStyle                          Style;
-    PageType                          CurrentPageType;
-    std::atomic<bool>                 ShouldExit{false};
-    std::unique_ptr<TelemetryBackend> Backend;
+    AppStyle          Style;
+    PageType          CurrentPageType;
+    std::atomic<bool> ShouldExit{false};
 
-    std::string Username;
-    std::string Password;
+    std::unique_ptr<TelemetryBackend> Backend;
+    std::string                       Username;
+    std::string                       Password;
 };

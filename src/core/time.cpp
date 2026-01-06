@@ -1,5 +1,6 @@
 #include <chrono>
 #include <format>
+#include <sstream>
 
 #include <taglib/mp4/mp4file.h>
 
@@ -68,22 +69,27 @@ std::string LocalTime::String() const {
     return std::format("{:02}:{:02}:{:02}.{:03}", Hour, Minute, Second, Millisecond);
 }
 
-std::optional<LocalTime> LocalTime::InputStringLT(std::string input) {
-    int h, m, s;
+std::optional<LocalTime> LocalTime::FromString(const std::string& str) {
+    std::istringstream ss{str};
+    int                h, m, s;
+    char               c1, c2;
 
-    if (sscanf(input.c_str(), "%d:%d:%d", &h, &m, &s) == 3) {
-        if (h >= 0 && h < 24 && m >= 0 && m < 60 && s >= 0 && s < 60) {
-            LocalTime lt;
-            lt.Hour        = h;
-            lt.Minute      = m;
-            lt.Second      = s;
-            lt.Millisecond = 0;
-            lt.Microsecond = 0;
-            return lt;
+    if (ss >> h >> c1 >> m >> c2 >> s) {
+        if (c1 == ':' && c2 == ':' && ss.eof()) {
+            if (h >= 0 && h < 24 && m >= 0 && m < 60 && s >= 0 && s < 60) {
+                LocalTime lt;
+                lt.Hour        = h;
+                lt.Minute      = m;
+                lt.Second      = s;
+                lt.Millisecond = 0;
+                lt.Microsecond = 0;
+                return lt;
+            }
         }
     }
     return std::nullopt;
 }
+
 DateTime::DateTime() {
     auto now      = system_clock::now();
     auto duration = now.time_since_epoch();

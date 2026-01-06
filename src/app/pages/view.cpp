@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <fstream>
@@ -16,7 +17,12 @@
 #include "core/log.hpp"
 
 #include "app/assets/images/image_buttons.hpp"
+#include "app/pages/common/plot.hpp"
+#include "app/pages/common/text.hpp"
 #include "app/pages/view.hpp"
+#include "app/style.hpp"
+
+using namespace std::chrono_literals;
 
 static constexpr size_t MAX_QUEUE_SIZE = 10;
 
@@ -40,17 +46,16 @@ void ViewPage::OnExit() {
 
 void ViewPage::Update() {
     auto window_flags = DefaultWindowFlags();
-    ImGui::Begin("View Data", nullptr, window_flags);
-
-    if (ImGui::BeginTable(
-            "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
-        ImGui::TableNextColumn();
-        DrawLHS();
-        ImGui::TableNextColumn();
-        DrawRHS();
-        ImGui::EndTable();
+    if (ImGui::Begin("View Data", nullptr, window_flags)) {
+        if (ImGui::BeginTable(
+                "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
+            ImGui::TableNextColumn();
+            DrawLHS();
+            ImGui::TableNextColumn();
+            DrawRHS();
+            ImGui::EndTable();
+        }
     }
-
     ImGui::End();
 }
 
@@ -60,48 +65,46 @@ void ViewPage::Cleanup() {
 }
 
 void ViewPage::DrawLHS() {
-    ImGui::BeginChild("VideoPlayerColumn");
+    if (ImGui::BeginChild("VideoPlayerColumn")) {
+        DrawOpenVideo();
+        ImGui::SameLine();
 
-    DrawOpenVideo();
+        // Playback logic and frame skipping can be ignored if paused
+        bool is_timer_tick = false;
+        if (m_IsPlaying && m_VideoFPS > 0.0f) {
+            m_TimeAccumulator += ImGui::GetIO().DeltaTime;
+            const auto frames_to_advance = static_cast<int>(m_TimeAccumulator / m_FrameDuration);
 
-    ImGui::SameLine();
+            // We have to handle skipped frames gracefully
+            if (frames_to_advance > 0) {
+                m_TimeAccumulator -= (frames_to_advance * m_FrameDuration);
 
-    // Playback logic and frame skipping can be ignored if paused
-    bool is_timer_tick = false;
-    if (m_IsPlaying && m_VideoFPS > 0.0f) {
-        m_TimeAccumulator += ImGui::GetIO().DeltaTime;
-        const auto frames_to_advance = static_cast<int>(m_TimeAccumulator / m_FrameDuration);
+                if (frames_to_advance > 1) {
+                    std::lock_guard<std::mutex> lock{m_FrameMutex};
 
-        // We have to handle skipped frames gracefully
-        if (frames_to_advance > 0) {
-            m_TimeAccumulator -= (frames_to_advance * m_FrameDuration);
-
-            if (frames_to_advance > 1) {
-                std::lock_guard<std::mutex> lock{m_FrameMutex};
-
-                const auto recoverable_frames =
-                    std::min(static_cast<int>(m_FrameQueue.size()) - 1, frames_to_advance - 1);
-                for (auto i = 0; i < recoverable_frames; i++) {
-                    m_FrameQueue.pop_front();
+                    const auto recoverable_frames =
+                        std::min(static_cast<int>(m_FrameQueue.size()) - 1, frames_to_advance - 1);
+                    for (auto i = 0; i < recoverable_frames; i++) {
+                        m_FrameQueue.pop_front();
+                    }
                 }
+
+                is_timer_tick = true;
             }
-
-            is_timer_tick = true;
         }
+
+        UpdateTexture(is_timer_tick);
+
+        if (m_VideoTexture.id != SG_INVALID_ID && m_TexWidth > 0) {
+            float aspect  = (float)m_TexWidth / (float)m_TexHeight;
+            float avail_w = ImGui::GetContentRegionAvail().x;
+            float h       = avail_w / aspect;
+
+            ImGui::Image(m_VideoTextureID, ImVec2(avail_w, h));
+        }
+
+        if (m_ThreadRunning) { DrawLHSControls(); }
     }
-
-    UpdateTexture(is_timer_tick);
-
-    if (m_VideoTexture.id != SG_INVALID_ID && m_TexWidth > 0) {
-        float aspect  = (float)m_TexWidth / (float)m_TexHeight;
-        float avail_w = ImGui::GetContentRegionAvail().x;
-        float h       = avail_w / aspect;
-
-        ImGui::Image(m_VideoTextureID, ImVec2(avail_w, h));
-    }
-
-    if (m_ThreadRunning) { DrawLHSControls(); }
-
     ImGui::EndChild();
 }
 
@@ -152,10 +155,12 @@ void ViewPage::DrawOpenVideo() {
         m_VideoDialogRunning = true;
         m_VideoLoaded        = false;
         m_DynamicPlotting    = false;
-        const auto alive     = m_IsAlive;
 
-        std::thread([this, alive]() {
-            const auto path = OpenVideoFile();
+        const auto  alive         = m_IsAlive;
+        const auto& previous_file = m_VideoPath;
+
+        std::thread([this, alive, previous_file]() {
+            const auto path = OpenVideoFile(previous_file);
             if (*alive) {
                 std::lock_guard<std::mutex> lock{m_VideoPathMutex};
                 m_SelectedVideo      = path;
@@ -167,101 +172,79 @@ void ViewPage::DrawOpenVideo() {
 }
 
 void ViewPage::DrawRHS() {
-    ImGui::BeginChild("Data");
-    ImGui::SetWindowFontScale(1.3f);
+    if (ImGui::BeginChild("Data")) {
+        HEADER({
+            DrawOpenText();
+            ImGui::SameLine();
+            DrawSyncVideoButtons();
+            ImGui::Separator();
+        });
 
-    DrawOpenText();
-
-    ImGui::SameLine();
-
-    DrawSyncVideoButtons();
-
-    ImGui::Separator();
-
-    if (ImGui::BeginMenu("Data Selection")) {
-        if (ImGui::MenuItem("All Data")) { m_DataShow = DataView::ALL; }
-        if (ImGui::MenuItem("RPM")) { m_DataShow = DataView::RPMDATA; }
-        if (ImGui::MenuItem("Shock")) { m_DataShow = DataView::SHOCKDATA; }
-        ImGui::EndMenu();
-    }
-
-    ImGui::SameLine();
-
-    ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical, 1.0f);
-
-    ImGui::SameLine();
-
-    ImGui::TextUnformatted(DataTypeString(m_DataShow));
-
-    ImGui::SetWindowFontScale(1.0f);
-
-    std::vector<double> time, fr, fl, br, bl, wheel, engine;
-
-    {
-        std::lock_guard lock{m_Context->Backend->DataMutex};
-        time = m_Context->Backend->Data.GetTime();
-
-        const auto& shock_data = m_Context->Backend->Data.GetShockData();
-        fr                     = shock_data.FrontRight;
-        fl                     = shock_data.FrontLeft;
-        br                     = shock_data.BackRight;
-        bl                     = shock_data.BackRight;
-
-        const auto& rpm_data = m_Context->Backend->Data.GetRPMData();
-        wheel                = rpm_data.WheelRPM;
-        engine               = rpm_data.EngineRPM;
-    }
-
-    const auto plot_title =
-        m_Context->Backend->Data.IsSyncedToZero
-            ? std::format("Data View from {}", m_Context->Backend->Data.SyncLT.String())
-            : "Data View from No Synced Time";
-
-    ViewPage::DynamicPlotLoop();
-    if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
-        if (!time.empty()) {
-            if (!wheel.empty() &&
-                (m_DataShow == DataView::ALL || m_DataShow == DataView::RPMDATA)) {
-                ImPlot::PlotLine("Wheel Speed",
-                                 time.data(),
-                                 wheel.data(),
-                                 std::min(time.size(), wheel.size()) - m_PlotPercent);
+        if (ImGui::BeginCombo("##DataView", DataTypeString(m_DataShow))) {
+            if (ImGui::Selectable("All Data", m_DataShow == DataView::ALL)) {
+                m_DataShow = DataView::ALL;
             }
-            if (!engine.empty() &&
-                (m_DataShow == DataView::ALL || m_DataShow == DataView::RPMDATA)) {
-                ImPlot::PlotLine("Engine Speed",
-                                 time.data(),
-                                 engine.data(),
-                                 std::min(time.size(), engine.size()) - m_PlotPercent);
+            if (ImGui::Selectable("RPM", m_DataShow == DataView::RPMDATA)) {
+                m_DataShow = DataView::RPMDATA;
             }
-            if (!fr.empty() && (m_DataShow == DataView::ALL || m_DataShow == DataView::SHOCKDATA)) {
-                ImPlot::PlotLine("Front Right Shock Travel",
-                                 time.data(),
-                                 fr.data(),
-                                 std::min(time.size(), fr.size()) - m_PlotPercent);
+            if (ImGui::Selectable("Shock", m_DataShow == DataView::SHOCKDATA)) {
+                m_DataShow = DataView::SHOCKDATA;
             }
-            if (!fl.empty() && (m_DataShow == DataView::ALL || m_DataShow == DataView::SHOCKDATA)) {
-                ImPlot::PlotLine("Front Left Shock Travel",
-                                 time.data(),
-                                 fl.data(),
-                                 std::min(time.size(), fl.size()) - m_PlotPercent);
-            }
-            if (!br.empty() && (m_DataShow == DataView::ALL || m_DataShow == DataView::SHOCKDATA)) {
-                ImPlot::PlotLine("Rear Right Shock Travel",
-                                 time.data(),
-                                 br.data(),
-                                 std::min(time.size(), br.size()) - m_PlotPercent);
-            }
-            if (!bl.empty() && (m_DataShow == DataView::ALL || m_DataShow == DataView::SHOCKDATA)) {
-                ImPlot::PlotLine("Rear Left Shock Travel",
-                                 time.data(),
-                                 bl.data(),
-                                 std::min(time.size(), bl.size()) - m_PlotPercent);
-            }
+            ImGui::EndCombo();
         }
-        ImPlot::EndPlot();
-    }
 
+        const auto  data  = m_Context->Backend->PackData();
+        const auto& rpm   = data.RPM;
+        const auto& shock = data.Shock;
+
+        const auto sync_lt    = m_Context->Backend->Data.GetSyncLT();
+        const auto plot_title = sync_lt.has_value()
+                                    ? std::format("Data View from {}", sync_lt.value().String())
+                                    : "No Synced Time";
+
+        ViewPage::DynamicPlotLoop();
+        if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
+            PlotUtils::PlotIfNonEmpty("Wheel Speed",
+                                      data.TimeMinutesNormalized,
+                                      rpm.WheelRPM,
+                                      m_DataShow == DataView::ALL ||
+                                          m_DataShow == DataView::RPMDATA,
+                                      m_PlotPercent);
+            PlotUtils::PlotIfNonEmpty("Engine Speed",
+                                      data.TimeMinutesNormalized,
+                                      rpm.EngineRPM,
+                                      m_DataShow == DataView::ALL ||
+                                          m_DataShow == DataView::RPMDATA,
+                                      m_PlotPercent);
+
+            PlotUtils::PlotIfNonEmpty("Front Right Shock Travel",
+                                      data.TimeMinutesNormalized,
+                                      shock.FrontRight,
+                                      m_DataShow == DataView::ALL ||
+                                          m_DataShow == DataView::SHOCKDATA,
+                                      m_PlotPercent);
+            PlotUtils::PlotIfNonEmpty("Front Left Shock Travel",
+                                      data.TimeMinutesNormalized,
+                                      shock.FrontLeft,
+                                      m_DataShow == DataView::ALL ||
+                                          m_DataShow == DataView::SHOCKDATA,
+                                      m_PlotPercent);
+            PlotUtils::PlotIfNonEmpty("Rear Right Shock Travel",
+                                      data.TimeMinutesNormalized,
+                                      shock.BackRight,
+                                      m_DataShow == DataView::ALL ||
+                                          m_DataShow == DataView::SHOCKDATA,
+                                      m_PlotPercent);
+            PlotUtils::PlotIfNonEmpty("Rear Left Shock Travel",
+                                      data.TimeMinutesNormalized,
+                                      shock.BackLeft,
+                                      m_DataShow == DataView::ALL ||
+                                          m_DataShow == DataView::SHOCKDATA,
+                                      m_PlotPercent);
+
+            ImPlot::EndPlot();
+        }
+    }
     ImGui::EndChild();
 }
 
@@ -284,10 +267,12 @@ void ViewPage::DrawOpenText() {
         m_TxtDialogRunning = true;
         m_TxtLoaded        = false;
         m_DynamicPlotting  = false;
-        const auto alive   = m_IsAlive;
 
-        std::thread([this, alive]() {
-            const auto path = OpenTextFile();
+        const auto alive         = m_IsAlive;
+        const auto previous_path = m_TxtPath;
+
+        std::thread([this, alive, previous_path]() {
+            const auto path = OpenTextFile(previous_path);
             if (*alive) {
                 std::lock_guard<std::mutex> lock{m_TxtPathMutex};
                 m_SelectedTxt                 = path;
@@ -300,7 +285,6 @@ void ViewPage::DrawOpenText() {
 }
 
 void ViewPage::DrawSyncVideoButtons() {
-    static char extraTextBuffer[256] = "";
     if (ImGui::Button("Sync Data/Video")) {
         m_DataAndTimeSync = false;
         m_DynamicPlotting = false;
@@ -313,9 +297,12 @@ void ViewPage::DrawSyncVideoButtons() {
             return;
         }
 
-        m_VideoCreationTimestamp = LocalTime::InputStringLT(extraTextBuffer);
-        if (!m_VideoCreationTimestamp.has_value()) { LOG_ERROR("Time could NOT be found"); }
-        extraTextBuffer[0] = '\0';
+        m_VideoCreationTimestamp = LocalTime::FromString(m_CreationMetadataTextBuf);
+        if (!m_VideoCreationTimestamp.has_value()) {
+            LOG_ERROR("Could not parse provided timestamp, or it was not provided.");
+            return;
+        }
+        m_CreationMetadataTextBuf = {};
 
         std::optional<size_t> sync_time_pos;
         {
@@ -332,18 +319,17 @@ void ViewPage::DrawSyncVideoButtons() {
         DeleteExtra(sync_time_pos.value());
         RequestSeek(0);
     }
+
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(120.0f);
-    ImGui::InputTextWithHint(
-        "##extra", "Hour:Min:Sec", extraTextBuffer, IM_ARRAYSIZE(extraTextBuffer));
+    TextUtils::DrawInputBox("##extra_view", m_CreationMetadataTextBuf, "Hour:Min:Sec", 120.0f);
     ImGui::SameLine();
     if (ImGui::Checkbox("Dynamic Plotting", &m_DynamicPlotting)) { ViewPage::DynamicPlotStart(); }
 }
 
-ViewPage::SelectedVideo ViewPage::OpenVideoFile() {
+ViewPage::SelectedVideo ViewPage::OpenVideoFile(const std::string& previous_file) {
     const char* filters[] = {"*.mp4", "*.mov"};
-    const char* path =
-        tinyfd_openFileDialog("Select a video file", "", std::size(filters), filters, NULL, 0);
+    const char* path      = tinyfd_openFileDialog(
+        "Select a video file", previous_file.c_str(), std::size(filters), filters, NULL, 0);
     if (path == nullptr) {
         LOG_WARN("No file selected");
         return std::nullopt;
@@ -362,10 +348,10 @@ ViewPage::SelectedVideo ViewPage::OpenVideoFile() {
     return std::pair{path, dt};
 }
 
-ViewPage::SelectedTxtFile ViewPage::OpenTextFile() {
+ViewPage::SelectedTxtFile ViewPage::OpenTextFile(const std::string& previous_file) {
     const char* filters[] = {"*.txt"};
-    const char* path =
-        tinyfd_openFileDialog("Select a text file", "", std::size(filters), filters, NULL, 0);
+    const char* path      = tinyfd_openFileDialog(
+        "Select a text file", previous_file.c_str(), std::size(filters), filters, NULL, 0);
     if (path == nullptr) {
         LOG_WARN("No file selected");
         return std::nullopt;
@@ -455,7 +441,7 @@ void ViewPage::StartDecodingThread() {
 
             // Don't decode if seeking or paused to prevent jitters
             if (!m_IsPlaying && !just_sought) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                std::this_thread::sleep_for(5ms);
                 continue;
             }
 
@@ -470,7 +456,7 @@ void ViewPage::StartDecodingThread() {
                 if (m_IsLooping) {
                     cap.set(cv::CAP_PROP_POS_FRAMES, 0);
                 } else {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    std::this_thread::sleep_for(10ms);
                 }
             }
         }
@@ -491,7 +477,7 @@ void ViewPage::UpdateTexture(bool is_timer_tick) {
     bool    frame_ready = false;
     {
         std::lock_guard<std::mutex> lock{m_FrameMutex};
-        bool                        should_consume = is_timer_tick || m_ForceUpdateFrame;
+        const bool                  should_consume = is_timer_tick || m_ForceUpdateFrame;
 
         if (should_consume && !m_FrameQueue.empty()) {
             const auto p     = m_FrameQueue.front();
@@ -559,8 +545,8 @@ std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<uint64_t>& micro
     m_DataAndTimeSync                 = true;
     const auto     creation_timestamp = m_VideoCreationTimestamp.value();
     const uint64_t micros_to_sync     = creation_timestamp.MicrosSinceMidnight();
-    const auto     it = std::lower_bound(micros_times.begin(), micros_times.end(), micros_to_sync);
-    if (it != micros_times.end()) { return static_cast<size_t>(it - micros_times.begin()); }
+    const auto     it                 = std::ranges::lower_bound(micros_times, micros_to_sync);
+    if (it != micros_times.end()) { return std::distance(micros_times.begin(), it); }
 
     return std::nullopt;
 }
@@ -596,7 +582,7 @@ void ViewPage::DynamicPlotStart() {
         const double video_duration_min = (static_cast<double>(m_TotalFrames) / m_VideoFPS) / 60.0;
         const double target_end_time    = begin_time_min + video_duration_min;
 
-        const auto end_it = std::lower_bound(time_vec.begin(), time_vec.end(), target_end_time);
+        const auto end_it = std::ranges::lower_bound(time_vec, target_end_time);
 
         const size_t end_idx = std::distance(time_vec.begin(), end_it);
         const size_t end_idy = std::distance(end_it, time_vec.end());

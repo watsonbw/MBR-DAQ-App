@@ -8,9 +8,11 @@ struct LocalTime {
     explicit LocalTime();
     explicit LocalTime(uint64_t micros);
 
-    uint64_t                        MicrosSinceMidnight() const;
-    double                          MinutesSinceMidnight() const;
-    static std::optional<LocalTime> InputStringLT(std::string input);
+    uint64_t MicrosSinceMidnight() const;
+    double   MinutesSinceMidnight() const;
+
+    // Tries to parse a string formatted as "HH:MM:SS".
+    static std::optional<LocalTime> FromString(const std::string& input);
 
     uint64_t Hour;
     uint64_t Minute;

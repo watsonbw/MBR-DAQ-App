@@ -1,5 +1,4 @@
 #include <cassert>
-#include <sstream>
 
 #include <imgui.h>
 #include <implot.h>
@@ -17,6 +16,7 @@
 #include "app/gui.hpp"
 #include "app/style.hpp"
 
+#include "app/pages/common/text.hpp"
 #include "app/pages/home.hpp"
 #include "app/pages/rpm.hpp"
 #include "app/pages/shock.hpp"
@@ -85,7 +85,7 @@ void GUI::OnFrame() {
     frame_desc.dpi_scale           = sapp_dpi_scale();
     simgui_new_frame(&frame_desc);
 
-    DrawMainMenuBar();
+    MAIN_MENU_BAR(DrawMainMenuBar());
 
     if (m_CurrentPage) {
         const auto* viewport = ImGui::GetMainViewport();
@@ -156,26 +156,23 @@ void GUI::ChangePage(PageType type) {
 }
 
 void GUI::DrawMainMenuBar() {
-    ImGui::PushFont(m_Context->Style.DefaultFonts.Regular, 30.0f);
-
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("Menu")) {
-            ImGui::PushFont(m_Context->Style.DefaultFonts.Regular, 28.0f);
-
-            if (ImGui::MenuItem("Home")) { ChangePage(PageType::HOME); }
-            if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
-            if (ImGui::MenuItem("Shock")) { ChangePage(PageType::SHOCK); }
-            if (ImGui::MenuItem("View")) { ChangePage(PageType::VIEW); }
-            if (ImGui::MenuItem("Toggle Dark Mode")) {
-                if (m_Context->Style.DarkMode) {
-                    m_Context->Style.SetLightThemeColors();
-                } else {
-                    m_Context->Style.SetDarkThemeColors();
+            MAIN_MENU_BAR_ITEM({
+                if (ImGui::MenuItem("Home")) { ChangePage(PageType::HOME); }
+                if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
+                if (ImGui::MenuItem("Shock")) { ChangePage(PageType::SHOCK); }
+                if (ImGui::MenuItem("View")) { ChangePage(PageType::VIEW); }
+                if (ImGui::MenuItem("Toggle Dark Mode")) {
+                    if (m_Context->Style.DarkMode) {
+                        m_Context->Style.SetLightThemeColors();
+                    } else {
+                        m_Context->Style.SetDarkThemeColors();
+                    }
                 }
-            }
-            if (ImGui::MenuItem("Exit")) { sapp_request_quit(); }
+                if (ImGui::MenuItem("Exit")) { sapp_request_quit(); }
+            });
 
-            ImGui::PopFont();
             ImGui::EndMenu();
         }
 
@@ -188,23 +185,16 @@ void GUI::DrawMainMenuBar() {
         LocalTime lt;
         auto      sync_time = lt.MicrosSinceMidnight();
 
-        std::stringstream ss;
-        ss << "SYNC ";
-        ss << sync_time;
-        if (ImGui::Button("Sync Time")) { m_Context->Backend->SendCMD(ss.str()); }
+        const auto command = std::format("SYNC {}", sync_time);
+        if (ImGui::Button("Sync Time")) { m_Context->Backend->SendCMD(command); }
 
         ImGui::Separator();
-
         if (ImGui::Button("Restart Connection")) { m_Context->Backend->TryConnection = true; }
-
         ImGui::Separator();
-
         if (ImGui::Button("Clear Data")) { m_Context->Backend->Data.Clear(); }
-
         ImGui::Separator();
 
         // Connection indicator
-
         bool connected = m_Context->Backend->IsConnected;
         bool receiving = m_Context->Backend->IsReceiving;
 
@@ -219,21 +209,17 @@ void GUI::DrawMainMenuBar() {
         ImDrawList* draw = ImGui::GetWindowDrawList();
         draw->AddCircleFilled(center, radius, color);
 
-        ImGui::Dummy(ImVec2(radius * 2.5f, radius * 2.0f));
+        ImGui::Dummy({radius * 2.5f, radius * 2.0f});
         ImGui::SameLine();
         ImGui::TextUnformatted(connected ? "Connected" : "Not Connected");
 
         ImGui::Separator();
-
-        static char buffer[128] = "";
-        ImGui::SetNextItemWidth(200.0f);
-        ImGui::InputText("##SmallBox", buffer, 128);
-
+        TextUtils::DrawInputBox("##command", m_CommandBuf);
         ImGui::Separator();
 
         if (ImGui::Button("Send CMD")) {
-            m_Context->Backend->SendCMD(buffer);
-            buffer[0] = '\0';
+            m_Context->Backend->SendCMD(m_CommandBuf);
+            m_CommandBuf = {};
         }
 
         ImGui::Separator();
@@ -243,6 +229,4 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::EndMainMenuBar();
     }
-
-    ImGui::PopFont();
 }

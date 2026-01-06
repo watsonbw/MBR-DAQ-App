@@ -1,8 +1,10 @@
 #pragma once
 
-#include "core/time.hpp"
+#include <optional>
 #include <string>
 #include <vector>
+
+#include "core/time.hpp"
 
 struct AppContext;
 
@@ -26,6 +28,17 @@ struct ShockData {
 
 class TelemetryData {
   public:
+    struct PackedData {
+        std::vector<uint64_t> TimeMicrosRaw;
+        std::vector<double>   TimeMinutesNormalized;
+
+        RPMData   RPM;
+        ShockData Shock;
+
+        std::vector<std::string> RawLines;
+    };
+
+  public:
     explicit TelemetryData();
     ~TelemetryData() = default;
 
@@ -34,19 +47,20 @@ class TelemetryData {
     const RPMData&                  GetRPMData() const { return m_RPMData; }
     const ShockData&                GetShockData() const { return m_ShockData; }
     const std::vector<std::string>& GetRawLines() const { return m_RawLines; };
-    void                            WriteData(std::string identifier, std::string value);
-    void                            WriteRawLine(const std::string& message);
-    void                            Clear();
-    bool                            IsSyncedToZero{false};
-    LocalTime                       SyncLT;
+    const std::optional<LocalTime>& GetSyncLT() const { return m_SyncLT; }
+
+    void WriteData(const std::string& identifier, const std::string& value);
+    void WriteRawLine(const std::string& message);
+    void Clear();
 
   private:
-    std::vector<double>      m_Time;
     std::vector<uint64_t>    m_TimeNoNormalMicros;
+    std::vector<double>      m_Time;
     RPMData                  m_RPMData;
     ShockData                m_ShockData;
     std::vector<std::string> m_RawLines;
     double                   m_SyncStart;
+    std::optional<LocalTime> m_SyncLT;
 
     friend class ViewPage;
 };
