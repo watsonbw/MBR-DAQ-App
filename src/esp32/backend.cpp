@@ -85,6 +85,7 @@ void TelemetryBackend::SendCMD(const std::string& text) {
         }
 
         LOG_INFO("Sent command: {}", text);
+        return;
     }
 
     LOG_WARN("Failed to send message as WebSocket was not open");
