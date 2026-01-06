@@ -8,6 +8,7 @@ Checks: >
   google-*,
   bugprone-*,
   -performance-no-int-to-ptr,
+  -portability-avoid-pragma-once,
   -readability-identifier-length,
   -readability-magic-numbers,
   -readability-function-cognitive-complexity,
@@ -23,6 +24,7 @@ Checks: >
   -google-build-using-namespace,
   -bugprone-easily-swappable-parameters,
   -bugprone-unchecked-optional-access,
+  -bugprone-exception-escape,
 
 WarningsAsErrors: "*"
 
@@ -35,13 +37,13 @@ CheckOptions:
   - { key: readability-identifier-naming.EnumConstantCase,         value: UPPER_CASE }
   - { key: readability-identifier-naming.StaticConstantCase,       value: UPPER_CASE }
   - { key: readability-identifier-naming.GlobalConstantCase,       value: UPPER_CASE }
-  
+
   - { key: readability-identifier-naming.PublicMemberCase,     value: CamelCase }
   - { key: readability-identifier-naming.PrivateMemberCase,    value: CamelCase }
   - { key: readability-identifier-naming.StaticVariableCase,      value: CamelCase }
   - { key: readability-identifier-naming.StaticVariablePrefix,    value: s_        }
-  
+
   - { key: readability-identifier-naming.PrivateMemberPrefix,  value: m_        }
-  
+
   - { key: readability-identifier-naming.ProtectedMemberCase,  value: CamelCase }
   - { key: readability-identifier-naming.ProtectedMemberPrefix, value: m_       }

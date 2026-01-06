@@ -251,9 +251,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
 
 cmake_policy(POP)
 
-function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
-    add_library(baja_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
-    target_link_libraries(baja_core_${TARGET_NAME} PUBLIC
+function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
+    add_library(mbrdaq_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
+    target_link_libraries(mbrdaq_core_${TARGET_NAME} PUBLIC
         imgui_setup
         implot_setup
         tinyfiledialogs
@@ -268,8 +268,8 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         tag
     )
 
-    target_include_directories(baja_core_${TARGET_NAME} PUBLIC include)
-    target_include_directories(baja_core_${TARGET_NAME} SYSTEM PUBLIC
+    target_include_directories(mbrdaq_core_${TARGET_NAME} PUBLIC include)
+    target_include_directories(mbrdaq_core_${TARGET_NAME} SYSTEM PUBLIC
         ${CMAKE_BINARY_DIR}
         ${CMAKE_SOURCE_DIR}/vendor/opencv/include
         ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/core/include
@@ -279,14 +279,14 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         ${CMAKE_SOURCE_DIR}/vendor/opencv/modules/highgui/include
     )
 
-    target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
-    target_compile_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
+    target_compile_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
+    target_compile_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
     if(APPLE)
-        target_link_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS} "-static-libstdc++")
+        target_link_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS} "-static-libstdc++")
     elseif(WIN32)
-        target_link_options(baja_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
+        target_link_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
     endif()
-    set_target_properties(baja_core_${TARGET_NAME}
+    set_target_properties(mbrdaq_core_${TARGET_NAME}
         PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${OUT_DIR})
 
     # Fresh catch2 configuration per target
@@ -299,49 +299,49 @@ function(create_baja_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     set_target_properties(catch2_${TARGET_NAME}
         PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${OUT_DIR})
 
-    add_executable(baja_tests_${TARGET_NAME} ${TEST_SOURCES})
-    target_link_libraries(baja_tests_${TARGET_NAME}
-        PRIVATE catch2_${TARGET_NAME} baja_core_${TARGET_NAME})
-    target_include_directories(baja_tests_${TARGET_NAME}
+    add_executable(mbrdaq_tests_${TARGET_NAME} ${TEST_SOURCES})
+    target_link_libraries(mbrdaq_tests_${TARGET_NAME}
+        PRIVATE catch2_${TARGET_NAME} mbrdaq_core_${TARGET_NAME})
+    target_include_directories(mbrdaq_tests_${TARGET_NAME}
         PRIVATE include tests/helpers)
-    target_compile_options(baja_tests_${TARGET_NAME}
+    target_compile_options(mbrdaq_tests_${TARGET_NAME}
         PRIVATE ${WARNING_IGNORE})
 
-    target_compile_options(baja_tests_${TARGET_NAME}
+    target_compile_options(mbrdaq_tests_${TARGET_NAME}
         PRIVATE ${EXTRA_FLAGS})
-    target_link_options(baja_tests_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
-    set_target_properties(baja_tests_${TARGET_NAME}
+    target_link_options(mbrdaq_tests_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
+    set_target_properties(mbrdaq_tests_${TARGET_NAME}
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUT_DIR})
 endfunction()
 
 function(create_standard_target EXTRA_FLAGS TARGET_NAME)
-    create_baja_suite("${TARGET_NAME}"
+    create_mbrdaq_suite("${TARGET_NAME}"
         "${EXTRA_FLAGS}"
         "${CMAKE_BINARY_DIR}/${TARGET_NAME}")
 
     if(WIN32 AND NOT TARGET_NAME STREQUAL "debug")
-        add_executable(baja_${TARGET_NAME} WIN32 src/main.cpp)
+        add_executable(mbrdaq_${TARGET_NAME} WIN32 src/main.cpp)
         if (NOT MINGW)
-            target_link_options(baja_${TARGET_NAME} PRIVATE "LINKER:/ENTRY:mainCRTStartup")
+            target_link_options(mbrdaq_${TARGET_NAME} PRIVATE "LINKER:/ENTRY:mainCRTStartup")
         endif()
     else()
-        add_executable(baja_${TARGET_NAME} src/main.cpp)
+        add_executable(mbrdaq_${TARGET_NAME} src/main.cpp)
     endif()
 
-    target_link_libraries(baja_${TARGET_NAME} PRIVATE baja_core_${TARGET_NAME})
+    target_link_libraries(mbrdaq_${TARGET_NAME} PRIVATE mbrdaq_core_${TARGET_NAME})
     add_custom_target(${TARGET_NAME} DEPENDS
-        baja_tests_${TARGET_NAME} baja_${TARGET_NAME})
+        mbrdaq_tests_${TARGET_NAME} mbrdaq_${TARGET_NAME})
 
-    set_target_properties(baja_${TARGET_NAME} PROPERTIES
+    set_target_properties(mbrdaq_${TARGET_NAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${TARGET_NAME}
         OUTPUT_NAME ${PROJECT_NAME})
 
     # Windows still depends on a custom ffmpeg dll provided by opencv
     if(WIN32)
-        add_custom_command(TARGET baja_${TARGET_NAME} POST_BUILD
+        add_custom_command(TARGET mbrdaq_${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${CMAKE_BINARY_DIR}/bin"
-                "$<TARGET_FILE_DIR:baja_${TARGET_NAME}>"
+                "$<TARGET_FILE_DIR:mbrdaq_${TARGET_NAME}>"
             COMMENT "Copy FFMPEG to output directory"
         )
     endif()
@@ -353,20 +353,20 @@ create_standard_target("${RELEASE_FLAGS}" "release")
 create_standard_target("${DEBUG_FLAGS}" "debug")
 
 enable_testing()
-add_test(NAME run_tests_debug COMMAND baja_tests_debug)
-add_test(NAME run_tests_release COMMAND baja_tests_release)
-add_test(NAME run_tests_dist COMMAND baja_tests_dist)
+add_test(NAME run_tests_debug COMMAND mbrdaq_tests_debug)
+add_test(NAME run_tests_release COMMAND mbrdaq_tests_release)
+add_test(NAME run_tests_dist COMMAND mbrdaq_tests_dist)
 
 # Compiler specific configuration
-add_custom_target(baja DEPENDS dist release debug)
+add_custom_target(mbrdaq DEPENDS dist release debug)
 
 add_custom_target(qtest
-    DEPENDS baja_tests_debug
+    DEPENDS mbrdaq_tests_debug
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -R run_tests_debug
     USES_TERMINAL)
 
-add_custom_target(baja_tests
-    DEPENDS baja_tests_debug baja_tests_release baja_tests_dist
+add_custom_target(mbrdaq_tests
+    DEPENDS mbrdaq_tests_debug mbrdaq_tests_release mbrdaq_tests_dist
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -R run_tests_debug
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -R run_tests_release
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -R run_tests_dist
@@ -376,15 +376,15 @@ add_custom_target(baja_tests
 if(APPLE)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang")
         set(ASAN_FLAGS "-fsanitize=undefined" "-fno-sanitize-recover=all" "-g")
-        set(ASAN_RUN_CMD leaks --atExit -- $<TARGET_FILE:baja_tests_asan>)
+        set(ASAN_RUN_CMD leaks --atExit -- $<TARGET_FILE:mbrdaq_tests_asan>)
     else()
         message(ERROR "Cannot run asan with non-clang compilers on macOS")
     endif()
     
-    create_standard_target("${ASAN_FLAGS}" "asan")
-    add_custom_target(test_asan
+    create_mbrdaq_suite("asan" "${ASAN_FLAGS}" "${CMAKE_BINARY_DIR}/asan")
+    add_custom_target(asan
         COMMAND ${ASAN_RUN_CMD}
-        DEPENDS baja_tests_asan
+        DEPENDS mbrdaq_tests_asan
         USES_TERMINAL)
 endif()
 
@@ -419,25 +419,27 @@ if (CLOC)
     add_custom_target(cloc COMMAND ${CLOC} ${TOOLING_SOURCES})
 endif()
 
-# Static analysis
-file(GLOB_RECURSE TIDY_SOURCES
-    ${SRC_DIR}/*.cpp
-    ${INCLUDE_DIR}/*.hpp
-    ${TEST_DIR}/*.cpp
-    ${TEST_DIR}/*.hpp
-)
-list(FILTER TIDY_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
-
-find_program(RUN_CLANG_TIDY run-clang-tidy)
-find_program(CLANG_TIDY clang-tidy)
-if(RUN_CLANG_TIDY AND MACOS)
-    add_custom_target(tidy COMMAND
-        ${RUN_CLANG_TIDY}
-        -p ${CMAKE_BINARY_DIR}
-        ${TOOLING_SOURCES})
-elseif(CLANG_TIDY)
-    add_custom_target(tidy COMMAND
-        ${CLANG_TIDY}
-        -p ${CMAKE_BINARY_DIR}
-        ${TOOLING_SOURCES})
+# Clang tidy has a tough time on windows
+if(APPLE)
+    file(GLOB_RECURSE TIDY_SOURCES
+        ${SRC_DIR}/*.cpp
+        ${INCLUDE_DIR}/*.hpp
+        ${TEST_DIR}/*.cpp
+        ${TEST_DIR}/*.hpp
+    )
+    list(FILTER TIDY_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
+    
+    find_program(RUN_CLANG_TIDY run-clang-tidy)
+    find_program(CLANG_TIDY clang-tidy)
+    if(RUN_CLANG_TIDY)
+        add_custom_target(tidy COMMAND
+            ${RUN_CLANG_TIDY}
+            -p ${CMAKE_BINARY_DIR}
+            ${TIDY_SOURCES})
+    elseif(CLANG_TIDY)
+        add_custom_target(tidy COMMAND
+            ${CLANG_TIDY}
+            -p ${CMAKE_BINARY_DIR}
+            ${TIDY_SOURCES})
+    endif()
 endif()

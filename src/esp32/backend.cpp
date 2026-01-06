@@ -1,6 +1,5 @@
 #include <cassert>
 #include <charconv>
-#include <chrono>
 #include <format>
 #include <string>
 
@@ -109,7 +108,7 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
             if (!parsed.has_value()) { continue; }
 
             // Now we can safely unpack the packet
-            const std::lock_guard<std::mutex> lock{DataMutex};
+            const std::scoped_lock<std::mutex> lock{DataMutex};
             for (const auto& [ident, value] : parsed.value()) {
                 Data.WriteData(std::string{ident}, std::string{value});
             }
@@ -166,7 +165,7 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
 }
 
 TelemetryData::PackedData TelemetryBackend::PackData() {
-    const std::lock_guard<std::mutex> lock{DataMutex};
+    const std::scoped_lock<std::mutex> lock{DataMutex};
     return {.TimeMicrosRaw         = Data.GetTimeNoNormal(),
             .TimeMinutesNormalized = Data.GetTime(),
             .RPM                   = Data.GetRPMData(),

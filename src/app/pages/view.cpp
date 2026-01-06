@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cassert>
-#include <chrono>
 #include <cstddef>
 #include <fstream>
 
@@ -90,7 +89,7 @@ void ViewPage::DrawLHS() {
                 m_TimeAccumulator -= (frames_to_advance * m_FrameDuration);
 
                 if (frames_to_advance > 1) {
-                    std::lock_guard<std::mutex> lock{m_FrameMutex};
+                    const std::scoped_lock<std::mutex> lock{m_FrameMutex};
 
                     const auto recoverable_frames =
                         std::min(static_cast<int>(m_FrameQueue.size()) - 1, frames_to_advance - 1);
@@ -147,7 +146,7 @@ void ViewPage::DrawLHSControls() {
 void ViewPage::DrawOpenVideo() {
     // Check if the file is ready
     {
-        std::lock_guard<std::mutex> lock{m_VideoPathMutex};
+        const std::scoped_lock<std::mutex> lock{m_VideoPathMutex};
         if (m_SelectedVideo.has_value()) {
             StopDecodingThread();
             TryCleanupSokolResources();
@@ -169,12 +168,20 @@ void ViewPage::DrawOpenVideo() {
         const auto  alive         = m_IsAlive;
         const auto& previous_file = m_VideoPath;
 
-        std::thread([this, alive, previous_file]() {
-            const auto path = OpenVideoFile(previous_file);
-            if (*alive) {
-                std::lock_guard<std::mutex> lock{m_VideoPathMutex};
-                m_SelectedVideo      = path;
+        std::thread([this, alive, previous_file]() noexcept {
+            try {
+                const auto path = OpenVideoFile(previous_file);
+                if (*alive) {
+                    const std::scoped_lock<std::mutex> lock{m_VideoPathMutex};
+                    m_SelectedVideo      = path;
+                    m_VideoDialogRunning = false;
+                }
+            } catch (const std::exception& e) {
                 m_VideoDialogRunning = false;
+                LOG_CRITICAL("Fatal error occurred while opening video dialog: {}", e.what());
+            } catch (...) {
+                m_VideoDialogRunning = false;
+                LOG_CRITICAL("Unknown fatal error occurred");
             }
         }).detach();
     }
@@ -261,7 +268,7 @@ void ViewPage::DrawRHS() {
 void ViewPage::DrawOpenText() {
     // Check if the file is ready
     {
-        std::lock_guard<std::mutex> lock{m_TxtPathMutex};
+        const std::scoped_lock<std::mutex> lock{m_TxtPathMutex};
         if (m_SelectedTxt.has_value()) {
             m_TxtPath     = m_SelectedTxt.value();
             m_SelectedTxt = std::nullopt;
@@ -281,13 +288,21 @@ void ViewPage::DrawOpenText() {
         const auto alive         = m_IsAlive;
         const auto previous_path = m_TxtPath;
 
-        std::thread([this, alive, previous_path]() {
-            const auto path = OpenTextFile(previous_path);
-            if (*alive) {
-                std::lock_guard<std::mutex> lock{m_TxtPathMutex};
-                m_SelectedTxt                 = path;
-                m_TxtDialogRunning            = false;
-                m_Context->Backend->IsLogging = false;
+        std::thread([this, alive, previous_path]() noexcept {
+            try {
+                const auto path = OpenTextFile(previous_path);
+                if (*alive) {
+                    const std::scoped_lock<std::mutex> lock{m_TxtPathMutex};
+                    m_SelectedTxt                 = path;
+                    m_TxtDialogRunning            = false;
+                    m_Context->Backend->IsLogging = false;
+                }
+            } catch (const std::exception& e) {
+                m_TxtDialogRunning = false;
+                LOG_CRITICAL("Fatal error occurred while opening text file dialog: {}", e.what());
+            } catch (...) {
+                m_TxtDialogRunning = false;
+                LOG_CRITICAL("Unknown fatal error occurred");
             }
         }).detach();
     }
@@ -316,7 +331,7 @@ void ViewPage::DrawSyncVideoButtons() {
 
         std::optional<size_t> sync_time_pos;
         {
-            std::lock_guard<std::mutex> lock{m_Context->Backend->DataMutex};
+            const std::scoped_lock<std::mutex> lock{m_Context->Backend->DataMutex};
             sync_time_pos = SyncDataVideo(m_Context->Backend->Data.GetTimeNoNormal());
         }
 
@@ -337,8 +352,8 @@ void ViewPage::DrawSyncVideoButtons() {
 }
 
 ViewPage::SelectedVideo ViewPage::OpenVideoFile(const std::string& previous_file) {
-    const char* filters[] = {"*.mp4", "*.mov"};
-    const char* path      = tinyfd_openFileDialog(
+    const char* const filters[] = {"*.mp4", "*.mov"};
+    const char*       path      = tinyfd_openFileDialog(
         "Select a video file", previous_file.c_str(), std::size(filters), filters, nullptr, 0);
     if (path == nullptr) {
         LOG_WARN("No file selected");
@@ -359,8 +374,8 @@ ViewPage::SelectedVideo ViewPage::OpenVideoFile(const std::string& previous_file
 }
 
 ViewPage::SelectedTxtFile ViewPage::OpenTextFile(const std::string& previous_file) {
-    const char* filters[] = {"*.txt"};
-    const char* path      = tinyfd_openFileDialog(
+    const char* const filters[] = {"*.txt"};
+    const char*       path      = tinyfd_openFileDialog(
         "Select a text file", previous_file.c_str(), std::size(filters), filters, nullptr, 0);
     if (path == nullptr) {
         LOG_WARN("No file selected");
@@ -378,7 +393,7 @@ void ViewPage::LoadData() {
         return;
     }
 
-    std::lock_guard<std::mutex> lock{m_Context->Backend->DataMutex};
+    const std::scoped_lock<std::mutex> lock{m_Context->Backend->DataMutex};
     m_Context->Backend->Data.Clear();
     std::string ident, value;
     while (file >> ident >> value) {
@@ -388,7 +403,7 @@ void ViewPage::LoadData() {
 
 void ViewPage::RequestSeek(int frame_index) {
     {
-        std::lock_guard<std::mutex> lock{m_FrameMutex};
+        const std::scoped_lock<std::mutex> lock{m_FrameMutex};
         m_FrameQueue.clear();
     }
 
@@ -426,12 +441,12 @@ void ViewPage::StartDecodingThread() {
                 if (!m_ThreadRunning) { break; }
             }
 
-            int  seek_req    = m_SeekTarget.exchange(-1);
-            bool just_sought = false;
+            const int seek_req    = m_SeekTarget.exchange(-1);
+            bool      just_sought = false;
 
             if (seek_req != -1) {
                 cap.set(cv::CAP_PROP_POS_FRAMES, seek_req);
-                std::lock_guard<std::mutex> lock{m_FrameMutex};
+                const std::scoped_lock<std::mutex> lock{m_FrameMutex};
                 m_FrameQueue.clear();
                 just_sought = true;
             }
@@ -445,9 +460,9 @@ void ViewPage::StartDecodingThread() {
             auto current_frame_index = static_cast<int>(cap.get(cv::CAP_PROP_POS_FRAMES));
             if (cap.read(raw_frame)) {
                 cv::cvtColor(raw_frame, rgba_frame, cv::COLOR_BGR2RGBA);
-                cv::Mat frame_copy = rgba_frame.clone();
+                const cv::Mat frame_copy = rgba_frame.clone();
 
-                std::lock_guard<std::mutex> lock{m_FrameMutex};
+                const std::scoped_lock<std::mutex> lock{m_FrameMutex};
                 m_FrameQueue.emplace_back(frame_copy, current_frame_index);
             } else {
                 if (m_IsLooping) {
@@ -465,7 +480,7 @@ void ViewPage::StopDecodingThread() {
     m_QueueCV.notify_all();
     if (m_DecodeThread.joinable()) { m_DecodeThread.join(); }
 
-    std::lock_guard<std::mutex> lock{m_FrameMutex};
+    const std::scoped_lock<std::mutex> lock{m_FrameMutex};
     m_FrameQueue.clear();
 }
 
@@ -473,8 +488,8 @@ void ViewPage::UpdateTexture(bool is_timer_tick) {
     cv::Mat frame_to_upload;
     bool    frame_ready = false;
     {
-        std::lock_guard<std::mutex> lock{m_FrameMutex};
-        const bool                  should_consume = is_timer_tick || m_ForceUpdateFrame;
+        const std::scoped_lock<std::mutex> lock{m_FrameMutex};
+        const bool                         should_consume = is_timer_tick || m_ForceUpdateFrame;
 
         if (should_consume && !m_FrameQueue.empty()) {
             const auto p     = m_FrameQueue.front();
@@ -549,8 +564,8 @@ std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<uint64_t>& micro
 }
 
 void ViewPage::DeleteExtra(size_t erase_pos) {
-    std::lock_guard<std::mutex> lock{m_Context->Backend->DataMutex};
-    std::vector<double>*        data[] = {
+    const std::scoped_lock<std::mutex> lock{m_Context->Backend->DataMutex};
+    std::vector<double>* const         data[] = {
         &m_Context->Backend->Data.m_Time,
         &m_Context->Backend->Data.m_RPMData.WheelRPM,
         &m_Context->Backend->Data.m_RPMData.EngineRPM,
@@ -564,15 +579,15 @@ void ViewPage::DeleteExtra(size_t erase_pos) {
         if (datum->size() < erase_pos) { return; }
     }
 
-    for (auto& datum : data) {
+    for (const auto& datum : data) {
         datum->erase(datum->begin(), datum->begin() + static_cast<ptrdiff_t>(erase_pos));
     }
 }
 
 void ViewPage::DynamicPlotStart() {
     if (m_DynamicPlotting) {
-        std::lock_guard<std::mutex> lock{m_Context->Backend->DataMutex};
-        const auto&                 time_vec = m_Context->Backend->Data.m_Time;
+        const std::scoped_lock<std::mutex> lock{m_Context->Backend->DataMutex};
+        const auto&                        time_vec = m_Context->Backend->Data.m_Time;
         if (time_vec.empty()) { return; }
         const auto begin_time_min = m_Context->Backend->Data.m_Time[0];
 

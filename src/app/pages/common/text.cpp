@@ -26,8 +26,8 @@ void TextUtils::DrawDataDownloadButton(const std::vector<std::string>& raw_lines
                                        std::string&                    buf) {
     HEADER({
         if (ImGui::Button("Download Data")) {
-            DateTime    dt;
-            std::string filepath;
+            const DateTime dt;
+            std::string    filepath;
             if (!buf.empty()) {
                 filepath =
                     std::format("{}_{}.txt", dt.String(DateTime::StringFormat::TEXT_FILE), buf);

@@ -36,6 +36,6 @@ void Log::Init() {
 }
 
 std::string Log::GetStreamedLogs() {
-    const std::lock_guard<std::mutex> lock{s_ErrorMutex};
+    const std::scoped_lock<std::mutex> lock{s_ErrorMutex};
     return s_OSS.str();
 }

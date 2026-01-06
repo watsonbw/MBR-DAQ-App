@@ -200,8 +200,8 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Separator();
 
-        LocalTime lt;
-        auto      sync_time = lt.MicrosSinceMidnight();
+        const LocalTime lt;
+        const auto      sync_time = lt.MicrosSinceMidnight();
 
         const auto command = std::format("SYNC {}", sync_time);
         if (ImGui::Button("Sync Time")) { m_Context->Backend->SendCMD(command); }
