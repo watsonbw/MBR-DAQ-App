@@ -16,7 +16,7 @@ ButtonTexture::ButtonTexture(const unsigned char* data, size_t size) {
     img_desc.pixel_format            = SG_PIXELFORMAT_RGBA8;
     img_desc.num_mipmaps             = 1;
     img_desc.data.mip_levels[0].ptr  = pixels;
-    img_desc.data.mip_levels[0].size = static_cast<size_t>(width * height) * 4;
+    img_desc.data.mip_levels[0].size = static_cast<size_t>(width * height) * comp;
 
     m_Image = sg_make_image(&img_desc);
     stbi_image_free(pixels);
@@ -51,7 +51,7 @@ IconTexture::IconTexture(const unsigned char* data, size_t size) {
     Width  = width;
     Height = height;
     Pixels = pixels;
-    Size   = static_cast<size_t>(width * height) * 4;
+    Size   = static_cast<size_t>(width * height) * comp;
 }
 
 void IconTexture::Free() {

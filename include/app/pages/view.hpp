@@ -119,6 +119,7 @@ class ViewPage : public Page {
     ImVec2        m_ButtonSize{24, 24};
     ButtonTexture m_PlayButton;
     ButtonTexture m_PauseButton;
+    ButtonTexture m_StepButton;
 
     sg_image    m_VideoTexture{SG_INVALID_ID};
     sg_view     m_VideoView{SG_INVALID_ID};

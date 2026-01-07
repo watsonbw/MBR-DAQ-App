@@ -44,7 +44,8 @@ const char* ViewPage::DataTypeString(DataView type) {
 ViewPage::ViewPage(const std::shared_ptr<AppContext>& ctx)
     : Page{ctx}, m_IsAlive{std::make_shared<bool>(true)},
       m_PlayButton{PLAY_BUTTON_PNG, PLAY_BUTTON_PNG_SIZE},
-      m_PauseButton{PAUSE_BUTTON_PNG, PAUSE_BUTTON_PNG_SIZE} {}
+      m_PauseButton{PAUSE_BUTTON_PNG, PAUSE_BUTTON_PNG_SIZE},
+      m_StepButton{STEP_BUTTON_PNG, STEP_BUTTON_PNG_SIZE} {}
 
 ViewPage::~ViewPage() {
     *m_IsAlive = false;
@@ -170,17 +171,46 @@ void ViewPage::DrawLHSControls() {
     ImGui::SameLine();
 
     // Play/Pause
-    if (ImGui::ImageButton("PlayPause",
-                           m_IsPlaying ? m_PauseButton.GetID() : m_PlayButton.GetID(),
-                           m_ButtonSize)) {
-        m_IsPlaying       = !m_IsPlaying;
+    const auto is_playing = m_IsPlaying.load();
+    const auto tint_color = m_Context->Style.DarkMode ? ImVec4{1, 1, 1, 1} : ImVec4{-1, -1, -1, 1};
+    ImGui::SameLine();
+    if (ImGui::ImageButton("##stepback",
+                           m_StepButton.GetID(),
+                           m_ButtonSize,
+                           {1, 0},
+                           {0, 1},
+                           {0, 0, 0, 0},
+                           tint_color)) {
+        RequestSeek(m_CurrentFrameUI - 5);
+        m_IsPlaying.exchange(false);
+    }
+    ImGui::SameLine();
+    if (ImGui::ImageButton("##playpause",
+                           is_playing ? m_PauseButton.GetID() : m_PlayButton.GetID(),
+                           m_ButtonSize,
+                           {0, 0},
+                           {1, 1},
+                           {0, 0, 0, 0},
+                           tint_color)) {
+        m_IsPlaying.exchange(!is_playing);
         m_TimeAccumulator = 0.0;
+    }
+    ImGui::SameLine();
+    if (ImGui::ImageButton("##stepforward",
+                           m_StepButton.GetID(),
+                           m_ButtonSize,
+                           {0, 0},
+                           {1, 1},
+                           {0, 0, 0, 0},
+                           tint_color)) {
+        RequestSeek(m_CurrentFrameUI + 5);
+        m_IsPlaying.exchange(false);
     }
 
     // Keyboard shortcuts
     if (m_VideoHovered && !m_TimestampInputFocused && !m_Context->CommandInputFocused) {
         if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
-            m_IsPlaying       = !m_IsPlaying;
+            m_IsPlaying.exchange(!is_playing);
             m_TimeAccumulator = 0.0;
         }
 
@@ -463,14 +493,17 @@ void ViewPage::LoadData() {
 }
 
 void ViewPage::RequestSeek(int frame_index) {
+    // Prevent stepping out of bounds, though it is recoverable
+    const auto clamped_frame = std::clamp(frame_index, 0, m_TotalFrames);
+
     {
         const std::scoped_lock<std::mutex> lock{m_FrameMutex};
         m_FrameQueue.clear();
     }
 
-    m_SeekTarget       = frame_index;
+    m_SeekTarget       = clamped_frame;
     m_ForceUpdateFrame = true;
-    m_CurrentFrameUI   = frame_index;
+    m_CurrentFrameUI   = clamped_frame;
     m_QueueCV.notify_one();
 }
 
