@@ -1,5 +1,6 @@
 # Founders
-Blake Watson
-Trevor Swan
+
+- Blake Watson
+- Trevor Swan
 
 # Contributors
