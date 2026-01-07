@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "app/pages/common/text.hpp"
+#include "app/common/text.hpp"
 #include "app/pages/page.hpp"
 
 struct AppContext;

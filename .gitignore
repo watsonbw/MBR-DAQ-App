@@ -5,6 +5,7 @@ release/
 build/
 build*/
 .cache
+.cmake/
 
 .theia
 .vscode

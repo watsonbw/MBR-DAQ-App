@@ -4,7 +4,8 @@
 
 #include "core/log.hpp"
 
-#include "app/pages/common/text.hpp"
+#include "app/common/scope.hpp"
+#include "app/common/text.hpp"
 #include "app/pages/home.hpp"
 #include "app/style.hpp"
 
@@ -16,45 +17,43 @@ void HomePage::Update() {
     const float top_height    = full_height * 0.66F;
     const float bottom_height = full_height - top_height;
 
-    if (ImGui::BeginChild("TopSection", {0, top_height})) {
-        if (ImGui::BeginTable("TopSplit", 2, ImGuiTableFlags_BordersInnerV)) {
+    if (const ImGuiScope<ImGui::EndChild> top_section{
+            IMSCOPE_FN(ImGui::BeginChild("##topsec", {0, top_height}))}) {
+        if (const ImGuiScope<ImGui::EndTable> split{
+                IMSCOPE_FN(ImGui::BeginTable("##topsplt", 2, ImGuiTableFlags_BordersInnerV))}) {
             ImGui::TableNextColumn();
             DrawTopLHS();
             ImGui::TableNextColumn();
             DrawTopRHS();
-
-            ImGui::EndTable();
         }
     }
-    ImGui::EndChild();
     ImGui::Separator();
 
-    if (ImGui::BeginChild("BottomSection", {0, bottom_height})) {
-        if (ImGui::BeginTable("BottomSplit", 2, ImGuiTableFlags_Resizable)) {
-            ImGui::TableSetupColumn("Errors", ImGuiTableColumnFlags_WidthStretch, 0.33F);
-            ImGui::TableSetupColumn("ActionPanel", ImGuiTableColumnFlags_WidthStretch, 0.66F);
+    if (const ImGuiScope<ImGui::EndChild> bottom_section{
+            IMSCOPE_FN(ImGui::BeginChild("##botsec", {0, bottom_height}))}) {
+        if (const ImGuiScope<ImGui::EndTable> split{
+                IMSCOPE_FN(ImGui::BeginTable("##botsplt", 2, ImGuiTableFlags_Resizable))}) {
+            ImGui::TableSetupColumn("##errors", ImGuiTableColumnFlags_WidthStretch, 0.33F);
+            ImGui::TableSetupColumn("##action", ImGuiTableColumnFlags_WidthStretch, 0.66F);
 
             ImGui::TableNextColumn();
             DrawBottomLHS();
             ImGui::TableNextColumn();
             DrawBottomRHS();
-
-            ImGui::EndTable();
         }
     }
-    ImGui::EndChild();
 }
 
 void HomePage::DrawTopLHS() {
     BOLD_HEADER(ImGui::Text("How To"));
     ImGui::Separator();
 
-    if (ImGui::BeginChild("Tutorial", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
+    if (const ImGuiScope<ImGui::EndChild> tutorial{IMSCOPE_FN(ImGui::BeginChild(
+            "##tutorial", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
         ImGui::BulletText("Touch my tail?");
         ImGui::BulletText("Uhm....");
         ImGui::BulletText("No!");
     }
-    ImGui::EndChild();
 }
 
 void HomePage::DrawTopRHS() {
@@ -84,24 +83,23 @@ void HomePage::DrawBottomLHS() {
     BOLD_HEADER(ImGui::Text("Error Log"));
     ImGui::Separator();
 
-    if (ImGui::BeginChild(
-            "ErrorScrollingRegion", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
+    if (const ImGuiScope<ImGui::EndChild> scroll{IMSCOPE_FN(ImGui::BeginChild(
+            "##errscroll", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
         const std::string all_errors = Log::GetStreamedLogs();
         ImGui::TextUnformatted(all_errors.c_str());
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) { ImGui::SetScrollHereY(1.0F); }
     }
-    ImGui::EndChild();
 }
 
 void HomePage::DrawBottomRHS() {
     BOLD_HEADER(ImGui::Text("Command Center"));
     ImGui::Separator();
 
-    if (ImGui::BeginChild("CommandCenter", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
+    if (const ImGuiScope<ImGui::EndChild> command_center{IMSCOPE_FN(ImGui::BeginChild(
+            "##commandcenter", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
         DrawIPControls();
         DrawCredentialControls();
     }
-    ImGui::EndChild();
 }
 
 void HomePage::DrawIPControls() {

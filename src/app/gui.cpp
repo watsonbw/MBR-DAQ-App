@@ -13,10 +13,11 @@
 
 #include "app/assets/images/app_icon.hpp"
 
+#include "app/common/scope.hpp"
+#include "app/common/text.hpp"
 #include "app/gui.hpp"
 #include "app/style.hpp"
 
-#include "app/pages/common/text.hpp"
 #include "app/pages/home.hpp"
 #include "app/pages/rpm.hpp"
 #include "app/pages/shock.hpp"
@@ -78,8 +79,7 @@ void GUI::OnInit() {
 }
 
 void GUI::OnFrame() {
-    SokolStartFrame();
-
+    const RenderScope<SokolEndFrame> frame{SokolStartFrame};
     MAIN_MENU_BAR(DrawMainMenuBar());
 
     if (m_CurrentPage) {
@@ -87,23 +87,24 @@ void GUI::OnFrame() {
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0F);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0F);
+        const ImGuiScope<ImGui::PopStyleVar, 1> sv1{
+            IMSCOPE_FN(ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0F))};
+        const ImGuiScope<ImGui::PopStyleVar, 1> sv2{
+            IMSCOPE_FN(ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0F))};
 
         constexpr ImGuiWindowFlags window_flags =
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
             ImGuiWindowFlags_NoNavFocus;
-        if (ImGui::Begin("##MainPage", nullptr, window_flags)) { m_CurrentPage->Update(); }
-        ImGui::End();
 
-        ImGui::PopStyleVar(2);
+        if (const ImGuiScope<ImGui::End> page{
+                IMSCOPE_FN(ImGui::Begin("##currpage", nullptr, window_flags))}) {
+            m_CurrentPage->Update();
+        }
     }
 
     if (ImGui::IsKeyPressed(ImGuiKey_F11, false)) { sapp_toggle_fullscreen(); }
     if (m_Context->Backend->TryConnection.exchange(false)) { m_Context->Backend->Start(); }
-
-    SokolEndFrame();
 }
 
 void GUI::OnEvent(const sapp_event* event) { // NOLINT
@@ -174,8 +175,11 @@ void GUI::ChangePage(PageType type) {
 }
 
 void GUI::DrawMainMenuBar() {
-    if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("Menu")) {
+    // DO NOT MOVE THIS BEGIN CALL IT WILL BREAK
+    if (const ImGuiScope<ImGui::EndMainMenuBar, REQUIRE_ALIVE_FOR_DTOR> main_menu_bar{
+            IMSCOPE_FN(ImGui::BeginMainMenuBar())}) {
+        if (const ImGuiScope<ImGui::EndMenu, REQUIRE_ALIVE_FOR_DTOR> menu{
+                IMSCOPE_FN(ImGui::BeginMenu("Menu"))}) {
             MAIN_MENU_BAR_ITEM({
                 if (ImGui::MenuItem("Home")) { ChangePage(PageType::HOME); }
                 if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
@@ -190,14 +194,12 @@ void GUI::DrawMainMenuBar() {
                 }
                 if (ImGui::MenuItem("Exit")) { sapp_request_quit(); }
             });
-
-            ImGui::EndMenu();
         }
 
         ImGui::Separator();
-
         ImGui::TextUnformatted(PageTypeString(m_Context->CurrentPageType));
-
+        ImGui::Separator();
+        ImGui::TextUnformatted(PageTypeString(m_Context->CurrentPageType));
         ImGui::Separator();
 
         const LocalTime lt;
@@ -236,6 +238,7 @@ void GUI::DrawMainMenuBar() {
 
         ImGui::Separator();
         TextUtils::DrawInputBox("##command", m_CommandBuf);
+        m_Context->CommandInputFocused = ImGui::IsItemFocused();
         ImGui::Separator();
 
         if (ImGui::Button("Send CMD")) {
@@ -247,7 +250,5 @@ void GUI::DrawMainMenuBar() {
 
         const std::string time_formatted = lt.String();
         ImGui::TextUnformatted(time_formatted.c_str());
-
-        ImGui::EndMainMenuBar();
     }
 }

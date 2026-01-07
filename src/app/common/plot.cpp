@@ -1,6 +1,6 @@
 #include <implot.h>
 
-#include <app/pages/common/plot.hpp>
+#include "app/common/plot.hpp"
 
 template <typename T>
 void PlotUtils::PlotIfNonEmpty(const char*           label,

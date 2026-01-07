@@ -24,6 +24,8 @@ struct AppContext {
     PageType          CurrentPageType;
     std::atomic<bool> ShouldExit{false};
 
+    bool CommandInputFocused{false};
+
     std::unique_ptr<TelemetryBackend> Backend;
     std::string                       Username;
     std::string                       Password;
