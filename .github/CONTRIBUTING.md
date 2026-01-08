@@ -4,7 +4,7 @@ All code submitted through PR's must pass all CI checks. Code that does not comp
 
 Please try to open issues where possible to better describe the problem your PR is addressing. This also makes it easy for us to mention or reopen issues that had thought to have been resolved. Issue templates are provided and should be used whenever possible, and should be made as descriptive as possible.
 
-The `dev` branch is where all active development occurs. All Pull Requests should start by branching off of `dev` and should be submitted against this branch, _not_ `main`.
+The `dev` branch is where all active development occurs. All Pull Requests should start by branching off of `dev` and should be submitted against this branch, _not_ `main`. Direct pushes to main are strictly forbidden. Pull requests are merged from `dev` into `main` as releases are prepared.
 
 Contributors, upon a successful merge of their PR, will have the name or github username added to the AUTHORS.md file shipped with every release. You can opt out of this by letting a maintainer know.
 
@@ -73,4 +73,4 @@ Packaging is done automatically through GitHub actions. Do not concern yourself 
 
 # Collaborators
 
-If you become a collaborator with push access, you are expected to work on a branch that is _not_ the `main` branch. Every push to the main branch causes the actions runners to spin up for the CI runs, which can take up to 15 minutes. The main branch should be used strictly for releases.
+If you become a collaborator with push access, you are expected to work on a branch that is _not_ the `main` branch. Pushing to main is strictly forbidden, though you are free to open PRs against `main`.

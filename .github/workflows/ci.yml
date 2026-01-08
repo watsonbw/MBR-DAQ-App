@@ -1,65 +1,67 @@
 name: CI
 
 on:
-  push:
-    branches: [main, 'feature/**']
-    paths:
-      - '.github/workflows/ci.yml'
-      - 'src/**'
-      - 'include/**'
-      - 'tests/**'
-      - 'vendor/**'
-      - 'CMakeLists.txt'
-  pull_request:
-    branches: [main, 'feature/**']
-      
-jobs:
-  build-test:
-    permissions:
-      contents: write
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
-    runs-on: ${{matrix.os}}
-              
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew update
-          brew install llvm
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
-          
-      - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          msystem: UCRT64
-          install: >-
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-ninja
+    pull_request:
+        branches: [main, dev]
+        paths:
+            - ".github/workflows/ci.yml"
+            - "src/**"
+            - "include/**"
+            - "tests/**"
+            - "vendor/**"
+            - ".gitmodules"
+            - "CMakeLists.txt"
 
-      - name: Build and test macOS
-        if: runner.os == 'macOS'
-        run: |
-            cmake -G Ninja -S . -B build
-            cmake --build build
-            cmake --build build --target asan
-            cd build && ctest --output-on-failure -R "run_tests_.*"
-            
-      - name: Build and test Windows
-        if: runner.os == 'Windows'
-        shell: msys2 {0}
-        run: |
-            cmake -G Ninja -S . -B build
-            cmake --build build
-            cd build && ctest --output-on-failure -R "run_tests_.*"
-            
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    build-test:
+        permissions:
+            contents: write
+        strategy:
+            matrix:
+                os: [macos-latest, windows-latest]
+        runs-on: ${{matrix.os}}
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - name: Install dependencies (macOS)
+              if: runner.os == 'macOS'
+              run: |
+                  brew update
+                  brew install llvm
+              env:
+                  HOMEBREW_NO_AUTO_UPDATE: 1
+
+            - name: Install dependencies (Windows)
+              if: runner.os == 'Windows'
+              uses: msys2/setup-msys2@v2
+              with:
+                  update: true
+                  msystem: UCRT64
+                  install: >-
+                      mingw-w64-ucrt-x86_64-gcc
+                      mingw-w64-ucrt-x86_64-cmake
+                      mingw-w64-ucrt-x86_64-ninja
+
+            - name: Build and test macOS
+              if: runner.os == 'macOS'
+              run: |
+                  cmake -G Ninja -S . -B build
+                  cmake --build build
+                  cmake --build build --target asan
+                  cd build && ctest --output-on-failure -R "run_tests_.*"
+
+            - name: Build and test Windows
+              if: runner.os == 'Windows'
+              shell: msys2 {0}
+              run: |
+                  cmake -G Ninja -S . -B build
+                  cmake --build build
+                  cd build && ctest --output-on-failure -R "run_tests_.*"
