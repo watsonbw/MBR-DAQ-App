@@ -8,7 +8,7 @@
 Data visualization and ESP32 interface for the University of Michigan's Baja team.
 </p>
 
-## Availablility
+## Availability
 
 This software is provided precompiled for x86-64 Windows and Apple Silicone macOS only. Other platforms require manual tweaking of the build process and are not guaranteed to work.
 
@@ -34,7 +34,7 @@ If you are interested in becoming a contributor or simply want more information 
 
 ### System Dependencies
 
-Ensure you have the following system depencies:
+Ensure you have the following system dependencies:
 
 - A C compiler (msys2's GCC & Clang are tested on windows, XCode's native clang compiler on mac)
 - CMake (>=v3.31.5)
@@ -53,7 +53,7 @@ cmake -G Ninja ..
 cmake --build . --target dist
 ```
 
-This will build the fully optimized executable and place it in `build/dist` (relative to the project root). Please open an issue if you have any probles when compiling.
+This will build the fully optimized executable and place it in `build/dist` (relative to the project root). Please open an issue if you have any problems when compiling.
 
 ## Third-Party Software
 
