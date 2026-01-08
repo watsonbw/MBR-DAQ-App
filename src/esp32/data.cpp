@@ -41,7 +41,7 @@ void TelemetryData::WriteData(const std::string& identifier, const std::string& 
             m_TimeNoNormalMicros.push_back(lt.MicrosSinceMidnight());
 
             const auto minutes_from_mid = lt.MinutesSinceMidnight();
-            if (!m_SyncLT.has_value()) {
+            if (!m_SyncLT) {
                 m_SyncLT    = lt;
                 m_SyncStart = minutes_from_mid;
             }

@@ -1,80 +1,80 @@
 name: Package Release
 
 on:
-  push:
-    tags:
-     - 'v*'
-      
-jobs:
-  package:
-    permissions:
-      contents: write
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
-    runs-on: ${{matrix.os}}
-              
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew update
-          brew install llvm
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
-          
-      - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          msystem: UCRT64
-          install: >-
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-ninja
-            zip 
-            tar
+    push:
+        tags:
+            - "v*"
 
-      - name: Build and pack macOS
-        if: runner.os == 'macOS'
-        run: |
-            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-            cmake --build build --target dist
-            mkdir -p MBR-DAQ-macOS
-            cp LICENSE MBR-DAQ-macOS
-            cp .github/AUTHORS.md MBR-DAQ-macOS
-            cp .github/CHANGELOG.md MBR-DAQ-macOS
-            cp build/dist/MBR-DAQ* MBR-DAQ-macOS
-            
-            tar -czvf MBR-DAQ-arm64-macOS-${{ github.ref_name }}.tar.gz MBR-DAQ-macOS/
-            zip -r MBR-DAQ-arm64-macOS-${{ github.ref_name }}.zip MBR-DAQ-macOS/
-            
-      - name: Build and pack windows
-        if: runner.os == 'Windows'
-        shell: msys2 {0}
-        run: |
-            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-            cmake --build build --target dist
-            mkdir -p MBR-DAQ-win32
-            cp LICENSE MBR-DAQ-win32
-            cp .github/AUTHORS.md MBR-DAQ-win32
-            cp .github/CHANGELOG.md MBR-DAQ-win32
-            cp build/dist/MBR-DAQ* MBR-DAQ-win32
-            cp build/dist/*.dll MBR-DAQ-win32
-            
-            tar -czvf MBR-DAQ-x86_64-win32-${{ github.ref_name }}.tar.gz MBR-DAQ-win32/
-            zip -r MBR-DAQ-x86_64-win32-${{ github.ref_name }}.zip MBR-DAQ-win32/
-            
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: MBR-DAQ-binaries-${{ matrix.os }}
-          path: |
-            *.tar.gz
-            *.zip
+jobs:
+    package:
+        permissions:
+            contents: write
+        strategy:
+            matrix:
+                os: [macos-latest, windows-latest]
+        runs-on: ${{matrix.os}}
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - name: Install dependencies (macOS)
+              if: runner.os == 'macOS'
+              run: |
+                  brew update
+                  brew install llvm
+              env:
+                  HOMEBREW_NO_AUTO_UPDATE: 1
+
+            - name: Install dependencies (Windows)
+              if: runner.os == 'Windows'
+              uses: msys2/setup-msys2@v2
+              with:
+                  update: true
+                  msystem: UCRT64
+                  install: >-
+                      mingw-w64-ucrt-x86_64-gcc
+                      mingw-w64-ucrt-x86_64-cmake
+                      mingw-w64-ucrt-x86_64-ninja
+                      zip
+                      tar
+
+            - name: Build and pack macOS
+              if: runner.os == 'macOS'
+              run: |
+                  cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+                  cmake --build build --target dist
+                  mkdir -p MBR-DAQ-macOS
+                  cp LICENSE MBR-DAQ-macOS
+                  cp .github/AUTHORS.md MBR-DAQ-macOS
+                  cp .github/CHANGELOG.md MBR-DAQ-macOS
+                  cp build/dist/MBR-DAQ* MBR-DAQ-macOS
+
+                  tar -czvf MBR-DAQ-arm64-macOS-${{ github.ref_name }}.tar.gz MBR-DAQ-macOS/
+                  zip -r MBR-DAQ-arm64-macOS-${{ github.ref_name }}.zip MBR-DAQ-macOS/
+
+            - name: Build and pack windows
+              if: runner.os == 'Windows'
+              shell: msys2 {0}
+              run: |
+                  cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+                  cmake --build build --target dist
+                  mkdir -p MBR-DAQ-win32
+                  cp LICENSE MBR-DAQ-win32
+                  cp .github/AUTHORS.md MBR-DAQ-win32
+                  cp .github/CHANGELOG.md MBR-DAQ-win32
+                  cp build/dist/MBR-DAQ* MBR-DAQ-win32
+                  cp build/dist/*.dll MBR-DAQ-win32
+
+                  tar -czvf MBR-DAQ-x86_64-win32-${{ github.ref_name }}.tar.gz MBR-DAQ-win32/
+                  zip -r MBR-DAQ-x86_64-win32-${{ github.ref_name }}.zip MBR-DAQ-win32/
+
+            - name: Upload Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: MBR-DAQ-binaries-${{ matrix.os }}
+                  path: |
+                      *.tar.gz
+                      *.zip

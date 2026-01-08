@@ -1,5 +1,5 @@
+#include <cassert>
 #include <chrono>
-#include <cstddef>
 #include <format>
 #include <sstream>
 
@@ -34,6 +34,11 @@ LocalTime::LocalTime() {
     Microsecond = static_cast<uint64_t>(us.count());
 }
 
+LocalTime::LocalTime(
+    uint64_t hour, uint64_t minute, uint64_t second, uint64_t millisecond, uint64_t microsecond)
+    : Hour{hour}, Minute{minute}, Second{second}, Millisecond{millisecond},
+      Microsecond{microsecond} {}
+
 LocalTime::LocalTime(uint64_t micros) {
     Microsecond                  = micros % 1000;
     const uint64_t total_ms      = micros / 1000;
@@ -45,6 +50,8 @@ LocalTime::LocalTime(uint64_t micros) {
     const uint64_t total_hours   = total_minutes / 60;
     Hour                         = total_hours % 24;
 }
+
+LocalTime LocalTime::Zero() noexcept { return LocalTime{0, 0, 0, 0, 0}; }
 
 uint64_t LocalTime::MicrosSinceMidnight() const {
     uint64_t acc = 0;
@@ -66,8 +73,12 @@ double LocalTime::MinutesSinceMidnight() const {
     return acc;
 }
 
-std::string LocalTime::String() const {
-    return std::format("{:02}:{:02}:{:02}.{:03}", Hour, Minute, Second, Millisecond);
+std::string LocalTime::String(bool high_precision) const {
+    if (high_precision) {
+        return std::format(
+            "{:02}:{:02}:{:02}.{:03}{:03}", Hour, Minute, Second, Millisecond, Microsecond);
+    }
+    return std::format("{:02}:{:02}:{:02}", Hour, Minute, Second);
 }
 
 std::optional<LocalTime> LocalTime::FromString(const std::string& input) {
@@ -78,17 +89,21 @@ std::optional<LocalTime> LocalTime::FromString(const std::string& input) {
     if (ss >> h >> c1 >> m >> c2 >> s) {
         if (c1 == ':' && c2 == ':' && ss.eof()) {
             if (h >= 0 && h < 24 && m >= 0 && m < 60 && s >= 0 && s < 60) {
-                LocalTime lt;
-                lt.Hour        = h;
-                lt.Minute      = m;
-                lt.Second      = s;
-                lt.Millisecond = 0;
-                lt.Microsecond = 0;
-                return lt;
+                return LocalTime{static_cast<uint64_t>(h),
+                                 static_cast<uint64_t>(m),
+                                 static_cast<uint64_t>(s),
+                                 0,
+                                 0};
             }
         }
     }
     return std::nullopt;
+}
+
+std::optional<LocalTime> LocalTime::FromMinutes(double minutes) {
+    if (minutes < 0) { return std::nullopt; }
+    const auto micros = static_cast<uint64_t>(minutes * 60'000'000.0);
+    return LocalTime{micros};
 }
 
 DateTime::DateTime() {
@@ -107,14 +122,12 @@ DateTime::DateTime() {
     Month = lt.tm_mon + 1;
     Day   = lt.tm_mday;
 
-    Local.Hour   = lt.tm_hour;
-    Local.Minute = lt.tm_min;
-    Local.Second = lt.tm_sec;
-
-    // Platform independent time points
-    auto total_us     = duration_cast<microseconds>(duration).count();
-    Local.Millisecond = (total_us / 1000) % 1000;
-    Local.Microsecond = total_us % 1000;
+    const auto total_us = duration_cast<microseconds>(duration).count();
+    Local               = LocalTime{static_cast<uint64_t>(lt.tm_hour),
+                      static_cast<uint64_t>(lt.tm_min),
+                      static_cast<uint64_t>(lt.tm_sec),
+                      static_cast<uint64_t>((total_us / 1000) % 1000),
+                      static_cast<uint64_t>(total_us % 1000)};
 }
 
 DateTime::DateTime(uint64_t creation_time_seconds) {
@@ -132,13 +145,12 @@ DateTime::DateTime(uint64_t creation_time_seconds) {
     Month = lt.tm_mon + 1;
     Day   = lt.tm_mday;
 
-    Local.Hour   = lt.tm_hour;
-    Local.Minute = lt.tm_min;
-    Local.Second = lt.tm_sec;
-
     // Accuracy is restricted to seconds
-    Local.Millisecond = 0;
-    Local.Microsecond = 0;
+    Local = LocalTime{static_cast<uint64_t>(lt.tm_hour),
+                      static_cast<uint64_t>(lt.tm_min),
+                      static_cast<uint64_t>(lt.tm_sec),
+                      0,
+                      0};
 }
 
 std::optional<DateTime> DateTime::FromVideoMetadata(const std::string& path) {

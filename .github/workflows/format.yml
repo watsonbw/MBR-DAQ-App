@@ -1,41 +1,45 @@
 name: Formatting
 
 on:
-  push:
-    branches: [main, 'feature/**']
-    paths:
-      - '.github/workflows/ci.yml'
-      - 'src/**'
-      - 'include/**'
-      - 'tests/**'
-      - 'boardcode/**'
-      - 'CMakeLists.txt'
-  pull_request:
+    pull_request:
+        branches: [main, dev]
+        paths:
+            - ".github/workflows/format.yml"
+            - "src/**"
+            - "include/**"
+            - "tests/**"
+            - ".clang-format"
+            - ".clang-tidy"
+            - "CMakeLists.txt"
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
-  fmt:
-    permissions:
-      contents: read
-    runs-on: macos-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+    fmt:
+        permissions:
+            contents: read
+        runs-on: macos-latest
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
 
-      - name: Install dependencies
-        run: |
-          brew update
-          brew install llvm
-          echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
+            - name: Install dependencies
+              run: |
+                  brew update
+                  brew install llvm
+                  echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+              env:
+                  HOMEBREW_NO_AUTO_UPDATE: 1
 
-      - name: Configure CMake
-        run: cmake -G Ninja -B build
+            - name: Configure CMake
+              run: cmake -G Ninja -B build
 
-      - name: Check formatting
-        run: cmake --build build --target fmt-check
-          
-      - name: Static analysis
-        run: cmake --build build --target tidy
+            - name: Check formatting
+              run: cmake --build build --target fmt-check
+
+            - name: Static analysis
+              run: cmake --build build --target tidy

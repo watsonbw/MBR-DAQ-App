@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <filesystem>
 #include <fstream>
 
 #include <tinyfiledialogs.h>
@@ -17,8 +18,9 @@
 #include "core/log.hpp"
 
 #include "app/assets/images/image_buttons.hpp"
-#include "app/pages/common/plot.hpp"
-#include "app/pages/common/text.hpp"
+#include "app/common/plot.hpp"
+#include "app/common/scope.hpp"
+#include "app/common/text.hpp"
 #include "app/pages/view.hpp"
 #include "app/style.hpp"
 
@@ -42,7 +44,8 @@ const char* ViewPage::DataTypeString(DataView type) {
 ViewPage::ViewPage(const std::shared_ptr<AppContext>& ctx)
     : Page{ctx}, m_IsAlive{std::make_shared<bool>(true)},
       m_PlayButton{PLAY_BUTTON_PNG, PLAY_BUTTON_PNG_SIZE},
-      m_PauseButton{PAUSE_BUTTON_PNG, PAUSE_BUTTON_PNG_SIZE} {}
+      m_PauseButton{PAUSE_BUTTON_PNG, PAUSE_BUTTON_PNG_SIZE},
+      m_StepButton{STEP_BUTTON_PNG, STEP_BUTTON_PNG_SIZE} {}
 
 ViewPage::~ViewPage() {
     *m_IsAlive = false;
@@ -58,13 +61,12 @@ void ViewPage::OnExit() {
 }
 
 void ViewPage::Update() {
-    if (ImGui::BeginTable(
-            "ViewSplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
+    if (const ImGuiScope<ImGui::EndTable> split{IMSCOPE_FN(ImGui::BeginTable(
+            "##viewsplt", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable))}) {
         ImGui::TableNextColumn();
         DrawLHS();
         ImGui::TableNextColumn();
         DrawRHS();
-        ImGui::EndTable();
     }
 }
 
@@ -74,9 +76,34 @@ void ViewPage::Cleanup() {
 }
 
 void ViewPage::DrawLHS() {
-    if (ImGui::BeginChild("VideoPlayerColumn")) {
+    if (const ImGuiScope<ImGui::EndChild> video_player{IMSCOPE_FN(ImGui::BeginChild("##video"))}) {
         DrawOpenVideo();
+        if (m_VideoLoaded && !m_VideoPath.empty()) {
+            ImGui::SameLine();
+            const std::filesystem::path path{m_VideoPath};
+            const auto                  filename_str = path.filename().string();
+            BOLD_DEFAULT(ImGui::TextUnformatted("Current File: "));
+            ImGui::SameLine();
+            ImGui::TextUnformatted(filename_str.c_str());
+        }
         ImGui::SameLine();
+
+        // Clear Video button is right aligned
+        const char*  label       = "Clear Video";
+        const ImVec2 button_size = ImGui::CalcTextSize(label);
+        const float  padding     = ImGui::GetStyle().FramePadding.x * 2.0F;
+        const float  right_x     = ImGui::GetWindowContentRegionMax().x - (button_size.x + padding);
+
+        ImGui::SetCursorPosX(right_x);
+        if (ImGui::Button(label)) {
+            StopDecodingThread();
+            m_IsPlaying = false;
+            m_VideoPath = {};
+            TryCleanupSokolResources();
+            return;
+        }
+
+        ImGui::Separator();
 
         // Playback logic and frame skipping can be ignored if paused
         bool is_timer_tick = false;
@@ -109,25 +136,34 @@ void ViewPage::DrawLHS() {
             const float avail_w = ImGui::GetContentRegionAvail().x;
             const float h       = avail_w / aspect;
 
-            ImGui::Image(m_VideoTextureID, ImVec2(avail_w, h));
+            ImGui::Image(m_VideoTextureID, {avail_w, h});
+            m_VideoHovered = ImGui::IsItemHovered();
         }
 
-        if (m_ThreadRunning) { DrawLHSControls(); }
+        if (m_ThreadRunning) {
+            ImGui::Separator();
+            DrawLHSControls();
+        }
     }
-    ImGui::EndChild();
 }
 
 void ViewPage::DrawLHSControls() {
-    ImGui::Separator();
-
     // Slider
-    int slider_pos = m_CurrentFrameUI;
-    ImGui::PushItemWidth(-1);
-    if (ImGui::SliderInt("##scrub", &slider_pos, 0, m_TotalFrames)) {
-        if (m_IsPlaying) { m_IsPlaying = false; }
-        RequestSeek(slider_pos);
+    const auto current_timestamp_min =
+        (static_cast<double>(m_CurrentFrameUI) / m_TotalFrames) * m_VideoLengthMin;
+    const auto current_timestamp   = LocalTime::FromMinutes(current_timestamp_min);
+    const auto formatted_timestamp = current_timestamp.value_or(LocalTime::Zero()).String(false);
+    ImGui::Text("%s / %s", formatted_timestamp.c_str(), m_VideoLengthFormatted.c_str());
+    ImGui::SameLine();
+
+    if (const ImGuiScope<ImGui::PopItemWidth> slider_width{IMSCOPE_FN(ImGui::PushItemWidth(-1))}) {
+        int slider_pos = m_CurrentFrameUI;
+        if (ImGui::SliderInt(
+                "##scrub", &slider_pos, 0, m_TotalFrames, "", ImGuiSliderFlags_NoInput)) {
+            m_IsPlaying.exchange(false);
+            RequestSeek(slider_pos);
+        }
     }
-    ImGui::PopItemWidth();
 
     // Loop checkbox
     bool looping = m_IsLooping;
@@ -135,11 +171,68 @@ void ViewPage::DrawLHSControls() {
     ImGui::SameLine();
 
     // Play/Pause
-    if (ImGui::ImageButton("PlayPause",
-                           m_IsPlaying ? m_PauseButton.GetID() : m_PlayButton.GetID(),
-                           m_ButtonSize)) {
-        m_IsPlaying       = !m_IsPlaying;
+    const auto is_playing = m_IsPlaying.load();
+    const auto tint_color = m_Context->Style.DarkMode ? ImVec4{1, 1, 1, 1} : ImVec4{-1, -1, -1, 1};
+    ImGui::SameLine();
+    if (ImGui::ImageButton("##stepback",
+                           m_StepButton.GetID(),
+                           m_ButtonSize,
+                           {1, 0},
+                           {0, 1},
+                           {0, 0, 0, 0},
+                           tint_color)) {
+        RequestSeek(m_CurrentFrameUI - 5);
+        m_IsPlaying.exchange(false);
+    }
+    ImGui::SameLine();
+    if (ImGui::ImageButton("##playpause",
+                           is_playing ? m_PauseButton.GetID() : m_PlayButton.GetID(),
+                           m_ButtonSize,
+                           {0, 0},
+                           {1, 1},
+                           {0, 0, 0, 0},
+                           tint_color)) {
+        m_IsPlaying.exchange(!is_playing);
         m_TimeAccumulator = 0.0;
+    }
+    ImGui::SameLine();
+    if (ImGui::ImageButton("##stepforward",
+                           m_StepButton.GetID(),
+                           m_ButtonSize,
+                           {0, 0},
+                           {1, 1},
+                           {0, 0, 0, 0},
+                           tint_color)) {
+        RequestSeek(m_CurrentFrameUI + 5);
+        m_IsPlaying.exchange(false);
+    }
+
+    // Keyboard shortcuts
+    if (m_VideoHovered && !m_TimestampInputFocused && !m_Context->CommandInputFocused) {
+        if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
+            m_IsPlaying.exchange(!is_playing);
+            m_TimeAccumulator = 0.0;
+        }
+
+        if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow, false)) {
+            RequestSeek(m_CurrentFrameUI - 1);
+            m_IsPlaying.exchange(false);
+        }
+
+        if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, false)) {
+            RequestSeek(m_CurrentFrameUI - 10);
+            m_IsPlaying.exchange(false);
+        }
+
+        if (ImGui::IsKeyPressed(ImGuiKey_RightArrow, false)) {
+            RequestSeek(m_CurrentFrameUI + 1);
+            m_IsPlaying.exchange(false);
+        }
+
+        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, false)) {
+            RequestSeek(m_CurrentFrameUI + 10);
+            m_IsPlaying.exchange(false);
+        }
     }
 }
 
@@ -147,7 +240,7 @@ void ViewPage::DrawOpenVideo() {
     // Check if the file is ready
     {
         const std::scoped_lock<std::mutex> lock{m_VideoPathMutex};
-        if (m_SelectedVideo.has_value()) {
+        if (m_SelectedVideo) {
             StopDecodingThread();
             TryCleanupSokolResources();
             m_VideoPath     = m_SelectedVideo.value().first;
@@ -189,7 +282,7 @@ void ViewPage::DrawOpenVideo() {
 }
 
 void ViewPage::DrawRHS() {
-    if (ImGui::BeginChild("Data")) {
+    if (const ImGuiScope<ImGui::EndChild> data_child{IMSCOPE_FN(ImGui::BeginChild("##data"))}) {
         HEADER({
             DrawOpenText();
             ImGui::SameLine();
@@ -197,7 +290,8 @@ void ViewPage::DrawRHS() {
             ImGui::Separator();
         });
 
-        if (ImGui::BeginCombo("##DataView", DataTypeString(m_DataShow))) {
+        if (const ImGuiScope<ImGui::EndCombo, REQUIRE_ALIVE_FOR_DTOR> combo{
+                IMSCOPE_FN(ImGui::BeginCombo("##DataView", DataTypeString(m_DataShow)))}) {
             if (ImGui::Selectable("All Data", m_DataShow == DataView::ALL)) {
                 m_DataShow = DataView::ALL;
             }
@@ -207,20 +301,19 @@ void ViewPage::DrawRHS() {
             if (ImGui::Selectable("Shock", m_DataShow == DataView::SHOCKDATA)) {
                 m_DataShow = DataView::SHOCKDATA;
             }
-            ImGui::EndCombo();
         }
 
         const auto  data  = m_Context->Backend->PackData();
         const auto& rpm   = data.RPM;
         const auto& shock = data.Shock;
 
-        const auto sync_lt    = m_Context->Backend->Data.GetSyncLT();
-        const auto plot_title = sync_lt.has_value()
-                                    ? std::format("Data View from {}", sync_lt.value().String())
-                                    : "No Synced Time";
+        const auto sync_lt = m_Context->Backend->Data.GetSyncLT();
+        const auto plot_title =
+            sync_lt ? std::format("Data View from {}", sync_lt.value().String()) : "No Synced Time";
 
         ViewPage::DynamicPlotLoop();
-        if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
+        if (const ImGuiScope<ImPlot::EndPlot, REQUIRE_ALIVE_FOR_DTOR> plot{
+                IMSCOPE_FN(ImPlot::BeginPlot(plot_title.c_str(), {-1, -1}))}) {
             PlotUtils::PlotIfNonEmpty("Wheel Speed",
                                       data.TimeMinutesNormalized,
                                       rpm.WheelRPM,
@@ -258,18 +351,15 @@ void ViewPage::DrawRHS() {
                                       m_DataShow == DataView::ALL ||
                                           m_DataShow == DataView::SHOCKDATA,
                                       m_PlotPercent);
-
-            ImPlot::EndPlot();
         }
     }
-    ImGui::EndChild();
 }
 
 void ViewPage::DrawOpenText() {
     // Check if the file is ready
     {
         const std::scoped_lock<std::mutex> lock{m_TxtPathMutex};
-        if (m_SelectedTxt.has_value()) {
+        if (m_SelectedTxt) {
             m_TxtPath     = m_SelectedTxt.value();
             m_SelectedTxt = std::nullopt;
             m_TxtLoaded   = true;
@@ -323,7 +413,7 @@ void ViewPage::DrawSyncVideoButtons() {
         }
 
         m_VideoCreationTimestamp = LocalTime::FromString(m_CreationMetadataTextBuf);
-        if (!m_VideoCreationTimestamp.has_value()) {
+        if (!m_VideoCreationTimestamp) {
             LOG_ERROR("Could not parse provided timestamp, or it was not provided.");
             return;
         }
@@ -335,7 +425,7 @@ void ViewPage::DrawSyncVideoButtons() {
             sync_time_pos = SyncDataVideo(m_Context->Backend->Data.GetTimeNoNormal());
         }
 
-        if (!sync_time_pos.has_value()) {
+        if (!sync_time_pos) {
             LOG_ERROR("Could not get trim position from data/video");
             return;
         }
@@ -347,6 +437,7 @@ void ViewPage::DrawSyncVideoButtons() {
 
     ImGui::SameLine();
     TextUtils::DrawInputBox("##extra_view", m_CreationMetadataTextBuf, "HH:MM:SS", 120.0F);
+    m_TimestampInputFocused = ImGui::IsItemFocused();
     ImGui::SameLine();
     if (ImGui::Checkbox("Dynamic Plotting", &m_DynamicPlotting)) { ViewPage::DynamicPlotStart(); }
 }
@@ -364,7 +455,7 @@ ViewPage::SelectedVideo ViewPage::OpenVideoFile(const std::string& previous_file
     LOG_INFO("Selected file: {}", real_path);
 
     auto dt = DateTime::FromVideoMetadata(real_path);
-    if (dt.has_value()) {
+    if (dt) {
         LOG_INFO("Selected video with creation timestamp: {}", dt.value().String());
     } else {
         LOG_WARN("Could not detect datetime metadata from selected video.");
@@ -402,14 +493,17 @@ void ViewPage::LoadData() {
 }
 
 void ViewPage::RequestSeek(int frame_index) {
+    // Prevent stepping out of bounds, though it is recoverable
+    const auto clamped_frame = std::clamp(frame_index, 0, m_TotalFrames);
+
     {
         const std::scoped_lock<std::mutex> lock{m_FrameMutex};
         m_FrameQueue.clear();
     }
 
-    m_SeekTarget       = frame_index;
+    m_SeekTarget       = clamped_frame;
     m_ForceUpdateFrame = true;
-    m_CurrentFrameUI   = frame_index;
+    m_CurrentFrameUI   = clamped_frame;
     m_QueueCV.notify_one();
 }
 
@@ -425,9 +519,17 @@ void ViewPage::StartDecodingThread() {
             return;
         }
 
-        m_VideoFPS      = cap.get(cv::CAP_PROP_FPS);
-        m_FrameDuration = 1.0 / m_VideoFPS;
-        m_TotalFrames   = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
+        m_VideoFPS                 = cap.get(cv::CAP_PROP_FPS);
+        m_FrameDuration            = 1.0 / m_VideoFPS;
+        m_TotalFrames              = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
+        m_VideoLengthMin           = (static_cast<double>(m_TotalFrames) / m_VideoFPS) / 60.0;
+        const auto video_length_lt = LocalTime::FromMinutes(m_VideoLengthMin);
+        if (!video_length_lt) {
+            LOG_ERROR("Video length could not be determined");
+            m_ThreadRunning = false;
+            return;
+        }
+        m_VideoLengthFormatted = video_length_lt.value().String(false);
 
         cv::Mat raw_frame, rgba_frame;
         while (m_ThreadRunning) {
@@ -499,8 +601,7 @@ void ViewPage::UpdateTexture(bool is_timer_tick) {
             m_FrameQueue.pop_front();
             frame_ready = true;
             m_QueueCV.notify_one();
-
-            if (m_ForceUpdateFrame) { m_ForceUpdateFrame = false; }
+            m_ForceUpdateFrame.exchange(false);
         }
     }
 
@@ -552,7 +653,7 @@ void ViewPage::TryCleanupSokolResources() {
 }
 
 std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<uint64_t>& micros_times) {
-    if (!m_VideoCreationTimestamp.has_value()) { return std::nullopt; }
+    if (!m_VideoCreationTimestamp) { return std::nullopt; }
 
     m_DataAndTimeSync                 = true;
     const auto     creation_timestamp = m_VideoCreationTimestamp.value();
@@ -591,10 +692,8 @@ void ViewPage::DynamicPlotStart() {
         if (time_vec.empty()) { return; }
         const auto begin_time_min = m_Context->Backend->Data.m_Time[0];
 
-        const double video_duration_min = (static_cast<double>(m_TotalFrames) / m_VideoFPS) / 60.0;
-        const double target_end_time    = begin_time_min + video_duration_min;
-
-        const auto end_it = std::ranges::lower_bound(time_vec, target_end_time);
+        const double target_end_time = begin_time_min + m_VideoLengthMin;
+        const auto   end_it          = std::ranges::lower_bound(time_vec, target_end_time);
 
         const size_t end_idx = std::distance(time_vec.begin(), end_it);
         const size_t end_idy = std::distance(end_it, time_vec.end());

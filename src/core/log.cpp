@@ -14,7 +14,7 @@ void Log::Init() {
 #ifdef LOGGING
     log_sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
     log_sinks.emplace_back(
-        std::make_shared<spdlog::sinks::basic_file_sink_mt>("MBR-DAC-Output.log", true));
+        std::make_shared<spdlog::sinks::basic_file_sink_mt>("MBR-DAQ-Output.log", true));
 
     log_sinks[log_idx++]->set_pattern("%^[%T] %n: %v%$");
     log_sinks[log_idx++]->set_pattern("[%T] [%l] %n: %v");
@@ -23,7 +23,7 @@ void Log::Init() {
     log_sinks[log_idx++]->set_pattern("[%l]: %v");
 
     s_CoreLogger =
-        std::make_shared<spdlog::logger>("MBR-DAC-DEBUG", log_sinks.begin(), log_sinks.end());
+        std::make_shared<spdlog::logger>("MBR-DAQ-DEBUG", log_sinks.begin(), log_sinks.end());
     spdlog::register_logger(s_CoreLogger);
 
 #ifdef LOGGING

@@ -5,9 +5,11 @@ release/
 build/
 build*/
 .cache
+.cmake/
 
 .theia
 .vscode
 .zed
 
 __cmake*
+*.log

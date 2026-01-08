@@ -10,8 +10,8 @@
 #include "core/log.hpp"
 #include "core/time.hpp"
 
+#include "app/common/text.hpp"
 #include "app/context.hpp"
-#include "app/pages/common/text.hpp"
 #include "app/style.hpp"
 
 void TextUtils::DrawStartLoggingButton() {
@@ -52,16 +52,14 @@ void TextUtils::DrawDataDownloadButton(const std::vector<std::string>& raw_lines
     });
 }
 
-void TextUtils::DrawInputBox(const char*                label,
+bool TextUtils::DrawInputBox(const char*                label,
                              std::string&               buf,
                              std::optional<const char*> hint,
-                             float                      width_scale) {
+                             float                      width_scale,
+                             ImGuiInputTextFlags        flags) {
     ImGui::SetNextItemWidth(width_scale);
-    if (hint.has_value()) {
-        ImGui::InputTextWithHint(label, hint.value(), &buf);
-    } else {
-        ImGui::InputText(label, &buf);
-    }
+    if (hint) { return ImGui::InputTextWithHint(label, hint.value(), &buf, flags); }
+    return ImGui::InputText(label, &buf, flags);
 }
 
 void TextUtils::DrawDataLog(const std::vector<std::string>& raw_lines) {

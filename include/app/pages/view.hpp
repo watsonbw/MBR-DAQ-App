@@ -81,6 +81,7 @@ class ViewPage : public Page {
     SelectedVideo            m_SelectedVideo;
     std::string              m_InputTime;
     bool                     m_VideoLoaded{false};
+    bool                     m_VideoHovered{false};
 
     bool   m_DynamicPlotting{false};
     size_t m_PlotPercent;
@@ -95,11 +96,13 @@ class ViewPage : public Page {
     bool              m_TxtLoaded{false};
     bool              m_DataAndTimeSync{false};
 
-    int    m_TotalFrames{0};
-    double m_VideoFPS{0.0};
-    double m_FrameDuration{0.0};
-    double m_TimeAccumulator{0.0};
-    int    m_CurrentFrameUI{0};
+    int         m_TotalFrames{0};
+    double      m_VideoFPS{0.0};
+    double      m_VideoLengthMin{0.0};
+    std::string m_VideoLengthFormatted;
+    double      m_FrameDuration{0.0};
+    double      m_TimeAccumulator{0.0};
+    int         m_CurrentFrameUI{0};
 
     std::atomic<bool> m_IsPlaying{false};
     std::atomic<bool> m_IsLooping{false};
@@ -116,10 +119,13 @@ class ViewPage : public Page {
     ImVec2        m_ButtonSize{24, 24};
     ButtonTexture m_PlayButton;
     ButtonTexture m_PauseButton;
+    ButtonTexture m_StepButton;
 
     sg_image    m_VideoTexture{SG_INVALID_ID};
     sg_view     m_VideoView{SG_INVALID_ID};
     ImTextureID m_VideoTextureID{0};
     int         m_TexWidth{0};
     int         m_TexHeight{0};
+
+    bool m_TimestampInputFocused{false};
 };
