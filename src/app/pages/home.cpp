@@ -51,22 +51,28 @@ void HomePage::DrawTopLHS() {
     if (const ImGuiScope<ImGui::EndChild> tutorial{IMSCOPE_FN(ImGui::BeginChild(
             "##tutorial", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
         ImGui::BulletText("Connect to Wifi on laptop");
-        ImGui::BulletText("Make sure you see 'Connected' and a green light, that means you are receiving data");
+        ImGui::BulletText(
+            "Make sure you see 'Connected' and a green light, that means you are receiving data");
         ImGui::BulletText("If not, restart everything: app, esp32, wifi");
-        ImGui::BulletText("Once connection is established, press 'Sync Time', this will allow the data to be displayed");
+        ImGui::BulletText("Once connection is established, press 'Sync Time', this will allow the "
+                          "data to be displayed");
         ImGui::BulletText("No data will be collected unless time is synced");
         ImGui::BulletText("You must sync time everytime the esp32 is restarted");
         ImGui::BulletText("Under the 'Menu' dropdown there are various pages");
         ImGui::BulletText("Go to the page you want data from");
         ImGui::BulletText("Press 'Start Logging'");
-        ImGui::BulletText("Once you've gathered the data, you can download it by just pressing download, or giving it a title");
+        ImGui::BulletText("Once you've gathered the data, you can download it by just pressing "
+                          "download, or giving it a title");
         ImGui::BulletText("No title just gives the time stamp");
-        ImGui::BulletText("In the 'View' page, you can upload data and video to watch the data be plotted live");
+        ImGui::BulletText(
+            "In the 'View' page, you can upload data and video to watch the data be plotted live");
         ImGui::BulletText("First upload both the video and the data file");
-        ImGui::BulletText("Then type in the timestamp (down to the second) of when the video was created");
+        ImGui::BulletText(
+            "Then type in the timestamp (down to the second) of when the video was created");
         ImGui::BulletText("Press 'Sync Data/Video'");
         ImGui::BulletText("Turn on dynamic plotting and watch the data be plotted");
-        ImGui::BulletText("You can also hide data you don't want to see by pressing on them in the legend");
+        ImGui::BulletText(
+            "You can also hide data you don't want to see by pressing on them in the legend");
         ImGui::BulletText("Send CMD currently works, but there aren't any commands supported");
     }
 }
