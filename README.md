@@ -22,8 +22,8 @@ Precompiled releases for macOS and windows are available in the releases tab. Yo
 - macOS: You have to remove the app from 'quarantine'. This can be done in settings, or by running this command in your terminal:
 
 ```shell
-xattr -d com.apple.quarantine /path/to/baja-app
-chmod +x /path/to/baja
+xattr -d com.apple.quarantine /path/to/mbr-app
+chmod +x /path/to/mbr-app
 ```
 
 - Linux: Currently not supported.
