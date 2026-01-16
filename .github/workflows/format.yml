@@ -22,8 +22,10 @@ jobs:
             contents: read
         runs-on: macos-latest
         steps:
-            - name: Shallow checkout repo
+            - name: Checkout repo
               uses: actions/checkout@v4
+              with:
+                  submodules: recursive
 
             - name: Install dependencies
               run: |
@@ -32,9 +34,19 @@ jobs:
                   echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
               env:
                   HOMEBREW_NO_AUTO_UPDATE: 1
+                  
+            - name: Cache build directory
+              uses: actions/cache@v4
+              with:
+                  path: build
+                  key: >
+                      fmt-${{ runner.os }}-
+                      ${{ hashFiles('CMakeLists.txt', 'src/**', 'include/**', 'tests/**') }}
+                  restore-keys: |
+                      fmt-${{ runner.os }}-
 
             - name: Configure CMake
-              run: cmake -G Ninja -B build -DTOOLING_ONLY=TRUE
+              run: cmake -G Ninja -B build
 
             - name: Check formatting
               run: cmake --build build --target fmt-check
