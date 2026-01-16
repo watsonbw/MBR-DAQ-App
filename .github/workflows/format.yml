@@ -22,10 +22,8 @@ jobs:
             contents: read
         runs-on: macos-latest
         steps:
-            - name: Checkout repo
+            - name: Shallow checkout repo
               uses: actions/checkout@v4
-              with:
-                  submodules: recursive
 
             - name: Install dependencies
               run: |
@@ -36,7 +34,7 @@ jobs:
                   HOMEBREW_NO_AUTO_UPDATE: 1
 
             - name: Configure CMake
-              run: cmake -G Ninja -B build
+              run: cmake -G Ninja -B build -DTOOLING_ONLY=TRUE
 
             - name: Check formatting
               run: cmake --build build --target fmt-check

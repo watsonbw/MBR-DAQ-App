@@ -50,6 +50,16 @@ jobs:
                       mingw-w64-ucrt-x86_64-cmake
                       mingw-w64-ucrt-x86_64-ninja
 
+            - name: Cache build directory
+              uses: actions/cache@v4
+              with:
+                  path: build
+                  key: >
+                      build-${{ runner.os }}-
+                      ${{ hashFiles('CMakeLists.txt', 'src/**', 'include/**', 'tests/**') }}
+                  restore-keys: |
+                      build-${{ runner.os }}-
+
             - name: Build and test macOS
               if: runner.os == 'macOS'
               run: |
