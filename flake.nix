@@ -14,7 +14,6 @@
       {
         devShells.default = pkgs.mkShellNoCC {
           buildInputs = with pkgs; [
-            git
             cmake
             ninja
             clang-tools
