@@ -12,13 +12,25 @@
         pkgs = import nixpkgs { inherit system; };
       in
       {
-        devShells.default = pkgs.mkShellNoCC {
-          buildInputs = with pkgs; [
-            cmake
-            ninja
-            clang-tools
-          ];
-        };
+        devShells.default =
+          pkgs.lib.throwIfNot pkgs.stdenv.isDarwin
+            "This project is macOS-only and requires Apple clang + Xcode Command Line Tools."
+            (
+              pkgs.mkShellNoCC {
+                buildInputs = with pkgs; [
+                  cmake
+                  ninja
+                  clang-tools
+                ];
+
+                shellHook = ''
+                  unset DEVELOPER_DIR
+                  export CC=/usr/bin/clang
+                  export CXX=/usr/bin/clang++
+                  export SDKROOT=$(xcrun --show-sdk-path)
+                '';
+              }
+            );
       }
     );
 }
