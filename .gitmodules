@@ -29,3 +29,6 @@
 [submodule "vendor/taglib"]
 	path = vendor/taglib
 	url = https://github.com/taglib/taglib
+[submodule "vendor/serial"]
+	path = vendor/serial
+	url = https://github.com/wjwwood/serial
