@@ -6,13 +6,13 @@ class RPMCollector {
 
     auto               GetRPM(uint32_t timestamp, uint8_t pin_value) -> double; // in the cpp
     [[nodiscard]] auto Thresh() const -> uint32_t {
-        return m_LastTime + 2*1000000.0/* Needs to be converted to us */;
+        return m_LastTime + 2 * 1000000.0 /* Needs to be converted to us */;
     }
 
   private:
     uint32_t m_LastTime = 0; // This is in microseconds
     double   m_RPM;
-    bool m_WasRPM = 0;
+    bool     m_WasRPM = 0;
 };
 
 #define LO 0

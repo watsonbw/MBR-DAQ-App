@@ -3,12 +3,12 @@
 // the string described below is how the app understands and interprets data
 // it is required that the calculations are handled on the esp32 side
 
-#include "board_wifi.hpp"
-#include "rpm.hpp"
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
-//#include "sd.hpp"
+#include "board_wifi.hpp"
+#include "rpm.hpp"
+// #include "sd.hpp"
 
 static const char*            ssid     = "esp32Wifi";
 static const char*            password = "MBRdatacollect";
@@ -19,9 +19,9 @@ volatile long                 test         = 0;
 volatile bool                 last         = false;
 volatile int                  wheel        = 0;
 volatile int                  engine       = 0;
-const int chipSelect = 5; 
-RPMCollector wheel_rc;
-RPMCollector engine_rc;
+const int                     chipSelect   = 5;
+RPMCollector                  wheel_rc;
+RPMCollector                  engine_rc;
 
 void setup() {
     Serial.begin(115200);
@@ -32,16 +32,16 @@ void setup() {
     wifi.CleanupClients();
 
     if (!SD.begin(chipSelect)) {
-    Serial.println("Card Mount Failed");
-    return;
-  }
+        Serial.println("Card Mount Failed");
+        return;
+    }
 
-  uint8_t cardType = SD.cardType();
-  if (cardType == CARD_NONE) {
-    Serial.println("No SD card attached");
-    return;
-  }
-  writeFile(SD, "/data.txt", "\n");
+    uint8_t cardType = SD.cardType();
+    if (cardType == CARD_NONE) {
+        Serial.println("No SD card attached");
+        return;
+    }
+    writeFile(SD, "/data.txt", "\n");
 }
 
 void loop() {
@@ -51,45 +51,48 @@ void loop() {
         last_cleanup = millis();
     }
 
-
-
     if (micros() - last_send > 50000) {
-        wheel = wheel_rc.GetRPM(wifi.GetRealTime(), digitalRead(32));
-        engine = engine_rc.GetRPM(wifi.GetRealTime(), digitalRead(33));
+        wheel                    = wheel_rc.GetRPM(wifi.GetRealTime(), digitalRead(32));
+        engine                   = engine_rc.GetRPM(wifi.GetRealTime(), digitalRead(33));
         const uint64_t real_time = wifi.GetRealTime();
-        if (real_time != 0){
-            appendFile(SD, "/data.txt", ("T " + String(real_time) + " W " + String(wheel) + " E " + String(engine) + " fr 0 fl 0 br 0 bl 0\n").c_str());
+        if (real_time != 0) {
+            appendFile(SD,
+                       "/data.txt",
+                       ("T " + String(real_time) + " W " + String(wheel) + " E " + String(engine) +
+                        " fr 0 fl 0 br 0 bl 0\n")
+                           .c_str());
         }
-        wifi.SendData("T " + String(real_time) + " W " + wheel + " E " + engine + " fr 0 fl 0 br 0 bl 0\n");
+        wifi.SendData("T " + String(real_time) + " W " + wheel + " E " + engine +
+                      " fr 0 fl 0 br 0 bl 0\n");
         last_send = micros();
     }
 }
 
-void writeFile(fs::FS &fs, const char * path, const char * message) {
-  File file = fs.open(path, FILE_WRITE);
-  if (!file) {
-    Serial.println("Failed to open file for writing");
-    return;
-  }
-  if (file.print(message)) {
-    Serial.println("File written");
-  } else {
-    Serial.println("Write failed");
-  }
-  file.close();
+void writeFile(fs::FS& fs, const char* path, const char* message) {
+    File file = fs.open(path, FILE_WRITE);
+    if (!file) {
+        Serial.println("Failed to open file for writing");
+        return;
+    }
+    if (file.print(message)) {
+        Serial.println("File written");
+    } else {
+        Serial.println("Write failed");
+    }
+    file.close();
 }
 
 // Function to append data to a file
-void appendFile(fs::FS &fs, const char * path, const char * message) {
-  File file = fs.open(path, FILE_APPEND);
-  if (!file) {
-    Serial.println("Failed to open file for appending");
-    return;
-  }
-  if (file.print(message)) {
-    Serial.println("Message appended");
-  } else {
-    Serial.println("Append failed");
-  }
-  file.close();
+void appendFile(fs::FS& fs, const char* path, const char* message) {
+    File file = fs.open(path, FILE_APPEND);
+    if (!file) {
+        Serial.println("Failed to open file for appending");
+        return;
+    }
+    if (file.print(message)) {
+        Serial.println("Message appended");
+    } else {
+        Serial.println("Append failed");
+    }
+    file.close();
 }

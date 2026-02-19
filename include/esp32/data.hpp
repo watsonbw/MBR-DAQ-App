@@ -50,7 +50,7 @@ class TelemetryData {
     [[nodiscard]] const ShockData&                GetShockData() const { return m_ShockData; }
     [[nodiscard]] const std::vector<std::string>& GetRawLines() const { return m_RawLines; };
     [[nodiscard]] const std::optional<LocalTime>& GetSyncLT() const { return m_SyncLT; }
-    [[nodiscard]] const std::string&              GetCurrentLine() {  return m_CurrentLine; }
+    [[nodiscard]] const std::string&              GetCurrentLine() { return m_CurrentLine; }
 
     void WriteData(const std::string& identifier, const std::string& value);
     void WriteRawLine(const std::string& message);

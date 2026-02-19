@@ -66,9 +66,7 @@ void TelemetryData::WriteRawLine(const std::string& full_message) {
     m_RawLines.push_back(full_message);
 }
 
-void TelemetryData::SaveCurrentLine(const std::string& line){
-    m_CurrentLine = line;
-}
+void TelemetryData::SaveCurrentLine(const std::string& line) { m_CurrentLine = line; }
 
 void TelemetryData::Clear() {
     m_RawLines.clear();
