@@ -112,6 +112,7 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
             for (const auto& [ident, value] : parsed.value()) {
                 Data.WriteData(std::string{ident}, std::string{value});
             }
+            Data.SaveCurrentLine(line);
             Data.WriteRawLine(line);
         }
     }
