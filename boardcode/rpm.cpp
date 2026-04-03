@@ -14,7 +14,7 @@ auto RPMCollector::GetRPM(uint32_t timestamp, uint8_t pin_value) -> double {
         // Do something meaningful maybe
     } else if (pin_value == LO && !m_WasRPM) {
         const auto elapsed_us = timestamp - m_LastTime;
-        if (elapsed_us > 1000) {
+        if (elapsed_us > 1) {
             m_RPM      = 60000000.0 / elapsed_us;
             m_LastTime = timestamp;
             m_WasRPM   = 1;

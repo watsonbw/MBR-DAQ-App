@@ -22,6 +22,7 @@
 #include "app/pages/rpm.hpp"
 #include "app/pages/shock.hpp"
 #include "app/pages/view.hpp"
+#include "app/pages/serialmon.hpp"
 
 using namespace std::chrono;
 
@@ -168,6 +169,9 @@ void GUI::ChangePage(PageType type) {
     case PageType::VIEW:
         m_CurrentPage = std::make_unique<ViewPage>(m_Context);
         break;
+    case PageType::SERIAL:
+        m_CurrentPage = std::make_unique<SerialPage>(m_Context);
+        break;
     }
 
     if (m_CurrentPage) { m_CurrentPage->OnEnter(); }
@@ -185,6 +189,7 @@ void GUI::DrawMainMenuBar() {
                 if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
                 if (ImGui::MenuItem("Shock")) { ChangePage(PageType::SHOCK); }
                 if (ImGui::MenuItem("View")) { ChangePage(PageType::VIEW); }
+                if (ImGui::MenuItem("Serial Monitor")) { ChangePage(PageType::SERIAL); }
                 if (ImGui::MenuItem("Toggle Dark Mode")) {
                     if (m_Context->Style.DarkMode) {
                         m_Context->Style.SetLightThemeColors();
@@ -199,8 +204,8 @@ void GUI::DrawMainMenuBar() {
         ImGui::Separator();
         ImGui::TextUnformatted(PageTypeString(m_Context->CurrentPageType));
         ImGui::Separator();
-        ImGui::TextUnformatted(PageTypeString(m_Context->CurrentPageType));
-        ImGui::Separator();
+        //ImGui::TextUnformatted(PageTypeString(m_Context->CurrentPageType));
+        //ImGui::Separator();
 
         const LocalTime lt;
         const auto      sync_time = lt.MicrosSinceMidnight();

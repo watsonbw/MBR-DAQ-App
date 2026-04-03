@@ -20,6 +20,7 @@ volatile bool                 last         = false;
 volatile int                  wheel        = 0;
 volatile int                  engine       = 0;
 const int                     chipSelect   = 5;
+volatile int                  test2         = 0;
 RPMCollector                  wheel_rc;
 RPMCollector                  engine_rc;
 
@@ -41,27 +42,25 @@ void setup() {
         Serial.println("No SD card attached");
         return;
     }
-    writeFile(SD, "/data.txt", "\n");
+    //writeFile(SD, "/data.txt", "\n");
 }
 
 void loop() {
+
+    wheel                    = wheel_rc.GetRPM(wifi.GetRealTime(), digitalRead(32)) / 2; 
+    engine                   = engine_rc.GetRPM(wifi.GetRealTime(), digitalRead(33));
+    const uint64_t real_time = wifi.GetRealTime();
 
     if (millis() - last_cleanup > 10000) {
         wifi.CleanupClients();
         last_cleanup = millis();
     }
-
+    if(real_time != 0){
+        test2 = simulateVehicleSpeed();
+    }
     if (micros() - last_send > 50000) {
-        wheel                    = wheel_rc.GetRPM(wifi.GetRealTime(), digitalRead(32));
-        engine                   = engine_rc.GetRPM(wifi.GetRealTime(), digitalRead(33));
-        const uint64_t real_time = wifi.GetRealTime();
-        if (real_time != 0) {
-            appendFile(SD,
-                       "/data.txt",
-                       ("T " + String(real_time) + " W " + String(wheel) + " E " + String(engine) +
-                        " fr 0 fl 0 br 0 bl 0\n")
-                           .c_str());
-        }
+        //wheel                    = wheel_rc.GetRPM(wifi.GetRealTime(), digitalRead(32));
+        //engine                   = engine_rc.GetRPM(wifi.GetRealTime(), digitalRead(33));
         wifi.SendData("T " + String(real_time) + " W " + wheel + " E " + engine +
                       " fr 0 fl 0 br 0 bl 0\n");
         last_send = micros();
@@ -96,3 +95,35 @@ void appendFile(fs::FS& fs, const char* path, const char* message) {
     }
     file.close();
 }
+
+
+
+int simulateVehicleSpeed() {
+  static int speed = 0;       // current speed
+  static int direction = 1;   // 1 = increasing, -1 = decreasing
+  const int maxSpeed = 255;   // maximum speed
+  const int step = 2;         // amount to change per call
+
+  // update speed
+  speed += step * direction;
+
+  // flip direction at the max
+  if (speed >= maxSpeed) {
+    speed = maxSpeed;
+    direction = -1; // start decreasing
+  } 
+  // stop when we reach 0
+  else if (speed <= 0) {
+    speed = 0;
+    direction = 0; // stop changing
+  }
+
+  return speed;
+}
+/*if (real_time != 0) {
+            appendFile(SD,
+                       "/data.txt",
+                       ("T " + String(real_time) + " W " + String(wheel) + " E " + String(engine) +
+                        " fr 0 fl 0 br 0 bl 0\n")
+                           .c_str());
+        }*/

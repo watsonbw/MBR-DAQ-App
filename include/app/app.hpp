@@ -16,5 +16,4 @@ class App {
   private:
     std::unique_ptr<GUI>        m_GUI;
     std::shared_ptr<AppContext> m_Context;
-    Serial                      m_Manager;
 };

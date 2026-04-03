@@ -3,31 +3,44 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <stop_token>
 
 #include "core/log.hpp"
 #include "esp32/serial.hpp"
 #include "serial/serial.h"
 
+
+
 using namespace std::chrono_literals;
 
-void Serial::Run() {
-    while (true) {
-        Scan();
-        WriteAll(m_Context->Backend->Data.GetCurrentLine());
-        std::this_thread::sleep_for(150ms);
-        std::cout << "Hello!";
-    }
-}
 
-bool Serial::OpenPort(const std::string& port, const std::string& description) {
+//Initializes and maintains Serial behavior
+void SerialManager::Start(){
+    m_Worker = std::thread([this]() {
+        while (1){
+            
+            this->CleanPorts();
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            if(IsSerialWrite){
+                this->ReceiveData();
+            }
+        }
+    });
+}
+//Opens a port
+bool SerialManager::OpenPort(const std::string& port, const std::string& description) {
     try {
-        auto* ser =
-            new serial::Serial(port, m_BaudRate, serial::Timeout::simpleTimeout(m_TimeoutMs));
+        serial::Timeout timeout;
+        timeout.inter_byte_timeout = 1;
+        timeout.read_timeout_constant = 0;
+        timeout.read_timeout_multiplier = 0;
+        timeout.write_timeout_constant = 0;
+        timeout.write_timeout_multiplier = 0;
+        auto* ser = new serial::Serial(port, m_BaudRate, timeout);
         if (ser->isOpen()) {
             m_Ports[port] = ser;
             LOG_INFO("[SerialManager] Opened: " + port);
-            if (!description.empty()) { std::cout << " (" << description << ")"; }
-            std::cout << '\n';
+            if (!description.empty()) { LOG_INFO(description); }
             return true;
         }
         delete ser;
@@ -37,15 +50,15 @@ bool Serial::OpenPort(const std::string& port, const std::string& description) {
     return false;
 }
 
-void Serial::Scan() {
+// Close ports that have disappeared, open ports that have appeared
+void SerialManager::CleanPorts() {
+    std::lock_guard<std::mutex> lock(m_Mutex);
     std::vector<serial::PortInfo> available = serial::list_ports();
-
-    // Open newly discovered ports
-    for (const auto& info : available) {
-        if (!m_Ports.contains(info.port)) { OpenPort(info.port, info.description); }
+    for (const auto& info : available){
+        if (!m_Ports.contains(info.port)) {
+        OpenPort(info.port, info.description);
     }
-
-    // Close ports that have disappeared
+    }
     std::vector<std::string> to_remove;
     for (auto& [port, ser] : m_Ports) {
         bool found = false;
@@ -61,12 +74,15 @@ void Serial::Scan() {
         ClosePort(port);
     }
 }
-
-void Serial::WriteAll(const std::string& msg) {
+//Send Data to all selected Serial ports
+void SerialManager::SendData(const std::string& msg){
+    std::lock_guard<std::mutex> lock(m_Mutex);
     std::vector<std::string> failed;
-    for (auto& [port, ser] : m_Ports) {
+    for (auto& port : m_ChosenPorts){
+        auto it = m_Ports.find(port);
+        if (it == m_Ports.end() || it->second == nullptr) { continue; }
         try {
-            ser->write(msg);
+            it->second->write(msg);
         } catch (const std::exception& e) {
             LOG_ERROR("[SerialManager] Write failed on " + port + ": " + e.what());
             failed.push_back(port);
@@ -77,19 +93,60 @@ void Serial::WriteAll(const std::string& msg) {
     }
 }
 
-void Serial::ClosePort(const std::string& port) {
+void SerialManager::ReceiveData(){
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    std::vector<std::string> failed;
+    for (auto& port : m_ChosenPorts){
+        auto it = m_Ports.find(port);
+        if (it == m_Ports.end() || it->second == nullptr) { continue; }
+        try {
+            if (it->second->available() > 0) {
+                auto input = it->second->read(it->second->available());
+                m_InputStream.push_back(input);
+            }
+        } catch (const std::exception& e) {
+            LOG_ERROR("[SerialManager] Read failed on " + port + ": " + e.what());
+            failed.push_back(port);
+        }
+    }
+    for (const auto& port : failed) {
+        ClosePort(port);
+    }
+}
+//Close selected port
+void SerialManager::ClosePort(const std::string& port) {
     auto it = m_Ports.find(port);
     if (it == m_Ports.end()) { return; }
     it->second->close();
     delete it->second;
     m_Ports.erase(it);
+    if (m_ChosenPorts.contains(port)) {
+        m_ChosenPorts.erase(port); 
+    }
     LOG_INFO("[SerialManager] Closed: " + port);
 }
-
-void Serial::CloseAll() {
+//Close all ports
+void SerialManager::CloseAll() {
     for (auto& [port, ser] : m_Ports) {
         ser->close();
         delete ser;
     }
     m_Ports.clear();
 }
+//change baud rate (its in the name)
+void SerialManager::ChangeBaudRate(uint32_t baud){
+    m_BaudRate = baud;
+}
+
+bool SerialManager::IsPortSelected(const std::string& port){
+    return m_ChosenPorts.contains(port);
+}
+
+void SerialManager::AddPort(const std::string& port){
+    m_ChosenPorts.insert(port);
+}
+
+void SerialManager::RemovePort(const std::string& port){
+    m_ChosenPorts.erase(port);
+}
+
