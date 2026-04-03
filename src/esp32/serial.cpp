@@ -136,6 +136,13 @@ void SerialManager::CloseAll() {
 //change baud rate (its in the name)
 void SerialManager::ChangeBaudRate(uint32_t baud){
     m_BaudRate = baud;
+    for (auto& [port, ser] : m_Ports) {
+    try {
+            ser->setBaudrate(m_BaudRate);
+        } catch (const std::exception& e) {
+            LOG_ERROR("[SerialManager] Baud rate change failed on " + port + ": " + e.what());
+        }
+    }
 }
 
 bool SerialManager::IsPortSelected(const std::string& port){
