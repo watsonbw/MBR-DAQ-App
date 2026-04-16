@@ -17,7 +17,7 @@
 #include "esp32/data.hpp"
 
 App::App([[maybe_unused]] int arc, [[maybe_unused]] char* argv[])
-    : m_Context{std::make_shared<AppContext>()}/*, m_Manager{m_Context}*/ {
+    : m_Context{std::make_shared<AppContext>()} /*, m_Manager{m_Context}*/ {
     Log::Init();
     ix::initNetSystem();
     const std::vector<std::string> packet_fields = {"T", "W", "E", "fr", "fl", "br", "bl"};

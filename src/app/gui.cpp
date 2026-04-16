@@ -20,9 +20,9 @@
 
 #include "app/pages/home.hpp"
 #include "app/pages/rpm.hpp"
+#include "app/pages/serialmon.hpp"
 #include "app/pages/shock.hpp"
 #include "app/pages/view.hpp"
-#include "app/pages/serialmon.hpp"
 
 using namespace std::chrono;
 
@@ -204,8 +204,8 @@ void GUI::DrawMainMenuBar() {
         ImGui::Separator();
         ImGui::TextUnformatted(PageTypeString(m_Context->CurrentPageType));
         ImGui::Separator();
-        //ImGui::TextUnformatted(PageTypeString(m_Context->CurrentPageType));
-        //ImGui::Separator();
+        // ImGui::TextUnformatted(PageTypeString(m_Context->CurrentPageType));
+        // ImGui::Separator();
 
         const LocalTime lt;
         const auto      sync_time = lt.MicrosSinceMidnight();

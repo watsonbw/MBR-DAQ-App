@@ -13,7 +13,8 @@
 
 using namespace std::chrono_literals;
 
-TelemetryBackend::TelemetryBackend(std::vector<std::string> packet_fields) : SerialMan(115200, 500) {
+TelemetryBackend::TelemetryBackend(std::vector<std::string> packet_fields)
+    : SerialMan(115200, 500) {
     m_PacketFields = std::move(packet_fields);
     m_Buffer.reserve(4096);
     m_IpAddr = DEFAULT_IP;
