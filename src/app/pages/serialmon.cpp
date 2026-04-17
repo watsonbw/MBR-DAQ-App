@@ -49,8 +49,8 @@ void SerialPage::DrawTopLHS() {
         }
         ImGui::Separator();
 
-        const std::string_view dropdown  = "Select Ports to Send Data";
-        auto                   all_ports = m_Context->Backend->SerialMan.ExportPorts();
+        const std::string dropdown  = "Select Ports to Send Data";
+        auto              all_ports = m_Context->Backend->SerialMan.ExportPorts();
         ImGui::SetNextItemWidth(250.0F);
         if (const ImGuiScope<ImGui::EndCombo, REQUIRE_ALIVE_FOR_DTOR> port_select{
                 IMSCOPE_FN(ImGui::BeginCombo("##port_dropdown", dropdown.c_str()))}) {
