@@ -30,7 +30,7 @@ jobs:
             - name: Install dependencies
               run: |
                   brew update
-                  brew install llvm
+                  brew install llvm@21
                   echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
               env:
                   HOMEBREW_NO_AUTO_UPDATE: 1
