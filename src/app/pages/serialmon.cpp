@@ -10,7 +10,6 @@
 #include "app/pages/serialmon.hpp"
 #include "app/style.hpp"
 
-
 void SerialPage::OnEnter() { LOG_INFO("Entered SerialPage"); }
 void SerialPage::OnExit() { LOG_INFO("Exited SerialPage"); }
 
@@ -45,29 +44,30 @@ void SerialPage::DrawTopLHS() {
         m_TextUtils.DrawStartSerialButton();
         ImGui::SameLine();
         m_TextUtils.DrawSendDataButton();
-        if(m_Context->Backend->SerialMan.m_KeepRunning){
+        if (m_Context->Backend->SerialMan.m_KeepRunning) {
             m_Context->Backend->SerialMan.SendData(m_Context->Backend->Data.GetCurrentLine());
         }
         ImGui::Separator();
 
         std::string dropdown = "Select Ports to Send Data";
-        auto AllPorts = m_Context->Backend->SerialMan.ExportPorts();
+        auto        AllPorts = m_Context->Backend->SerialMan.ExportPorts();
         ImGui::SetNextItemWidth(250.0f);
         if (const ImGuiScope<ImGui::EndCombo, REQUIRE_ALIVE_FOR_DTOR> port_select{
-            IMSCOPE_FN(ImGui::BeginCombo("##port_dropdown", dropdown.c_str()))}) {
-                for (auto& [port, ser] : AllPorts){
-                    bool is_selected = m_Context->Backend->SerialMan.IsPortSelected(port);
-                    if (ImGui::Selectable(port.c_str(), is_selected, ImGuiSelectableFlags_NoAutoClosePopups)) {
-                        if (!is_selected) {
-                            m_Context->Backend->SerialMan.AddPort(port);
-                            LOG_INFO("Added port " + port);
-                        } else {
-                            m_Context->Backend->SerialMan.RemovePort(port);
-                            LOG_INFO("Removed port " + port);
-                        }
+                IMSCOPE_FN(ImGui::BeginCombo("##port_dropdown", dropdown.c_str()))}) {
+            for (auto& [port, ser] : AllPorts) {
+                bool is_selected = m_Context->Backend->SerialMan.IsPortSelected(port);
+                if (ImGui::Selectable(
+                        port.c_str(), is_selected, ImGuiSelectableFlags_NoAutoClosePopups)) {
+                    if (!is_selected) {
+                        m_Context->Backend->SerialMan.AddPort(port);
+                        LOG_INFO("Added port " + port);
+                    } else {
+                        m_Context->Backend->SerialMan.RemovePort(port);
+                        LOG_INFO("Removed port " + port);
                     }
                 }
             }
+        }
 
         ImGui::SameLine();
         ImGui::TextUnformatted("Chosen Ports: ");
@@ -79,27 +79,24 @@ void SerialPage::DrawTopLHS() {
         ImGui::Separator();
         ImGui::TextUnformatted("Baud Rate");
         ImGui::SameLine();
-    
+
         ImGui::SetNextItemWidth(100.0f);
         if (const ImGuiScope<ImGui::EndCombo, REQUIRE_ALIVE_FOR_DTOR> baud_combo{
-            IMSCOPE_FN(ImGui::BeginCombo("##baud_dropdown", std::to_string(m_Context->Backend->SerialMan.GetBaudRate()).c_str()))}) {
-                // This can stay inside DrawTopLHS or be a static member
-            static const uint32_t baud_rates[] = { 
-                300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200 
-            };
-        
-            for (uint32_t rate : baud_rates){
+                IMSCOPE_FN(ImGui::BeginCombo(
+                    "##baud_dropdown",
+                    std::to_string(m_Context->Backend->SerialMan.GetBaudRate()).c_str()))}) {
+            // This can stay inside DrawTopLHS or be a static member
+            static const uint32_t baud_rates[] = {
+                300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200};
+
+            for (uint32_t rate : baud_rates) {
                 bool is_selected = (m_Context->Backend->SerialMan.GetBaudRate() == rate);
                 if (ImGui::Selectable(std::to_string(rate).c_str(), is_selected)) {
-                m_Context->Backend->SerialMan.ChangeBaudRate(rate);
+                    m_Context->Backend->SerialMan.ChangeBaudRate(rate);
                 }
-                if (is_selected) {
-                ImGui::SetItemDefaultFocus();
-
-                }
+                if (is_selected) { ImGui::SetItemDefaultFocus(); }
             }
         }
-        
     }
 }
 
@@ -117,7 +114,11 @@ void SerialPage::DrawTopRHS() {
 }
 
 void SerialPage::DrawBottom() {
-    if (TextUtils::DrawInputBox("##command", m_SerialBuffer, "Send Serial Data Here", 1900.0F, ImGuiInputTextFlags_EnterReturnsTrue)) {
+    if (TextUtils::DrawInputBox("##command",
+                                m_SerialBuffer,
+                                "Send Serial Data Here",
+                                1900.0F,
+                                ImGuiInputTextFlags_EnterReturnsTrue)) {
         m_Context->Backend->SerialMan.SendData(m_SerialBuffer + "\n");
         m_SerialBuffer = {};
         ImGui::SetKeyboardFocusHere(-1);
@@ -126,5 +127,4 @@ void SerialPage::DrawBottom() {
         ImGui::Separator();
         TextUtils::DrawDataLog(m_Context->Backend->SerialMan.ReturnDataStream());
     }
-    
 }

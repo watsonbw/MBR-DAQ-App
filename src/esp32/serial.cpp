@@ -1,42 +1,37 @@
 #include <iostream>
 #include <map>
+#include <stop_token>
 #include <string>
 #include <thread>
 #include <vector>
-#include <stop_token>
 
 #include "core/log.hpp"
 #include "esp32/serial.hpp"
 #include "serial/serial.h"
 
-
-
 using namespace std::chrono_literals;
 
-
-//Initializes and maintains Serial behavior
-void SerialManager::Start(){
+// Initializes and maintains Serial behavior
+void SerialManager::Start() {
     m_Worker = std::thread([this]() {
-        while (1){
-            
+        while (1) {
+
             this->CleanPorts();
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            if(IsSerialWrite){
-                this->ReceiveData();
-            }
+            if (IsSerialWrite) { this->ReceiveData(); }
         }
     });
 }
-//Opens a port
+// Opens a port
 bool SerialManager::OpenPort(const std::string& port, const std::string& description) {
     try {
         serial::Timeout timeout;
-        timeout.inter_byte_timeout = 1;
-        timeout.read_timeout_constant = 0;
-        timeout.read_timeout_multiplier = 0;
-        timeout.write_timeout_constant = 0;
+        timeout.inter_byte_timeout       = 1;
+        timeout.read_timeout_constant    = 0;
+        timeout.read_timeout_multiplier  = 0;
+        timeout.write_timeout_constant   = 0;
         timeout.write_timeout_multiplier = 0;
-        auto* ser = new serial::Serial(port, m_BaudRate, timeout);
+        auto* ser                        = new serial::Serial(port, m_BaudRate, timeout);
         if (ser->isOpen()) {
             m_Ports[port] = ser;
             LOG_INFO("[SerialManager] Opened: " + port);
@@ -52,12 +47,10 @@ bool SerialManager::OpenPort(const std::string& port, const std::string& descrip
 
 // Close ports that have disappeared, open ports that have appeared
 void SerialManager::CleanPorts() {
-    std::lock_guard<std::mutex> lock(m_Mutex);
+    std::lock_guard<std::mutex>   lock(m_Mutex);
     std::vector<serial::PortInfo> available = serial::list_ports();
-    for (const auto& info : available){
-        if (!m_Ports.contains(info.port)) {
-        OpenPort(info.port, info.description);
-    }
+    for (const auto& info : available) {
+        if (!m_Ports.contains(info.port)) { OpenPort(info.port, info.description); }
     }
     std::vector<std::string> to_remove;
     for (auto& [port, ser] : m_Ports) {
@@ -74,11 +67,11 @@ void SerialManager::CleanPorts() {
         ClosePort(port);
     }
 }
-//Send Data to all selected Serial ports
-void SerialManager::SendData(const std::string& msg){
+// Send Data to all selected Serial ports
+void SerialManager::SendData(const std::string& msg) {
     std::lock_guard<std::mutex> lock(m_Mutex);
-    std::vector<std::string> failed;
-    for (auto& port : m_ChosenPorts){
+    std::vector<std::string>    failed;
+    for (auto& port : m_ChosenPorts) {
         auto it = m_Ports.find(port);
         if (it == m_Ports.end() || it->second == nullptr) { continue; }
         try {
@@ -93,10 +86,10 @@ void SerialManager::SendData(const std::string& msg){
     }
 }
 
-void SerialManager::ReceiveData(){
+void SerialManager::ReceiveData() {
     std::lock_guard<std::mutex> lock(m_Mutex);
-    std::vector<std::string> failed;
-    for (auto& port : m_ChosenPorts){
+    std::vector<std::string>    failed;
+    for (auto& port : m_ChosenPorts) {
         auto it = m_Ports.find(port);
         if (it == m_Ports.end() || it->second == nullptr) { continue; }
         try {
@@ -113,19 +106,17 @@ void SerialManager::ReceiveData(){
         ClosePort(port);
     }
 }
-//Close selected port
+// Close selected port
 void SerialManager::ClosePort(const std::string& port) {
     auto it = m_Ports.find(port);
     if (it == m_Ports.end()) { return; }
     it->second->close();
     delete it->second;
     m_Ports.erase(it);
-    if (m_ChosenPorts.contains(port)) {
-        m_ChosenPorts.erase(port); 
-    }
+    if (m_ChosenPorts.contains(port)) { m_ChosenPorts.erase(port); }
     LOG_INFO("[SerialManager] Closed: " + port);
 }
-//Close all ports
+// Close all ports
 void SerialManager::CloseAll() {
     for (auto& [port, ser] : m_Ports) {
         ser->close();
@@ -133,11 +124,11 @@ void SerialManager::CloseAll() {
     }
     m_Ports.clear();
 }
-//change baud rate (its in the name)
-void SerialManager::ChangeBaudRate(uint32_t baud){
+// change baud rate (its in the name)
+void SerialManager::ChangeBaudRate(uint32_t baud) {
     m_BaudRate = baud;
     for (auto& [port, ser] : m_Ports) {
-    try {
+        try {
             ser->setBaudrate(m_BaudRate);
         } catch (const std::exception& e) {
             LOG_ERROR("[SerialManager] Baud rate change failed on " + port + ": " + e.what());
@@ -145,15 +136,8 @@ void SerialManager::ChangeBaudRate(uint32_t baud){
     }
 }
 
-bool SerialManager::IsPortSelected(const std::string& port){
-    return m_ChosenPorts.contains(port);
-}
+bool SerialManager::IsPortSelected(const std::string& port) { return m_ChosenPorts.contains(port); }
 
-void SerialManager::AddPort(const std::string& port){
-    m_ChosenPorts.insert(port);
-}
+void SerialManager::AddPort(const std::string& port) { m_ChosenPorts.insert(port); }
 
-void SerialManager::RemovePort(const std::string& port){
-    m_ChosenPorts.erase(port);
-}
-
+void SerialManager::RemovePort(const std::string& port) { m_ChosenPorts.erase(port); }

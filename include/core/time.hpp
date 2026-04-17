@@ -30,6 +30,7 @@ struct LocalTime {
 
     [[nodiscard]] std::string String(bool high_precision = true) const;
 };
+
 struct DateTime {
     explicit DateTime();
     explicit DateTime(uint64_t creation_time_seconds);
