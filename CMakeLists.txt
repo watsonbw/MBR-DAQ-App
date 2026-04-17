@@ -251,6 +251,39 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
 
 cmake_policy(POP)
 
+# Serial Library
+set(SERIAL_DIR "vendor/serial")
+set(SERIAL_SOURCES
+    ${SERIAL_DIR}/src/serial.cc
+)
+
+if(APPLE)
+    list(APPEND SERIAL_SOURCES 
+        ${SERIAL_DIR}/src/impl/unix.cc
+        ${SERIAL_DIR}/src/impl/list_ports/list_ports_osx.cc
+    )
+elseif(WIN32)
+    list(APPEND SERIAL_SOURCES 
+        ${SERIAL_DIR}/src/impl/win.cc
+        ${SERIAL_DIR}/src/impl/list_ports/list_ports_win.cc
+    )
+endif()
+
+add_library(serial_setup STATIC ${SERIAL_SOURCES})
+target_include_directories(serial_setup PUBLIC 
+    ${SERIAL_DIR}/include
+)
+target_compile_options(serial_setup PRIVATE ${WARNING_IGNORE})
+
+if(APPLE)
+    target_link_libraries(serial_setup INTERFACE
+        "-framework Foundation"
+        "-framework IOKit"
+    )
+elseif(WIN32)
+    target_link_libraries(serial_setup INTERFACE setupapi)
+endif()
+
 function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(mbrdaq_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
     target_link_libraries(mbrdaq_core_${TARGET_NAME} PUBLIC
@@ -266,6 +299,7 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         ixwebsocket
         stb_image_setup
         tag
+        serial_setup
     )
 
     target_include_directories(mbrdaq_core_${TARGET_NAME} PUBLIC include)

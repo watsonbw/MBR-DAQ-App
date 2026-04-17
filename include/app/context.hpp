@@ -13,6 +13,7 @@ enum class PageType : uint8_t {
     RPM,
     SHOCK,
     VIEW,
+    SERIAL,
 };
 
 const char* PageTypeString(PageType type);

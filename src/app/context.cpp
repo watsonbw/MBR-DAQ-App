@@ -10,6 +10,8 @@ const char* PageTypeString(PageType type) {
         return "Shock";
     case PageType::VIEW:
         return "View";
+    case PageType::SERIAL:
+        return "Serial Monitor";
     default:
         return "Unknown";
     }

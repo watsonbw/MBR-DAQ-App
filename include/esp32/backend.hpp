@@ -12,6 +12,7 @@
 #include "core/ip.hpp"
 
 #include "esp32/data.hpp"
+#include "esp32/serial.hpp"
 
 struct AppContext;
 
@@ -34,6 +35,7 @@ class TelemetryBackend {
   public:
     std::mutex        DataMutex;
     TelemetryData     Data;
+    SerialManager     SerialMan;
     std::atomic<bool> TryConnection{false};
     std::atomic<bool> IsConnected{false};
     std::atomic<bool> IsLogging{false};

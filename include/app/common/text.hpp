@@ -15,6 +15,8 @@ class TextUtils {
     ~TextUtils() = default;
 
     void DrawStartLoggingButton();
+    void DrawStartSerialButton();
+    void DrawSendDataButton();
 
     // Appends the buf data to the filepath, clearing the buf on success.
     void        DrawDataDownloadButton(const std::vector<std::string>& raw_lines, std::string& buf);

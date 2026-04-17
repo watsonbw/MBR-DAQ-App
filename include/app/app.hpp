@@ -1,5 +1,6 @@
 #pragma once
 
+#include "esp32/serial.hpp"
 #include <memory>
 
 struct AppContext;
