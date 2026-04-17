@@ -14,7 +14,7 @@ using namespace std::chrono_literals;
 // Initializes and maintains Serial behavior
 void SerialManager::Start() {
     m_Worker = std::thread([this]() {
-        while (1) {
+        while (true) {
 
             this->CleanPorts();
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -47,8 +47,8 @@ bool SerialManager::OpenPort(const std::string& port, const std::string& descrip
 
 // Close ports that have disappeared, open ports that have appeared
 void SerialManager::CleanPorts() {
-    std::lock_guard<std::mutex>   lock(m_Mutex);
-    std::vector<serial::PortInfo> available = serial::list_ports();
+    const std::scoped_lock<std::mutex>  lock{m_Mutex};
+    const std::vector<serial::PortInfo> available = serial::list_ports();
     for (const auto& info : available) {
         if (!m_Ports.contains(info.port)) { OpenPort(info.port, info.description); }
     }
@@ -69,9 +69,9 @@ void SerialManager::CleanPorts() {
 }
 // Send Data to all selected Serial ports
 void SerialManager::SendData(const std::string& msg) {
-    std::lock_guard<std::mutex> lock(m_Mutex);
-    std::vector<std::string>    failed;
-    for (auto& port : m_ChosenPorts) {
+    const std::scoped_lock<std::mutex> lock{m_Mutex};
+    std::vector<std::string>           failed;
+    for (const auto& port : m_ChosenPorts) {
         auto it = m_Ports.find(port);
         if (it == m_Ports.end() || it->second == nullptr) { continue; }
         try {
@@ -87,9 +87,9 @@ void SerialManager::SendData(const std::string& msg) {
 }
 
 void SerialManager::ReceiveData() {
-    std::lock_guard<std::mutex> lock(m_Mutex);
-    std::vector<std::string>    failed;
-    for (auto& port : m_ChosenPorts) {
+    const std::scoped_lock<std::mutex> lock{m_Mutex};
+    std::vector<std::string>           failed;
+    for (const auto& port : m_ChosenPorts) {
         auto it = m_Ports.find(port);
         if (it == m_Ports.end() || it->second == nullptr) { continue; }
         try {
@@ -126,7 +126,8 @@ void SerialManager::CloseAll() {
 }
 // change baud rate (its in the name)
 void SerialManager::ChangeBaudRate(uint32_t baud) {
-    m_BaudRate = baud;
+    m_BaudRate =
+        static_cast<int>(baud); // TODO(blake) why is m_BaudRate an int but this func takes a u32
     for (auto& [port, ser] : m_Ports) {
         try {
             ser->setBaudrate(m_BaudRate);

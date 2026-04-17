@@ -49,13 +49,13 @@ void SerialPage::DrawTopLHS() {
         }
         ImGui::Separator();
 
-        std::string dropdown = "Select Ports to Send Data";
-        auto        AllPorts = m_Context->Backend->SerialMan.ExportPorts();
-        ImGui::SetNextItemWidth(250.0f);
+        const std::string_view dropdown  = "Select Ports to Send Data";
+        auto                   all_ports = m_Context->Backend->SerialMan.ExportPorts();
+        ImGui::SetNextItemWidth(250.0F);
         if (const ImGuiScope<ImGui::EndCombo, REQUIRE_ALIVE_FOR_DTOR> port_select{
                 IMSCOPE_FN(ImGui::BeginCombo("##port_dropdown", dropdown.c_str()))}) {
-            for (auto& [port, ser] : AllPorts) {
-                bool is_selected = m_Context->Backend->SerialMan.IsPortSelected(port);
+            for (auto& [port, ser] : all_ports) {
+                const bool is_selected = m_Context->Backend->SerialMan.IsPortSelected(port);
                 if (ImGui::Selectable(
                         port.c_str(), is_selected, ImGuiSelectableFlags_NoAutoClosePopups)) {
                     if (!is_selected) {
@@ -80,17 +80,17 @@ void SerialPage::DrawTopLHS() {
         ImGui::TextUnformatted("Baud Rate");
         ImGui::SameLine();
 
-        ImGui::SetNextItemWidth(100.0f);
+        ImGui::SetNextItemWidth(100.0F);
         if (const ImGuiScope<ImGui::EndCombo, REQUIRE_ALIVE_FOR_DTOR> baud_combo{
                 IMSCOPE_FN(ImGui::BeginCombo(
                     "##baud_dropdown",
                     std::to_string(m_Context->Backend->SerialMan.GetBaudRate()).c_str()))}) {
             // This can stay inside DrawTopLHS or be a static member
-            static const uint32_t baud_rates[] = {
+            static const uint32_t BAUD_RATES[] = {
                 300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200};
 
-            for (uint32_t rate : baud_rates) {
-                bool is_selected = (m_Context->Backend->SerialMan.GetBaudRate() == rate);
+            for (const uint32_t rate : BAUD_RATES) {
+                const bool is_selected = (m_Context->Backend->SerialMan.GetBaudRate() == rate);
                 if (ImGui::Selectable(std::to_string(rate).c_str(), is_selected)) {
                     m_Context->Backend->SerialMan.ChangeBaudRate(rate);
                 }
