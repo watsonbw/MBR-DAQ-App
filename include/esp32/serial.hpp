@@ -19,24 +19,25 @@ class SerialManager {
         CloseAll();
      };
 
-    std::atomic<bool>                      m_KeepRunning{true};
-    std::atomic<bool>                      IsSerialWrite{false};
-    std::map<std::string, serial::Serial*> ExportPorts() { return m_Ports; }
-    std::unordered_set<std::string>        ReturnChosen() { return m_ChosenPorts; }
-    std::vector<std::string>               ReturnDataStream() const { return m_InputStream; }
-    void                                   SendData(const std::string& msg);
-    void                                   ReceiveData();
-    void                                   ReadAll();
-    void                                   Start();
-    void                                   AddPort(const std::string& port);
-    void                                   RemovePort(const std::string& port);
-    void                                   CleanPorts();
-    void                                   ClosePort(const std::string& port);
-    void                                   CloseAll();
-    bool     OpenPort(const std::string& port, const std::string& description = "");
-    bool     IsPortSelected(const std::string& port);
-    void     ChangeBaudRate(uint32_t baud);
-    uint32_t GetBaudRate() { return m_BaudRate; }
+    std::atomic<bool> m_KeepRunning{true};
+    std::atomic<bool> m_SendData{false};
+    std::atomic<bool> IsSerialWrite{false};
+    std::map<std::string, serial::Serial*> ExportPorts(){ return m_Ports;}
+    std::unordered_set<std::string> ReturnChosen() {return m_ChosenPorts;}
+    std::vector<std::string> ReturnDataStream() const {return m_InputStream;} 
+    void SendData(const std::string& msg);
+    void ReceiveData();
+    void ReadAll();
+    void Start();
+    void AddPort(const std::string& port);
+    void RemovePort(const std::string& port);
+    void CleanPorts();
+    void ClosePort(const std::string& port);
+    void CloseAll();
+    bool OpenPort(const std::string& port, const std::string& description = "");
+    bool IsPortSelected(const std::string& port);
+    void ChangeBaudRate(uint32_t baud);
+    uint32_t GetBaudRate() {return m_BaudRate;}
 
   private:
     int                                    m_BaudRate;
