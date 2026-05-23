@@ -11,11 +11,12 @@
 
 using namespace std::chrono_literals;
 
-// Initializes and maintains Serial behavior
-void SerialManager::Start() {
-    m_Worker = std::thread([this]() {
-        while (true) {
 
+//Initializes and maintains Serial behavior
+void SerialManager::Start(){
+    m_KeepRunning = true;
+    m_Worker = std::thread([this]() {
+        while (m_KeepRunning){
             this->CleanPorts();
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             if (IsSerialWrite) { this->ReceiveData(); }
@@ -120,9 +121,11 @@ void SerialManager::ClosePort(const std::string& port) {
 void SerialManager::CloseAll() {
     for (auto& [port, ser] : m_Ports) {
         ser->close();
+        LOG_INFO("[SerialManager] Closed: " + port);
         delete ser;
     }
     m_Ports.clear();
+    m_ChosenPorts.clear();
 }
 // change baud rate (its in the name)
 void SerialManager::ChangeBaudRate(uint32_t baud) {

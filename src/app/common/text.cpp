@@ -34,10 +34,8 @@ void TextUtils::DrawStartSerialButton() {
 
 void TextUtils::DrawSendDataButton() {
     HEADER({
-        if (ImGui::Button(m_Context->Backend->SerialMan.m_KeepRunning ? "Scan for Ports"
-                                                                      : "Stop Scan")) {
-            m_Context->Backend->SerialMan.m_KeepRunning =
-                !m_Context->Backend->SerialMan.m_KeepRunning;
+        if (ImGui::Button(m_Context->Backend->SerialMan.m_SendData ? "Stop Data Send" : "Send Data")) {
+            m_Context->Backend->SerialMan.m_SendData = !m_Context->Backend->SerialMan.m_SendData;
         }
     });
 }

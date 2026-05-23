@@ -44,7 +44,7 @@ void SerialPage::DrawTopLHS() {
         m_TextUtils.DrawStartSerialButton();
         ImGui::SameLine();
         m_TextUtils.DrawSendDataButton();
-        if (m_Context->Backend->SerialMan.m_KeepRunning) {
+        if(m_Context->Backend->SerialMan.m_SendData){
             m_Context->Backend->SerialMan.SendData(m_Context->Backend->Data.GetCurrentLine());
         }
         ImGui::Separator();

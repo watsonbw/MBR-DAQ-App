@@ -13,7 +13,11 @@ class SerialManager {
   public:
     explicit SerialManager(int baud_rate = 115200, int timeout_ms = 0)
         : m_BaudRate(baud_rate), m_TimeoutMs(timeout_ms) {}
-    ~SerialManager() { CloseAll(); };
+    ~SerialManager() { 
+      m_KeepRunning = false;
+      if (m_Worker.joinable()) m_Worker.join();
+        CloseAll();
+     };
 
     std::atomic<bool>                      m_KeepRunning{true};
     std::atomic<bool>                      IsSerialWrite{false};

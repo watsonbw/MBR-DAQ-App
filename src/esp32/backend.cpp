@@ -116,7 +116,7 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
             Data.WriteRawLine(line);
             for (const auto& [ident, value] : parsed.value()) {
                 if (ident == "W") {
-                    Data.SaveCurrentLine(std::string{value} + "\n");
+                    Data.SaveCurrentLine(line);
                     break;
                 }
             }

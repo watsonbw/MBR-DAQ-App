@@ -14,11 +14,9 @@ class BoardWifi {
 
     void     CleanupClients() { m_WebSock.cleanupClients(); }
     void     Start();
-    void     ReceiveCMD();
-    void     SendData(String msg);
-    uint64_t GetRealTime();
-    void     UpdateCommand(String command);
-    // void     UpdateDNS() { _dnsServer.processNextRequest(); }
+    void     SendData(const char* msg);
+    String        m_CommandValue{""};
+    volatile bool m_NewCommand{false};
 
   private:
     static void OnWsEvent(AsyncWebSocket*       server,
@@ -33,14 +31,6 @@ class BoardWifi {
 
     const char*   m_SSID;
     const char*   m_Password;
-    uint64_t      m_BaseTimeMicros{0};
-    uint32_t      m_LocalSyncMicros{0};
-    volatile bool m_IsTimeSynced{0};
-    volatile bool m_TimeCMD{0};
-    // DNSServer _dnsServer;
-
-    String        m_LastCommand{""};
-    volatile bool m_NewCommand{false};
 
     AsyncWebServer m_AsyncServer;
     AsyncWebSocket m_WebSock;

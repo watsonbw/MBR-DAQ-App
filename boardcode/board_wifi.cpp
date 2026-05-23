@@ -40,7 +40,7 @@ void BoardWifi::Start() {
     Serial.println("HTTP Server started");
 }
 
-void BoardWifi::SendData(String msg) {
+void BoardWifi::SendData(const char* msg) {
     if (m_WebSock.count() > 0) { m_WebSock.textAll(msg); }
 }
 
@@ -56,16 +56,8 @@ void BoardWifi::OnWsEvent(AsyncWebSocket*       server,
             command += (char)data[i];
         }
 
-        if (command.startsWith("SYNC")) {
-            String timeStr                = command.substring(4);
-            s_Instance->m_LocalSyncMicros = micros();
-            s_Instance->m_BaseTimeMicros  = strtoull(timeStr.c_str(), NULL, 10);
-            s_Instance->m_IsTimeSynced    = 1;
-        } else {
-            s_Instance->m_LastCommand = command;
-            s_Instance->m_NewCommand  = true;
-        }
-
+        s_Instance->m_NewCommand = true;
+        s_Instance->m_CommandValue = command;
         Serial.print("Received Command: ");
         Serial.println(command);
     } else if (type == WS_EVT_CONNECT) {
@@ -76,8 +68,3 @@ void BoardWifi::OnWsEvent(AsyncWebSocket*       server,
     }
 }
 
-uint64_t BoardWifi::GetRealTime() {
-    if (!s_Instance->m_IsTimeSynced) { return 0; }
-    uint32_t elapsedMicros = micros() - m_LocalSyncMicros;
-    return m_BaseTimeMicros + (uint64_t)(elapsedMicros);
-}
