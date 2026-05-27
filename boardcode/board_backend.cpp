@@ -12,7 +12,7 @@ BoardBackend::BoardBackend(const char* ssid, const char* password)
 void BoardBackend::Initialize(){ 
     m_wifi.Start();
     CleanupClients();
-    //m_sd.OpenFile();
+    m_sd.OpenSD();
     //canbus.Start(); I believe
 }
 
@@ -32,6 +32,7 @@ void BoardBackend::Run(){
 
     if (micros() - m_LastSend > 50000) {
         SendData(m_Msg);
+        m_sd.WriteSD(m_Msg);
         m_LastSend = micros();
     }
 
