@@ -26,12 +26,12 @@ class BoardBackend {
     const char*   m_Password;
     char          m_Msg[200];
     uint64_t      m_BaseTimeMicros{0};
-    uint32_t      m_LocalSyncMicros{0};
+    uint64_t      m_LocalSyncMicros{0};
     volatile bool m_IsTimeSynced{0};
     volatile bool m_WifiOn{true};
     volatile bool m_LoRaOn{false};
-    static unsigned long          m_LastSend;
-    static unsigned long          m_LastCleanup;
+    static uint32_t m_LastSend;
+    static uint32_t m_LastCleanup;
     BoardWifi m_wifi;
     SDCard m_sd;
     RPMCollector                  wheel_rc;

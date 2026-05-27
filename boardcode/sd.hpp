@@ -13,5 +13,5 @@ class SDCard {
     File logFile;
     bool isOpen = 0;
     const int chipselect = 5;
-    long lastFlush;
+    long lastFlush = 0;
 };

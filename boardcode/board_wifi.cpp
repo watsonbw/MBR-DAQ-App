@@ -51,15 +51,13 @@ void BoardWifi::OnWsEvent(AsyncWebSocket*       server,
                           uint8_t*              data,
                           size_t                len) {
     if (type == WS_EVT_DATA && s_Instance != nullptr) {
-        String command = "";
-        for (size_t i = 0; i < len; i++) {
-            command += (char)data[i];
-        }
-
+        size_t copyLen = min(len, sizeof(s_Instance->m_CommandValue) - 1);
+        memcpy(s_Instance->m_CommandValue, data, copyLen);
+        s_Instance->m_CommandValue[copyLen] = '\0';
         s_Instance->m_NewCommand = true;
-        s_Instance->m_CommandValue = command;
+
         Serial.print("Received Command: ");
-        Serial.println(command);
+        Serial.println(s_Instance->m_CommandValue);
     } else if (type == WS_EVT_CONNECT) {
         server->cleanupClients();
         Serial.println("Client connected");

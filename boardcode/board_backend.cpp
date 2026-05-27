@@ -1,8 +1,8 @@
 #include "board_backend.hpp"
 #include <Arduino.h>
 
-unsigned long BoardBackend::m_LastSend = 0;
-unsigned long BoardBackend::m_LastCleanup = 0;
+uint32_t BoardBackend::m_LastSend = 0;
+uint32_t BoardBackend::m_LastCleanup = 0;
 
 
 BoardBackend::BoardBackend(const char* ssid, const char* password) 
@@ -19,18 +19,18 @@ void BoardBackend::Initialize(){
 //Runs the backend
 void BoardBackend::Run(){
     const uint64_t real_time = GetRealTime();
-    if (millis() - m_LastCleanup > 10000) {
+    if ((uint32_t)(millis()) - m_LastCleanup > 10000) {
         CleanupClients();
         m_LastCleanup = millis();
     }
 
     //collect data here, will be changed with canbus implementation
-    m_wheel                    = wheel_rc.GetRPM(GetRealTime(), digitalRead(32)) / 2; 
-    m_engine                   = engine_rc.GetRPM(GetRealTime(), digitalRead(33));
+    m_wheel                    = wheel_rc.GetRPM(micros(), digitalRead(32)) / 2; 
+    m_engine                   = engine_rc.GetRPM(micros(), digitalRead(33));
 
     snprintf(m_Msg, sizeof(m_Msg), "T %llu W %d E %d", GetRealTime(), m_wheel, m_engine);
 
-    if (micros() - m_LastSend > 50000) {
+    if ((uint32_t)(micros()) - m_LastSend > 50000) {
         SendData(m_Msg);
         m_sd.WriteSD(m_Msg);
         m_LastSend = micros();
@@ -55,10 +55,10 @@ void BoardBackend::SendData(const char* msg){
 
 void BoardBackend::ReceiveData(){
             if (m_WifiOn){
-            if (m_wifi.m_CommandValue.startsWith("SYNC")) {
-                String timeStr                = m_wifi.m_CommandValue.substring(4);
+            if (strncmp(m_wifi.m_CommandValue, "SYNC", 4) == 0) {
+                const char* timeStr = m_wifi.m_CommandValue + 4;
                 m_LocalSyncMicros = micros();
-                m_BaseTimeMicros  = strtoull(timeStr.c_str(), NULL, 10);
+                m_BaseTimeMicros  = strtoull(timeStr, NULL, 10);
                 m_IsTimeSynced    = 1;
             } else {
                 /*currently does nothing, need to work on other command implementation*/

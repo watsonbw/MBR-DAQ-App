@@ -2,13 +2,11 @@
 #include <cstdint>
 
 RPMCollector::RPMCollector() {
-    // Initialize any variables here if needed, e.g.:
-    // last_micros = 0;
 }
 
 auto RPMCollector::GetRPM(uint32_t timestamp, uint8_t pin_value) -> double {
     if (timestamp == 0) { return 0.0; }
-    if (pin_value == HI && timestamp > Thresh()) {
+    if (m_LastTime != 0 && timestamp > Thresh()) {
         m_RPM    = 0.0;
         m_WasRPM = 0;
         // Do something meaningful maybe

@@ -11,7 +11,7 @@ class RPMCollector {
 
   private:
     uint32_t m_LastTime = 0; // This is in microseconds
-    double   m_RPM;
+    double   m_RPM = 0;
     bool     m_WasRPM = 0;
 };
 
