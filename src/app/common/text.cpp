@@ -22,14 +22,17 @@ void TextUtils::DrawStartLoggingButton() {
     });
 }
 
-void TextUtils::DrawStartSerialButton() {
+bool TextUtils::DrawStartSerialButton() {
+    bool clicked = false;
     HEADER({
         if (ImGui::Button(m_Context->Backend->SerialMan.IsSerialWrite ? "Stop Serial"
                                                                       : "Start Serial")) {
             m_Context->Backend->SerialMan.IsSerialWrite =
                 !m_Context->Backend->SerialMan.IsSerialWrite;
+            clicked = true;
         }
     });
+    return clicked;
 }
 
 void TextUtils::DrawSendDataButton() {

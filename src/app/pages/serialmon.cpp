@@ -41,7 +41,13 @@ void SerialPage::DrawTopLHS() {
         BOLD_HEADER(ImGui::Text("Serial Monitor Settings"));
 
         ImGui::Separator();
-        m_TextUtils.DrawStartSerialButton();
+        if (m_TextUtils.DrawStartSerialButton()){
+            if(!m_Context->Backend->SerialMan.IsRunning()){
+                m_Context->Backend->SerialMan.Start();
+            } else {
+                m_Context->Backend->SerialMan.Stop();
+            }
+        }
         ImGui::SameLine();
         m_TextUtils.DrawSendDataButton();
         if(m_Context->Backend->SerialMan.m_SendData){

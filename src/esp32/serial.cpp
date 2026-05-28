@@ -14,6 +14,7 @@ using namespace std::chrono_literals;
 
 //Initializes and maintains Serial behavior
 void SerialManager::Start(){
+    if (m_Worker.joinable()) return;
     m_KeepRunning = true;
     m_Worker = std::thread([this]() {
         while (m_KeepRunning){
@@ -138,6 +139,18 @@ void SerialManager::ChangeBaudRate(uint32_t baud) {
             LOG_ERROR("[SerialManager] Baud rate change failed on " + port + ": " + e.what());
         }
     }
+}
+
+bool SerialManager::IsRunning() const { return m_Worker.joinable(); }
+
+void SerialManager::Stop() {
+    if (!m_Worker.joinable()) return;
+    m_KeepRunning = false;
+    std::thread cleanup([worker = std::move(m_Worker), this]() mutable {
+        if (worker.joinable()) worker.join();
+        CloseAll();
+    });
+    cleanup.detach();
 }
 
 bool SerialManager::IsPortSelected(const std::string& port) { return m_ChosenPorts.contains(port); }

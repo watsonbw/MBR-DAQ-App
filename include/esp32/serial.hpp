@@ -37,6 +37,8 @@ class SerialManager {
     bool OpenPort(const std::string& port, const std::string& description = "");
     bool IsPortSelected(const std::string& port);
     void ChangeBaudRate(uint32_t baud);
+    void Stop();
+    bool IsRunning() const;
     uint32_t GetBaudRate() {return m_BaudRate;}
 
   private:
