@@ -110,6 +110,14 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
 
             // Now we can safely unpack the packet
             const std::scoped_lock<std::mutex> lock{DataMutex};
+
+            //check for commands/responses first
+            auto pair = parsed.value()[0];
+            if (pair.first == "RES") {
+                HandleCommand(parsed);
+             }
+
+            //write data
             for (const auto& [ident, value] : parsed.value()) {
                 Data.WriteData(std::string{ident}, std::string{value});
             }
@@ -174,10 +182,16 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
         parsed.emplace_back(key, value);
     }
     bool hasT = 0;
+    bool hasRES = 0;
     for (const auto &pair : parsed){
-        if (pair.first == "T") { hasT = 1; break; }
+        if (pair.first == "T") { 
+            hasT = 1; break; 
+        } 
+        if (pair.first == "RES"){
+            hasRES = 1; break;
+        }
     }
-    if (!hasT) { return std::nullopt; } 
+    if (hasT == hasRES) { return std::nullopt; } 
 
     return parsed;
 }
@@ -202,6 +216,16 @@ void TelemetryBackend::SetIp(const IpV4& ipv4) {
     m_ShouldKill = false;
     Start();
     TryConnection = false;
+}
+
+auto TelemetryBackend::HandleCommand( std::optional<std::vector<std::pair<std::string_view, std::string_view>>> parsed) -> void {
+    auto response = parsed.value()[1];
+    if (response.first == "SYNC"){
+        uint64_t micros = 0;
+        std::from_chars(response.second.data(), response.second.data() + response.second.size(), micros);
+        LocalTime t{micros};
+        LOG_INFO("Time successfully synced at: {}", t.String(false));
+    }
 }
 /*
 for (const auto& field : m_PacketFields) {

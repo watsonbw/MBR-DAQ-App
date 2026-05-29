@@ -30,8 +30,8 @@ void Log::Init() {
     s_CoreLogger->set_level(spdlog::level::trace);
     s_CoreLogger->flush_on(spdlog::level::trace);
 #else
-    s_CoreLogger->set_level(spdlog::level::warn);
-    s_CoreLogger->flush_on(spdlog::level::warn);
+    s_CoreLogger->set_level(spdlog::level::info);
+    s_CoreLogger->flush_on(spdlog::level::info);
 #endif
 }
 

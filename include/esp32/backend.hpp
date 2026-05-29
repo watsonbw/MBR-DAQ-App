@@ -47,6 +47,7 @@ class TelemetryBackend {
 
     std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
     ValidatePacket(std::string_view str) const;
+    auto HandleCommand(std::optional<std::vector<std::pair<std::string_view, std::string_view>>> parsed) -> void;
 
   private:
     std::thread              m_Worker;

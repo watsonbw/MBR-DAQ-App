@@ -30,7 +30,7 @@ void BoardBackend::Run(){
 
     snprintf(m_Msg, sizeof(m_Msg), "T %llu W %d E %d\n", GetRealTime(), m_wheel, m_engine);
 
-    if (now - m_LastSend > 50000LL) {
+    if ((now - m_LastSend > 50000LL) && m_IsTimeSynced) {
         SendData(m_Msg);
         m_sd.WriteSD(m_Msg);
         m_LastSend = now;
@@ -61,7 +61,9 @@ void BoardBackend::ReceiveData(){
                 m_BaseTimeMicros  = strtoull(timeStr, NULL, 10);
                 m_IsTimeSynced    = 1;
                 if (m_BaseTimeMicros != 0){
-                    SendData("CMD Time is synched to %llu", m_BaseTimeMicros);
+                    char res[64];
+                    snprintf(res, sizeof(res), "RES 0 SYNC %lld", m_BaseTimeMicros);
+                    SendData(res);
                 }
             } else {
                 /*currently does nothing, need to work on other command implementation*/
