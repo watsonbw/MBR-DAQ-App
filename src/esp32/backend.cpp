@@ -130,44 +130,55 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
     parsed.reserve(m_PacketFields.size());
 
     size_t pos = 0;
-    for (const auto& field : m_PacketFields) {
+    //runs through the whole sent packet. this ensures that the packet must be valid but doesn't need every m_packetfield.
+    while (pos < str.size()){
+        bool isKey = 0;
         const size_t ident_start = pos;
-        while (pos < str.size() && str[pos] != ' ') {
-            pos += 1;
-        }
-        if (str.substr(ident_start, pos - ident_start) != field) { return std::nullopt; }
 
-        // There can be an arbitrary amount of spaces between idents/values
-        if (pos >= str.size() || str[pos] != ' ') { return std::nullopt; }
-        while (pos < str.size() && str[pos] == ' ') {
-            pos += 1;
+        //run until space to find key
+        while (pos < str.size() && str[pos] != ' '){
+            pos++;
         }
+        std::string_view key = str.substr(ident_start, pos - ident_start);
 
+        //run until start of value
+        while (pos < str.size() && str[pos] == ' ') { pos++; } 
         const size_t value_start = pos;
-        while (pos < str.size() && str[pos] != ' ') {
-            pos += 1;
+
+        //run until space again to find value
+        while (pos < str.size() && str[pos] != ' '){
+            pos++;
         }
         if (value_start == pos) { return std::nullopt; }
-        const auto value = str.substr(value_start, pos - value_start);
+        std::string_view value = str.substr(value_start, pos - value_start);
+        
+        //skip extra spaces
+        while (pos < str.size() && str[pos] == ' ') {
+        pos += 1;
+        }
 
-        // Uncalibrated packets or unparsable times are invalid
-        if (field == "T") {
+        //check key value pairs
+        for (const auto &field : m_PacketFields){
+            if (field == key){
+                isKey = 1;
+            }
+        }
+        if (!isKey){
+            return std::nullopt;
+        }
+        if (key == "T") {
             uint64_t t   = 0;
             auto     res = std::from_chars(value.data(), value.data() + value.size(), t);
             if (res.ec != std::errc{} || t == 0) { return std::nullopt; }
         }
-
-        parsed.emplace_back(field, value);
-        while (pos < str.size() && str[pos] == ' ') {
-            pos += 1;
-        }
+        parsed.emplace_back(key, value);
     }
-
-    // Consume trailing whitespace just to be safe
-    while (pos < str.size() && str[pos] == ' ') {
-        pos += 1;
+    bool hasT = 0;
+    for (const auto &pair : parsed){
+        if (pair.first == "T") { hasT = 1; break; }
     }
-    if (pos != str.size()) { return std::nullopt; }
+    if (!hasT) { return std::nullopt; } 
+
     return parsed;
 }
 
@@ -185,10 +196,44 @@ void TelemetryBackend::SetIp(const IpV4& ipv4) {
         LOG_ERROR("Requested Ip was invalid: {}", ipv4.String());
         return;
     }
-
+    
     m_IpAddr = ipv4;
     Kill();
     m_ShouldKill = false;
     Start();
     TryConnection = false;
 }
+/*
+for (const auto& field : m_PacketFields) {
+    const size_t ident_start = pos;
+    while (pos < str.size() && str[pos] != ' ') {
+        pos += 1;
+    }
+    if (str.substr(ident_start, pos - ident_start) != field) { return std::nullopt; }
+    
+    // There can be an arbitrary amount of spaces between idents/values
+    if (pos >= str.size() || str[pos] != ' ') { return std::nullopt; }
+    while (pos < str.size() && str[pos] == ' ') {
+        pos += 1;
+    }
+    
+    const size_t value_start = pos;
+    while (pos < str.size() && str[pos] != ' ') {
+        pos += 1;
+    }
+    if (value_start == pos) { return std::nullopt; }
+    const auto value = str.substr(value_start, pos - value_start);
+    
+    // Uncalibrated packets or unparsable times are invalid
+    if (field == "T") {
+        uint64_t t   = 0;
+        auto     res = std::from_chars(value.data(), value.data() + value.size(), t);
+        if (res.ec != std::errc{} || t == 0) { return std::nullopt; }
+    }
+    
+    parsed.emplace_back(field, value);
+    while (pos < str.size() && str[pos] == ' ') {
+        pos += 1;
+    }
+}
+*/

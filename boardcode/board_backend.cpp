@@ -18,22 +18,22 @@ void BoardBackend::Initialize(){
 
 //Runs the backend
 void BoardBackend::Run(){
-    const uint64_t real_time = GetRealTime();
-    if ((uint32_t)(millis()) - m_LastCleanup > 10000) {
+    int64_t now = esp_timer_get_time();
+    if (now - m_LastCleanup > 10000000LL) {
         CleanupClients();
-        m_LastCleanup = millis();
+        m_LastCleanup = now;
     }
 
     //collect data here, will be changed with canbus implementation
-    m_wheel                    = wheel_rc.GetRPM(micros(), digitalRead(32)) / 2; 
-    m_engine                   = engine_rc.GetRPM(micros(), digitalRead(33));
+    m_wheel                    = wheel_rc.GetRPM(esp_timer_get_time(), digitalRead(32)) / 2; 
+    m_engine                   = engine_rc.GetRPM(esp_timer_get_time(), digitalRead(33));
 
     snprintf(m_Msg, sizeof(m_Msg), "T %llu W %d E %d\n", GetRealTime(), m_wheel, m_engine);
 
-    if ((uint32_t)(esp_timer_get_time()) - m_LastSend > 50000) {
+    if (now - m_LastSend > 50000LL) {
         SendData(m_Msg);
         m_sd.WriteSD(m_Msg);
-        m_LastSend = micros();
+        m_LastSend = now;
     }
 
     if (m_wifi.m_NewCommand || 0 /*add for LoRa behavior*/){
@@ -44,7 +44,7 @@ void BoardBackend::Run(){
 uint64_t BoardBackend::GetRealTime() {
     if (!m_IsTimeSynced) { return 0; 
     } else {
-        int64_t elapsedMicros = (uint32_t)esp_timer_get_time() - m_LocalSyncMicros;
+        int64_t elapsedMicros = esp_timer_get_time() - m_LocalSyncMicros;
         return (uint64_t)m_BaseTimeMicros + (uint64_t)(elapsedMicros);
     }
 }
@@ -60,6 +60,9 @@ void BoardBackend::ReceiveData(){
                 m_LocalSyncMicros = esp_timer_get_time();
                 m_BaseTimeMicros  = strtoull(timeStr, NULL, 10);
                 m_IsTimeSynced    = 1;
+                if (m_BaseTimeMicros != 0){
+                    SendData("CMD Time is synched to %llu", m_BaseTimeMicros);
+                }
             } else {
                 /*currently does nothing, need to work on other command implementation*/
             }
