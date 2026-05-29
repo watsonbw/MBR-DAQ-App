@@ -62,7 +62,8 @@ void BoardBackend::ReceiveData(){
                 m_IsTimeSynced    = 1;
                 if (m_BaseTimeMicros != 0){
                     char res[64];
-                    snprintf(res, sizeof(res), "RES 0 SYNC %lld", m_BaseTimeMicros);
+                    snprintf(res, sizeof(res), "RES 0 SYNC %lld\n", m_BaseTimeMicros);
+                    Serial.println(res);
                     SendData(res);
                 }
             } else {

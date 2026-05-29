@@ -99,7 +99,7 @@ void TelemetryBackend::WorkerLoop() {
 }
 
 void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
-    if (IsLogging && msg->type == ix::WebSocketMessageType::Message) {
+    if (msg->type == ix::WebSocketMessageType::Message) {
         m_Buffer.append(msg->str);
         size_t newline_pos;
         while ((newline_pos = m_Buffer.find('\n')) != std::string::npos) {
@@ -115,9 +115,12 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
             auto pair = parsed.value()[0];
             if (pair.first == "RES") {
                 HandleCommand(parsed);
+                continue;
              }
 
             //write data
+            if (!IsLogging) { continue; }
+            
             for (const auto& [ident, value] : parsed.value()) {
                 Data.WriteData(std::string{ident}, std::string{value});
             }
