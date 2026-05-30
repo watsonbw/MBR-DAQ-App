@@ -56,6 +56,9 @@ void HomePage::DrawTopLHS() {
         ImGui::SameLine();
         if (ImGui::Button("Create File")) {
             if (name.empty()) { m_SDName = t.String(0); }
+            for (char& c : m_SDName) {
+                if (c == ':' || c == ' ') c = '-';
+            }
             const auto command = std::format("SD_START /{}.txt", m_SDName);
             m_Context->Backend->SendCMD(command);
         }
