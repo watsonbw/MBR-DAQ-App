@@ -233,6 +233,7 @@ auto TelemetryBackend::HandleCommand( std::optional<std::vector<std::pair<std::s
             LOG_ERROR("SD Card Failed Initialization");
         } else {
             LOG_INFO("SD Card Initialized At {}", response.second);
+            IsOpen = true;
         }
     } else if (response.first == "SD_WRITE") {
         if (response.second == "1"){
@@ -244,6 +245,7 @@ auto TelemetryBackend::HandleCommand( std::optional<std::vector<std::pair<std::s
         }
     } else if (response.first == "SD_CLOSE") {
         if (response.second == "1"){
+            IsOpen = false;
             LOG_INFO("SD Card Has Closed Succesfully");
         } else if (response.second == "0"){
             LOG_INFO("SD Card Failed Close");
