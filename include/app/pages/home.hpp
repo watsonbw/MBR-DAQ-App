@@ -32,4 +32,5 @@ class HomePage : public Page {
     std::string m_UsernameBuf;
     std::string m_PasswordBuf;
     std::string m_SDName;
+    std::string m_SetName;
 };

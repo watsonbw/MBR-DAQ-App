@@ -75,6 +75,7 @@ void BoardBackend::ReceiveData(){
             }
             if (m_sd.isOpen){
                 if (m_sd.CloseSD()){
+                    SendData("RES 0 SD_WRITE 0\n");
                     SendData("RES 0 SD_CLOSE 1\n");
                 } else {
                     SendData("RES 0 SD_CLOSE 0\n");

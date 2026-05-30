@@ -41,6 +41,7 @@ class TelemetryBackend {
     std::atomic<bool> IsLogging{false};
     std::atomic<bool> IsReceiving{false};
     std::atomic<bool> IsWriting{false};
+    std::atomic<bool> IsOpen{false};
 
   private:
     void WorkerLoop();

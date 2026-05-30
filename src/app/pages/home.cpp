@@ -51,18 +51,17 @@ void HomePage::DrawTopLHS() {
     if (const ImGuiScope<ImGui::EndChild> sd_control{IMSCOPE_FN(ImGui::BeginChild(
             "##sd_control", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
         LocalTime t;
-        std::string name;
-        HEADER(TextUtils::DrawInputBox("##sd_name", name, std::format("Name ({})", t.String(0)).c_str()));
+        HEADER(TextUtils::DrawInputBox("##sd_name", m_SetName, std::format("Name ({})", t.String(0)).c_str()));
         ImGui::SameLine();
         if (ImGui::Button("Create File")) {
-            if (name.empty()) { m_SDName = t.String(0); }
-            else { m_SDName = name; }
+            if (m_SetName.empty()) { m_SDName = t.String(0); }
+            else { m_SDName = m_SetName; }
             for (char& c : m_SDName) {
                 if (c == ':' || c == ' ') c = '-';
             }
             const auto command = std::format("SD_START /{}.txt", m_SDName);
             m_Context->Backend->SendCMD(command);
-            name.clear();
+            m_SetName.clear();
         }
         ImGui::SameLine();
         ImGui::PushStyleColor(ImGuiCol_Button, m_Context->Backend->IsWriting ? ImVec4(0,0.7f,0,1) : ImVec4(0.7f,0,0,1));
@@ -76,9 +75,18 @@ void HomePage::DrawTopLHS() {
         }
         ImGui::PopStyleColor();
         ImGui::SameLine();
-        if (ImGui::Button("Close SD")) {
-            m_Context->Backend->SendCMD("SD_CLOSE");
+        if (!m_SDName.empty()) {
+            if (ImGui::Button(m_Context->Backend->IsOpen ? "Close SD" : "Open SD")) {
+                if (m_Context->Backend->IsOpen) {
+                    m_Context->Backend->SendCMD("SD_CLOSE");
+                } else {
+                    const auto command = std::format("SD_START /{}.txt", m_SDName);
+                    m_Context->Backend->SendCMD(command);
+                }
+            }
         }
+        ImGui::SameLine();
+        ImGui::TextDisabled(m_Context->Backend->IsOpen ? m_SDName.c_str() : "No file open");
         /*
         ImGui::BulletText("Connect to Wifi on laptop");
         ImGui::BulletText(
