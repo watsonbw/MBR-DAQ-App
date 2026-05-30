@@ -3,12 +3,8 @@
 SDCard::SDCard() : isOpen(false) {}
 
 bool SDCard::OpenSD(const char* name){
-    if (!SD.begin(chipselect)){
-        Serial.println("SD mount fail");
-        return false;
-    }
-
-    logFile = SD.open(name, FILE_APPEND);
+    
+    logFile = SD.open(name, FILE_WRITE);
     if (logFile){
         isOpen = 1;
         Serial.println("SD File opened successfully. Streaming active.");
@@ -43,4 +39,13 @@ bool SDCard::CloseSD(){
     } else {
         return 0;
     }
+}
+
+bool SDCard::InitSD(){
+    if (!SD.begin(chipselect)){
+        Serial.println("SD mount fail");
+        return false;
+    }
+    Serial.println("SD mounted");
+    return true;
 }

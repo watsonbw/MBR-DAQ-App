@@ -12,7 +12,7 @@ BoardBackend::BoardBackend(const char* ssid, const char* password)
 void BoardBackend::Initialize(){ 
     m_wifi.Start();
     CleanupClients();
-    //m_sd.OpenSD();
+    m_sd.InitSD();
     //canbus.Start(); I believe
 }
 

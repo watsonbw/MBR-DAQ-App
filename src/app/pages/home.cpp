@@ -51,11 +51,11 @@ void HomePage::DrawTopLHS() {
     if (const ImGuiScope<ImGui::EndChild> sd_control{IMSCOPE_FN(ImGui::BeginChild(
             "##sd_control", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
         LocalTime t;
-        
-        HEADER(TextUtils::DrawInputBox("##sd_name", m_SDName, std::format("Name ({})", t.String(0)).c_str()));
+        std::string name;
+        HEADER(TextUtils::DrawInputBox("##sd_name", name, std::format("Name ({})", t.String(0)).c_str()));
         ImGui::SameLine();
         if (ImGui::Button("Create File")) {
-            if (m_SDName.empty()) { m_SDName = t.String(); }
+            if (name.empty()) { m_SDName = t.String(0); }
             const auto command = std::format("SD_START /{}.txt", m_SDName);
             m_Context->Backend->SendCMD(command);
         }
