@@ -56,11 +56,13 @@ void HomePage::DrawTopLHS() {
         ImGui::SameLine();
         if (ImGui::Button("Create File")) {
             if (name.empty()) { m_SDName = t.String(0); }
+            else { m_SDName = name; }
             for (char& c : m_SDName) {
                 if (c == ':' || c == ' ') c = '-';
             }
             const auto command = std::format("SD_START /{}.txt", m_SDName);
             m_Context->Backend->SendCMD(command);
+            name.clear();
         }
         ImGui::SameLine();
         ImGui::PushStyleColor(ImGuiCol_Button, m_Context->Backend->IsWriting ? ImVec4(0,0.7f,0,1) : ImVec4(0.7f,0,0,1));

@@ -94,6 +94,7 @@ void BoardBackend::ReceiveData(){
             SendData(res);
         } else if (strncmp(m_wifi.m_CommandValue, "SD_CLOSE", 8) == 0 ){
             if (m_sd.CloseSD()){
+                    SendData("RES 0 SD_WRITE 0\n");
                     SendData("RES 0 SD_CLOSE 1\n");
                 } else {
                     SendData("RES 0 SD_CLOSE 0\n");
