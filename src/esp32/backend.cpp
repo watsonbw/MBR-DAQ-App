@@ -42,6 +42,7 @@ void TelemetryBackend::Start() {
         if (msg->type == ix::WebSocketMessageType::Open) {
             IsConnected = true;
             IsReceiving = false;
+            SendCMD("STATUS");
             LOG_INFO("Connected to ESP32");
         }
 
@@ -60,6 +61,7 @@ void TelemetryBackend::Start() {
         if (msg->type == ix::WebSocketMessageType::Message) {
             IsReceiving = true;
             this->OnMessage(msg);
+            m_LastDataTime = std::chrono::steady_clock::now();
         }
     });
 
@@ -95,6 +97,9 @@ void TelemetryBackend::WorkerLoop() {
     while (!m_ShouldKill) {
         std::this_thread::sleep_for(10ms);
         if (m_WebSocket.getReadyState() != ix::ReadyState::Open) { IsConnected = false; }
+        if (std::chrono::steady_clock::now() - m_LastDataTime > 500ms) {
+        IsReceiving = false;
+        }
     }
 }
 
@@ -222,6 +227,10 @@ void TelemetryBackend::SetIp(const IpV4& ipv4) {
 }
 
 auto TelemetryBackend::HandleCommand( std::optional<std::vector<std::pair<std::string_view, std::string_view>>> parsed) -> void {
+    if (!parsed || parsed->size() < 2) {
+        LOG_ERROR("Command Not Found");
+        return;
+    }
     auto response = parsed.value()[1];
     if (response.first == "SYNC"){
         uint64_t micros = 0;

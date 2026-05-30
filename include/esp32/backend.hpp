@@ -57,6 +57,6 @@ class TelemetryBackend {
     std::string              m_Buffer;
     std::vector<std::string> m_PacketFields;
     IpV4                     m_IpAddr;
-
+    std::chrono::steady_clock::time_point m_LastDataTime{};
     std::atomic<bool> m_ShouldKill{false};
 };
