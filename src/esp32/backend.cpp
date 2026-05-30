@@ -228,6 +228,28 @@ auto TelemetryBackend::HandleCommand( std::optional<std::vector<std::pair<std::s
         std::from_chars(response.second.data(), response.second.data() + response.second.size(), micros);
         LocalTime t{micros};
         LOG_INFO("Time successfully synced at: {}", t.String(false));
+    } else if (response.first == "SD_START"){
+        if (response.second == "deadbeef"){
+            LOG_ERROR("SD Card Failed Initialization");
+        } else {
+            LOG_INFO("SD Card Initialized At {}", response.second);
+        }
+    } else if (response.first == "SD_WRITE") {
+        if (response.second == "1"){
+            LOG_INFO("SD Card Has Begun Writing");
+            IsWriting = true;
+        } else if (response.second == "0"){
+            LOG_INFO("SD Card Has Stopped Writing");
+            IsWriting = false;
+        }
+    } else if (response.first == "SD_CLOSE") {
+        if (response.second == "1"){
+            LOG_INFO("SD Card Has Closed Succesfully");
+        } else if (response.second == "0"){
+            LOG_INFO("SD Card Failed Close");
+        }
+    } else if (parsed.value()[0].second == "1"){
+        LOG_ERROR("Command Not Found");
     }
 }
 /*

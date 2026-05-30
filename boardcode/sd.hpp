@@ -5,13 +5,15 @@
 class SDCard {
   public:
     explicit SDCard();
-    void OpenSD();
+    bool OpenSD(const char* name);
     void WriteSD(const char* msg);
-    void CloseSD();
+    bool CloseSD();
+    bool isOpen = 0;
+    bool isWrite = 0;
+    const char* name;
 
   private:
     File logFile;
-    bool isOpen = 0;
     const int chipselect = 5;
     long lastFlush = 0;
 };
