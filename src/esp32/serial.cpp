@@ -13,9 +13,10 @@ using namespace std::chrono_literals;
 
 // Initializes and maintains Serial behavior
 void SerialManager::Start() {
-    m_Worker = std::thread([this]() {
-        while (true) {
-
+    if (m_Worker.joinable()) return;
+    m_KeepRunning = true;
+    m_Worker      = std::thread([this]() {
+        while (m_KeepRunning) {
             this->CleanPorts();
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             if (IsSerialWrite) { this->ReceiveData(); }
@@ -120,9 +121,11 @@ void SerialManager::ClosePort(const std::string& port) {
 void SerialManager::CloseAll() {
     for (auto& [port, ser] : m_Ports) {
         ser->close();
+        LOG_INFO("[SerialManager] Closed: " + port);
         delete ser;
     }
     m_Ports.clear();
+    m_ChosenPorts.clear();
 }
 // change baud rate (its in the name)
 void SerialManager::ChangeBaudRate(uint32_t baud) {
@@ -135,6 +138,18 @@ void SerialManager::ChangeBaudRate(uint32_t baud) {
             LOG_ERROR("[SerialManager] Baud rate change failed on " + port + ": " + e.what());
         }
     }
+}
+
+bool SerialManager::IsRunning() const { return m_Worker.joinable(); }
+
+void SerialManager::Stop() {
+    if (!m_Worker.joinable()) return;
+    m_KeepRunning = false;
+    std::thread cleanup([worker = std::move(m_Worker), this]() mutable {
+        if (worker.joinable()) worker.join();
+        CloseAll();
+    });
+    cleanup.detach();
 }
 
 bool SerialManager::IsPortSelected(const std::string& port) { return m_ChosenPorts.contains(port); }

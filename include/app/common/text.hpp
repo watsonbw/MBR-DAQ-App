@@ -15,7 +15,7 @@ class TextUtils {
     ~TextUtils() = default;
 
     void DrawStartLoggingButton();
-    void DrawStartSerialButton();
+    bool DrawStartSerialButton();
     void DrawSendDataButton();
 
     // Appends the buf data to the filepath, clearing the buf on success.

@@ -13,9 +13,14 @@ class SerialManager {
   public:
     explicit SerialManager(int baud_rate = 115200, int timeout_ms = 0)
         : m_BaudRate(baud_rate), m_TimeoutMs(timeout_ms) {}
-    ~SerialManager() { CloseAll(); };
+    ~SerialManager() {
+        m_KeepRunning = false;
+        if (m_Worker.joinable()) m_Worker.join();
+        CloseAll();
+    };
 
     std::atomic<bool>                      m_KeepRunning{true};
+    std::atomic<bool>                      m_SendData{false};
     std::atomic<bool>                      IsSerialWrite{false};
     std::map<std::string, serial::Serial*> ExportPorts() { return m_Ports; }
     std::unordered_set<std::string>        ReturnChosen() { return m_ChosenPorts; }
@@ -32,6 +37,8 @@ class SerialManager {
     bool     OpenPort(const std::string& port, const std::string& description = "");
     bool     IsPortSelected(const std::string& port);
     void     ChangeBaudRate(uint32_t baud);
+    void     Stop();
+    bool     IsRunning() const;
     uint32_t GetBaudRate() { return m_BaudRate; }
 
   private:

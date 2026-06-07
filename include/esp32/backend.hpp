@@ -40,6 +40,8 @@ class TelemetryBackend {
     std::atomic<bool> IsConnected{false};
     std::atomic<bool> IsLogging{false};
     std::atomic<bool> IsReceiving{false};
+    std::atomic<bool> IsWriting{false};
+    std::atomic<bool> IsOpen{false};
 
   private:
     void WorkerLoop();
@@ -47,13 +49,16 @@ class TelemetryBackend {
 
     std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
     ValidatePacket(std::string_view str) const;
+    auto
+    HandleCommand(std::optional<std::vector<std::pair<std::string_view, std::string_view>>> parsed)
+        -> void;
 
   private:
-    std::thread              m_Worker;
-    ix::WebSocket            m_WebSocket;
-    std::string              m_Buffer;
-    std::vector<std::string> m_PacketFields;
-    IpV4                     m_IpAddr;
-
-    std::atomic<bool> m_ShouldKill{false};
+    std::thread                           m_Worker;
+    ix::WebSocket                         m_WebSocket;
+    std::string                           m_Buffer;
+    std::vector<std::string>              m_PacketFields;
+    IpV4                                  m_IpAddr;
+    std::chrono::steady_clock::time_point m_LastDataTime{};
+    std::atomic<bool>                     m_ShouldKill{false};
 };

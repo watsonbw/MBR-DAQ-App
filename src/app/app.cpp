@@ -20,10 +20,22 @@ App::App([[maybe_unused]] int arc, [[maybe_unused]] char* argv[])
     : m_Context{std::make_shared<AppContext>()} /*, m_Manager{m_Context}*/ {
     Log::Init();
     ix::initNetSystem();
-    const std::vector<std::string> packet_fields = {"T", "W", "E", "fr", "fl", "br", "bl"};
+    const std::vector<std::string> packet_fields = {"T",
+                                                    "W",
+                                                    "E",
+                                                    "fr",
+                                                    "fl",
+                                                    "br",
+                                                    "bl",
+                                                    "SYNC",
+                                                    "SD_START",
+                                                    "SD_CLOSE",
+                                                    "SD_WRITE",
+                                                    "RES",
+                                                    "STATUS"};
     m_GUI                                        = std::make_unique<GUI>(m_Context);
     m_Context->Backend = std::make_unique<TelemetryBackend>(packet_fields);
-    m_Context->Backend->SerialMan.Start();
+    // m_Context->Backend->SerialMan.Start();
 }
 
 App::~App() { ix::uninitNetSystem(); }

@@ -31,4 +31,6 @@ class HomePage : public Page {
     IpV4        m_IpBuf;
     std::string m_UsernameBuf;
     std::string m_PasswordBuf;
+    std::string m_SDName;
+    std::string m_SetName;
 };

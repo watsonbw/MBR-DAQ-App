@@ -73,6 +73,7 @@ This software builds the following from source:
 - [stb](https://github.com/nothings/stb)
 - [taglib](https://github.com/taglib/taglib)
 - [utfcpp](https://github.com/nemtrif/utfcpp)
+- [serial](https://github.com/wjwwood/serial)
 
 All third-party libraries listed above are licensed under terms compatible with the MIT License.
 
