@@ -16,6 +16,10 @@ class BoardWifi {
     void          Start();
     void          SendData(const char* msg);
     char          m_CommandValue[128]{""};
+    void          CleanupClients() { m_WebSock.cleanupClients(); }
+    void          Start();
+    void          SendData(const char* msg);
+    char          m_CommandValue[128]{""};
     volatile bool m_NewCommand{false};
 
   private:
