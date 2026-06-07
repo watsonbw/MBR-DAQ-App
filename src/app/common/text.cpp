@@ -37,7 +37,8 @@ bool TextUtils::DrawStartSerialButton() {
 
 void TextUtils::DrawSendDataButton() {
     HEADER({
-        if (ImGui::Button(m_Context->Backend->SerialMan.m_SendData ? "Stop Data Send" : "Send Data")) {
+        if (ImGui::Button(m_Context->Backend->SerialMan.m_SendData ? "Stop Data Send"
+                                                                   : "Send Data")) {
             m_Context->Backend->SerialMan.m_SendData = !m_Context->Backend->SerialMan.m_SendData;
         }
     });

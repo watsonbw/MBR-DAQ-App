@@ -10,9 +10,9 @@ class RPMCollector {
     }
 
   private:
-    int64_t  m_LastTime = 0; // This is in microseconds
-    double   m_RPM = 0;
-    bool     m_WasRPM = 0;
+    int64_t m_LastTime = 0; // This is in microseconds
+    double  m_RPM      = 0;
+    bool    m_WasRPM   = 0;
 };
 
 #define LO 0

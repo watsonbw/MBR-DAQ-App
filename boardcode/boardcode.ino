@@ -5,9 +5,9 @@
 
 #include "board_backend.hpp"
 
-static const char*            ssid     = "esp32Wifi";
-static const char*            password = "MBRdatacollect";
-static BoardBackend           backend{ssid, password};
+static const char*  ssid     = "esp32Wifi";
+static const char*  password = "MBRdatacollect";
+static BoardBackend backend{ssid, password};
 
 void setup() {
     Serial.begin(115200);
@@ -16,8 +16,4 @@ void setup() {
     backend.Initialize();
 }
 
-void loop() {
-    backend.Run();
-}
-
-
+void loop() { backend.Run(); }

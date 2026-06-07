@@ -2,6 +2,9 @@
 #include "sd.hpp"
 #include "rpm.hpp"
 
+static constexpr int MAX_FILES = 16;
+static constexpr int MAX_NAME_LEN = 32;
+
 
 class BoardBackend {
     public:
@@ -35,6 +38,9 @@ class BoardBackend {
     BoardWifi m_wifi;
     SDCard m_sd;
     RPMCollector                  wheel_rc;
-    RPMCollector                  engine_rc;    
+    RPMCollector                  engine_rc;  
+    char m_FileIndex[MAX_FILES][MAX_NAME_LEN]{};
+    int m_FileCount = 0;  
+    std::vector<std::string> m_FileNames;
 
 };

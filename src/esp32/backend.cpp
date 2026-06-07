@@ -97,9 +97,7 @@ void TelemetryBackend::WorkerLoop() {
     while (!m_ShouldKill) {
         std::this_thread::sleep_for(10ms);
         if (m_WebSocket.getReadyState() != ix::ReadyState::Open) { IsConnected = false; }
-        if (std::chrono::steady_clock::now() - m_LastDataTime > 500ms) {
-        IsReceiving = false;
-        }
+        if (std::chrono::steady_clock::now() - m_LastDataTime > 500ms) { IsReceiving = false; }
     }
 }
 
@@ -116,16 +114,16 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
             // Now we can safely unpack the packet
             const std::scoped_lock<std::mutex> lock{DataMutex};
 
-            //check for commands/responses first
+            // check for commands/responses first
             auto pair = parsed.value()[0];
             if (pair.first == "RES") {
                 HandleCommand(parsed);
                 continue;
-             }
+            }
 
-            //write data
+            // write data
             if (!IsLogging) { continue; }
-            
+
             for (const auto& [ident, value] : parsed.value()) {
                 Data.WriteData(std::string{ident}, std::string{value});
             }
@@ -146,42 +144,41 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
     parsed.reserve(m_PacketFields.size());
 
     size_t pos = 0;
-    //runs through the whole sent packet. this ensures that the packet must be valid but doesn't need every m_packetfield.
-    while (pos < str.size()){
-        bool isKey = 0;
+    // runs through the whole sent packet. this ensures that the packet must be valid but doesn't
+    // need every m_packetfield.
+    while (pos < str.size()) {
+        bool         isKey       = 0;
         const size_t ident_start = pos;
 
-        //run until space to find key
-        while (pos < str.size() && str[pos] != ' '){
+        // run until space to find key
+        while (pos < str.size() && str[pos] != ' ') {
             pos++;
         }
         std::string_view key = str.substr(ident_start, pos - ident_start);
 
-        //run until start of value
-        while (pos < str.size() && str[pos] == ' ') { pos++; } 
+        // run until start of value
+        while (pos < str.size() && str[pos] == ' ') {
+            pos++;
+        }
         const size_t value_start = pos;
 
-        //run until space again to find value
-        while (pos < str.size() && str[pos] != ' '){
+        // run until space again to find value
+        while (pos < str.size() && str[pos] != ' ') {
             pos++;
         }
         if (value_start == pos) { return std::nullopt; }
         std::string_view value = str.substr(value_start, pos - value_start);
-        
-        //skip extra spaces
+
+        // skip extra spaces
         while (pos < str.size() && str[pos] == ' ') {
-        pos += 1;
+            pos += 1;
         }
 
-        //check key value pairs
-        for (const auto &field : m_PacketFields){
-            if (field == key){
-                isKey = 1;
-            }
+        // check key value pairs
+        for (const auto& field : m_PacketFields) {
+            if (field == key) { isKey = 1; }
         }
-        if (!isKey){
-            return std::nullopt;
-        }
+        if (!isKey) { return std::nullopt; }
         if (key == "T") {
             uint64_t t   = 0;
             auto     res = std::from_chars(value.data(), value.data() + value.size(), t);
@@ -189,17 +186,19 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
         }
         parsed.emplace_back(key, value);
     }
-    bool hasT = 0;
+    bool hasT   = 0;
     bool hasRES = 0;
-    for (const auto &pair : parsed){
-        if (pair.first == "T") { 
-            hasT = 1; break; 
-        } 
-        if (pair.first == "RES"){
-            hasRES = 1; break;
+    for (const auto& pair : parsed) {
+        if (pair.first == "T") {
+            hasT = 1;
+            break;
+        }
+        if (pair.first == "RES") {
+            hasRES = 1;
+            break;
         }
     }
-    if (hasT == hasRES) { return std::nullopt; } 
+    if (hasT == hasRES) { return std::nullopt; }
 
     return parsed;
 }
@@ -218,7 +217,7 @@ void TelemetryBackend::SetIp(const IpV4& ipv4) {
         LOG_ERROR("Requested Ip was invalid: {}", ipv4.String());
         return;
     }
-    
+
     m_IpAddr = ipv4;
     Kill();
     m_ShouldKill = false;
@@ -226,40 +225,42 @@ void TelemetryBackend::SetIp(const IpV4& ipv4) {
     TryConnection = false;
 }
 
-auto TelemetryBackend::HandleCommand( std::optional<std::vector<std::pair<std::string_view, std::string_view>>> parsed) -> void {
+auto TelemetryBackend::HandleCommand(
+    std::optional<std::vector<std::pair<std::string_view, std::string_view>>> parsed) -> void {
     if (!parsed || parsed->size() < 2) {
         LOG_ERROR("Command Not Found");
         return;
     }
     auto response = parsed.value()[1];
-    if (response.first == "SYNC"){
+    if (response.first == "SYNC") {
         uint64_t micros = 0;
-        std::from_chars(response.second.data(), response.second.data() + response.second.size(), micros);
+        std::from_chars(
+            response.second.data(), response.second.data() + response.second.size(), micros);
         LocalTime t{micros};
         LOG_INFO("Time successfully synced at: {}", t.String(false));
-    } else if (response.first == "SD_START"){
-        if (response.second == "deadbeef"){
+    } else if (response.first == "SD_START") {
+        if (response.second == "deadbeef") {
             LOG_ERROR("SD Card Failed Initialization");
         } else {
             LOG_INFO("SD Card Initialized At {}", response.second);
             IsOpen = true;
         }
     } else if (response.first == "SD_WRITE") {
-        if (response.second == "1"){
+        if (response.second == "1") {
             LOG_INFO("SD Card Has Begun Writing");
             IsWriting = true;
-        } else if (response.second == "0"){
+        } else if (response.second == "0") {
             LOG_INFO("SD Card Has Stopped Writing");
             IsWriting = false;
         }
     } else if (response.first == "SD_CLOSE") {
-        if (response.second == "1"){
+        if (response.second == "1") {
             IsOpen = false;
             LOG_INFO("SD Card Has Closed Succesfully");
-        } else if (response.second == "0"){
+        } else if (response.second == "0") {
             LOG_INFO("SD Card Failed Close");
         }
-    } else if (parsed.value()[0].second == "1"){
+    } else if (parsed.value()[0].second == "1") {
         LOG_ERROR("Command Not Found");
     }
 }
@@ -270,27 +271,27 @@ for (const auto& field : m_PacketFields) {
         pos += 1;
     }
     if (str.substr(ident_start, pos - ident_start) != field) { return std::nullopt; }
-    
+
     // There can be an arbitrary amount of spaces between idents/values
     if (pos >= str.size() || str[pos] != ' ') { return std::nullopt; }
     while (pos < str.size() && str[pos] == ' ') {
         pos += 1;
     }
-    
+
     const size_t value_start = pos;
     while (pos < str.size() && str[pos] != ' ') {
         pos += 1;
     }
     if (value_start == pos) { return std::nullopt; }
     const auto value = str.substr(value_start, pos - value_start);
-    
+
     // Uncalibrated packets or unparsable times are invalid
     if (field == "T") {
         uint64_t t   = 0;
         auto     res = std::from_chars(value.data(), value.data() + value.size(), t);
         if (res.ec != std::errc{} || t == 0) { return std::nullopt; }
     }
-    
+
     parsed.emplace_back(field, value);
     while (pos < str.size() && str[pos] == ' ') {
         pos += 1;

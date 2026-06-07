@@ -1,11 +1,7 @@
 #include "board_wifi.hpp"
 
-BoardWifi* BoardWifi::s_Instance = nullptr;
-
 BoardWifi::BoardWifi(const char* ssid, const char* password)
-    : m_SSID(ssid), m_Password(password), m_AsyncServer(80), m_WebSock("/ws") {
-    s_Instance = this;
-}
+    : m_SSID(ssid), m_Password(password), m_AsyncServer(80), m_WebSock("/ws") {}
 
 void BoardWifi::Start() {
     WiFi.softAPdisconnect(true);
@@ -27,7 +23,27 @@ void BoardWifi::Start() {
 
     if (MDNS.begin("telemetry")) { Serial.println("mDNS responder started"); }
 
-    m_WebSock.onEvent(BoardWifi::OnWsEvent);
+    m_WebSock.onEvent([this](AsyncWebSocket*       server,
+                             AsyncWebSocketClient* client,
+                             AwsEventType          type,
+                             void*                 arg,
+                             uint8_t*              data,
+                             size_t                len) {
+        if (type == WS_EVT_DATA) {
+            size_t copyLen = min(len, sizeof(m_CommandValue) - 1);
+            memcpy(m_CommandValue, data, copyLen);
+            m_CommandValue[copyLen] = '\0';
+            m_NewCommand            = true;
+
+            Serial.print("Received Command: ");
+            Serial.println(m_CommandValue);
+        } else if (type == WS_EVT_CONNECT) {
+            server->cleanupClients();
+            Serial.println("Client connected");
+        } else if (type == WS_EVT_DISCONNECT) {
+            Serial.println("Client disconnected");
+        }
+    });
 
     m_AsyncServer.addHandler(&m_WebSock);
 
@@ -43,26 +59,3 @@ void BoardWifi::Start() {
 void BoardWifi::SendData(const char* msg) {
     if (m_WebSock.count() > 0) { m_WebSock.textAll(msg); }
 }
-
-void BoardWifi::OnWsEvent(AsyncWebSocket*       server,
-                          AsyncWebSocketClient* client,
-                          AwsEventType          type,
-                          void*                 arg,
-                          uint8_t*              data,
-                          size_t                len) {
-    if (type == WS_EVT_DATA && s_Instance != nullptr) {
-        size_t copyLen = min(len, sizeof(s_Instance->m_CommandValue) - 1);
-        memcpy(s_Instance->m_CommandValue, data, copyLen);
-        s_Instance->m_CommandValue[copyLen] = '\0';
-        s_Instance->m_NewCommand = true;
-
-        Serial.print("Received Command: ");
-        Serial.println(s_Instance->m_CommandValue);
-    } else if (type == WS_EVT_CONNECT) {
-        server->cleanupClients();
-        Serial.println("Client connected");
-    } else if (type == WS_EVT_DISCONNECT) {
-        Serial.println("Client disconnected");
-    }
-}
-

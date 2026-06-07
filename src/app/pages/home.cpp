@@ -51,11 +51,15 @@ void HomePage::DrawTopLHS() {
     if (const ImGuiScope<ImGui::EndChild> sd_control{IMSCOPE_FN(ImGui::BeginChild(
             "##sd_control", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
         LocalTime t;
-        HEADER(TextUtils::DrawInputBox("##sd_name", m_SetName, std::format("Name ({})", t.String(0)).c_str()));
+        HEADER(TextUtils::DrawInputBox(
+            "##sd_name", m_SetName, std::format("Name ({})", t.String(0)).c_str()));
         ImGui::SameLine();
         if (ImGui::Button("Create File")) {
-            if (m_SetName.empty()) { m_SDName = t.String(0); }
-            else { m_SDName = m_SetName; }
+            if (m_SetName.empty()) {
+                m_SDName = t.String(0);
+            } else {
+                m_SDName = m_SetName;
+            }
             for (char& c : m_SDName) {
                 if (c == ':' || c == ' ') c = '-';
             }
@@ -64,14 +68,16 @@ void HomePage::DrawTopLHS() {
             m_SetName.clear();
         }
         ImGui::SameLine();
-        ImGui::PushStyleColor(ImGuiCol_Button, m_Context->Backend->IsWriting ? ImVec4(0,0.7f,0,1) : ImVec4(0.7f,0,0,1));
+        ImGui::PushStyleColor(ImGuiCol_Button,
+                              m_Context->Backend->IsWriting ? ImVec4(0, 0.7f, 0, 1)
+                                                            : ImVec4(0.7f, 0, 0, 1));
         if (ImGui::Button(m_Context->Backend->IsWriting ? "Write ON" : "Write OFF")) {
             if (m_Context->Backend->IsWriting) {
                 m_Context->Backend->SendCMD("SD_WRITE 0");
             } else {
                 m_Context->Backend->SendCMD("SD_WRITE 1");
             }
-            //m_SDWrite = !m_SDWrite;
+            // m_SDWrite = !m_SDWrite;
         }
         ImGui::PopStyleColor();
         ImGui::SameLine();

@@ -11,13 +11,12 @@
 
 using namespace std::chrono_literals;
 
-
-//Initializes and maintains Serial behavior
-void SerialManager::Start(){
+// Initializes and maintains Serial behavior
+void SerialManager::Start() {
     if (m_Worker.joinable()) return;
     m_KeepRunning = true;
-    m_Worker = std::thread([this]() {
-        while (m_KeepRunning){
+    m_Worker      = std::thread([this]() {
+        while (m_KeepRunning) {
             this->CleanPorts();
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             if (IsSerialWrite) { this->ReceiveData(); }
