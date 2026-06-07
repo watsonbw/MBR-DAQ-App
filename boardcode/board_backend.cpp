@@ -46,12 +46,9 @@ uint64_t BoardBackend::GetRealTime() {
     }
 }
 
-void BoardBackend::SendData(const char* msg){
-    m_wifi.SendData(msg);
-}
+void BoardBackend::SendData(const char* msg) { m_wifi.SendData(msg); }
 
-
-void BoardBackend::ReceiveData(){
+void BoardBackend::ReceiveData() {
     m_wifi.m_NewCommand = false;
     char res[64];
     if (m_WifiOn) {
@@ -67,9 +64,7 @@ void BoardBackend::ReceiveData(){
             }
         } else if (strncmp(m_wifi.m_CommandValue, "SD_START", 8) == 0) {
             const char* nameStr = m_wifi.m_CommandValue + 9;
-            if (*nameStr == '\0'){
-                nameStr = "/data.txt";
-            }
+            if (*nameStr == '\0') { nameStr = "/data.txt"; }
             if (m_FileCount < MAX_FILES) {
                 bool exists = false;
                 for (int i = 0; i < m_FileCount; i++) {
@@ -78,15 +73,13 @@ void BoardBackend::ReceiveData(){
                         break;
                     }
                 }
-                if (!exists) {
-                    strncpy(m_FileIndex[m_FileCount++], nameStr, MAX_NAME_LEN - 1);
-                }
+                if (!exists) { strncpy(m_FileIndex[m_FileCount++], nameStr, MAX_NAME_LEN - 1); }
             } else {
                 SendData("RES 0 SD_START deadbeef\n");
                 return;
             }
-            if (m_sd.isOpen){
-                if (m_sd.CloseSD()){
+            if (m_sd.isOpen) {
+                if (m_sd.CloseSD()) {
                     SendData("RES 0 SD_WRITE 0\n");
                     SendData("RES 0 SD_CLOSE 1\n");
                 } else {
@@ -105,17 +98,17 @@ void BoardBackend::ReceiveData(){
             m_sd.isWrite         = (*valueStr == '1');
             snprintf(res, sizeof(res), "RES 0 SD_WRITE %d\n", m_sd.isWrite);
             SendData(res);
-        } else if (strncmp(m_wifi.m_CommandValue, "SD_CLOSE", 8) == 0 ){
-            if (m_sd.CloseSD()){
-                    SendData("RES 0 SD_WRITE 0\n");
-                    SendData("RES 0 SD_CLOSE 1\n");
-                } else {
-                    SendData("RES 0 SD_CLOSE 0\n");
-                }
-        } else if (strncmp(m_wifi.m_CommandValue, "STATUS", 6) == 0 ){
+        } else if (strncmp(m_wifi.m_CommandValue, "SD_CLOSE", 8) == 0) {
+            if (m_sd.CloseSD()) {
+                SendData("RES 0 SD_WRITE 0\n");
+                SendData("RES 0 SD_CLOSE 1\n");
+            } else {
+                SendData("RES 0 SD_CLOSE 0\n");
+            }
+        } else if (strncmp(m_wifi.m_CommandValue, "STATUS", 6) == 0) {
             for (size_t i = 0; i < MAX_FILES; i++) {
-                //snprintf(res, sizeof(res), "RES 0 SD_OPEN %d\n", m_FileNames[i]);
-                //SendData(res);
+                // snprintf(res, sizeof(res), "RES 0 SD_OPEN %d\n", m_FileNames[i]);
+                // SendData(res);
             }
         } else {
             /*currently does nothing, need to work on other command implementation*/
@@ -123,8 +116,6 @@ void BoardBackend::ReceiveData(){
         }
     }
 
-    if (m_LoRaOn /*currently its never on */){
-
-    }
+    if (m_LoRaOn /*currently its never on */) {}
     return;
 }

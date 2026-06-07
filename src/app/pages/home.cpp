@@ -92,7 +92,7 @@ void HomePage::DrawTopLHS() {
             }
         }
         ImGui::SameLine();
-        ImGui::TextDisabled(!m_SDName.empty() ? m_SDName.c_str() : "No file created");
+        ImGui::TextDisabled("%s", !m_SDName.empty() ? m_SDName.c_str() : "No file created");
         /*
         ImGui::BulletText("Connect to Wifi on laptop");
         ImGui::BulletText(
