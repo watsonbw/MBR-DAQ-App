@@ -1,58 +1,57 @@
 #include "sd.hpp"
+#include "SD.h"
 
-SDCard::SDCard() : isOpen(false) {}
+SDCard::SDCard() = default;
 
 bool SDCard::OpenSD(const char* name) {
 
     File check  = SD.open(name, FILE_READ);
-    bool exists = (bool)check;
-    if (check) check.close();
+    bool exists = static_cast<bool>(check);
+    if (check) { check.close(); }
 
     if (exists) {
-        logFile = SD.open(name, FILE_APPEND);
+        m_LogFile = SD.open(name, FILE_APPEND);
     } else {
-        logFile = SD.open(name, FILE_WRITE);
+        m_LogFile = SD.open(name, FILE_WRITE);
     }
 
-    if (logFile) {
-        isOpen = 1;
+    if (m_LogFile) {
+        IsOpen = true;
         if (exists) {
             Serial.println("SD File re-opened successfully. Streaming active.");
         } else {
             Serial.println("SD File opened successfully. Streaming active.");
         }
         return true;
-    } else {
-        Serial.println("Failed to open file for appending.");
-        return false;
     }
+    Serial.println("Failed to open file for appending.");
+    return false;
 }
 
 void SDCard::WriteSD(const char* msg) {
-    if (!isOpen || !logFile) { return; }
+    if (!IsOpen || !m_LogFile) { return; }
 
-    logFile.print(msg);
+    m_LogFile.print(msg);
 
-    if (millis() - lastFlush > 5000) {
-        logFile.flush();
-        lastFlush = millis();
+    if (millis() - m_LastFlush > 5000) {
+        m_LogFile.flush();
+        m_LastFlush = millis();
     }
 }
 
 bool SDCard::CloseSD() {
-    if (isOpen && logFile) {
-        logFile.close();
-        isOpen  = false;
-        isWrite = false;
+    if (IsOpen && m_LogFile) {
+        m_LogFile.close();
+        IsOpen  = false;
+        IsWrite = false;
         Serial.println("SD File cleanly closed.");
-        return 1;
-    } else {
-        return 0;
+        return true;
     }
+    return false;
 }
 
-bool SDCard::InitSD() {
-    if (!SD.begin(chipselect)) {
+bool SDCard::InitSD() const {
+    if (!SD.begin(m_Chipselect)) {
         Serial.println("SD mount fail");
         return false;
     }

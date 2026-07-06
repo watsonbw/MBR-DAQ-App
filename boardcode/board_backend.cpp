@@ -30,11 +30,11 @@ void BoardBackend::Run() {
 
     if ((now - m_LastSend > 50000LL) && m_IsTimeSynced) {
         SendData(m_Msg);
-        if (m_Sd.isOpen && m_Sd.isWrite) { m_Sd.WriteSD(m_Msg); }
+        if (m_Sd.IsOpen && m_Sd.IsWrite) { m_Sd.WriteSD(m_Msg); }
         m_LastSend = now;
     }
 
-    if (m_Wifi.m_NewCommand /*add for LoRa behavior*/) { ReceiveData(); }
+    if (m_Wifi.NewCommand /*add for LoRa behavior*/) { ReceiveData(); }
 }
 
 uint64_t BoardBackend::GetRealTime() const {
@@ -50,11 +50,11 @@ uint64_t BoardBackend::GetRealTime() const {
 void BoardBackend::SendData(const char* msg) { m_Wifi.SendData(msg); }
 
 void BoardBackend::ReceiveData() {
-    m_Wifi.m_NewCommand = false;
+    m_Wifi.NewCommand = false;
     char res[64];
     if (m_WifiOn) {
-        if (strncmp(m_Wifi.m_CommandValue, "SYNC", 4) == 0) {
-            const char* time_str = m_Wifi.m_CommandValue + 4;
+        if (strncmp(m_Wifi.CommandValue, "SYNC", 4) == 0) {
+            const char* time_str = m_Wifi.CommandValue + 4;
             m_LocalSyncMicros   = esp_timer_get_time();
             m_BaseTimeMicros    = static_cast<int64_t>(strtoull(time_str, nullptr, 10));
             m_IsTimeSynced      = true;
@@ -63,8 +63,8 @@ void BoardBackend::ReceiveData() {
                 Serial.println(res);
                 SendData(res);
             }
-        } else if (strncmp(m_Wifi.m_CommandValue, "SD_START", 8) == 0) {
-            const char* name_str = m_Wifi.m_CommandValue + 9;
+        } else if (strncmp(m_Wifi.CommandValue, "SD_START", 8) == 0) {
+            const char* name_str = m_Wifi.CommandValue + 9;
             if (*name_str == '\0') { name_str = "/data.txt"; }
             if (m_FileCount < MAX_FILES) {
                 bool exists = false;
@@ -79,7 +79,7 @@ void BoardBackend::ReceiveData() {
                 SendData("RES 0 SD_START deadbeef\n");
                 return;
             }
-            if (m_Sd.isOpen) {
+            if (m_Sd.IsOpen) {
                 if (m_Sd.CloseSD()) {
                     SendData("RES 0 SD_WRITE 0\n");
                     SendData("RES 0 SD_CLOSE 1\n");
@@ -91,22 +91,22 @@ void BoardBackend::ReceiveData() {
                 SendData("RES 0 SD_START deadbeef\n");
                 return;
             }
-            m_Sd.name = name_str;
+            m_Sd.Name = name_str;
             snprintf(res, sizeof(res), "RES 0 SD_START %s\n", name_str);
             SendData(res);
-        } else if (strncmp(m_Wifi.m_CommandValue, "SD_WRITE", 8) == 0) {
-            const char* value_str = m_Wifi.m_CommandValue + 9;
-            m_Sd.isWrite         = (*value_str == '1');
-            snprintf(res, sizeof(res), "RES 0 SD_WRITE %d\n", m_Sd.isWrite);
+        } else if (strncmp(m_Wifi.CommandValue, "SD_WRITE", 8) == 0) {
+            const char* value_str = m_Wifi.CommandValue + 9;
+            m_Sd.IsWrite         = (*value_str == '1');
+            snprintf(res, sizeof(res), "RES 0 SD_WRITE %d\n", m_Sd.IsWrite);
             SendData(res);
-        } else if (strncmp(m_Wifi.m_CommandValue, "SD_CLOSE", 8) == 0) {
+        } else if (strncmp(m_Wifi.CommandValue, "SD_CLOSE", 8) == 0) {
             if (m_Sd.CloseSD()) {
                 SendData("RES 0 SD_WRITE 0\n");
                 SendData("RES 0 SD_CLOSE 1\n");
             } else {
                 SendData("RES 0 SD_CLOSE 0\n");
             }
-        } else if (strncmp(m_Wifi.m_CommandValue, "STATUS", 6) == 0) {
+        } else if (strncmp(m_Wifi.CommandValue, "STATUS", 6) == 0) {
             for (size_t i = 0; i < MAX_FILES; i++) {
                 // snprintf(res, sizeof(res), "RES 0 SD_OPEN %d\n", m_FileNames[i]);
                 // SendData(res);
