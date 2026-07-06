@@ -10,6 +10,7 @@ build*/
 .theia
 .vscode
 .zed
+.pio
 
 __cmake*
 *.log

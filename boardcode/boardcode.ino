@@ -4,6 +4,7 @@
 // it is required that the calculations are handled on the esp32 side
 
 #include "board_backend.hpp"
+#include <Arduino.h>
 
 static const char*  ssid     = "esp32Wifi";
 static const char*  password = "MBRdatacollect";
