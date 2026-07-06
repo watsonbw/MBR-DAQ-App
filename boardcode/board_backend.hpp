@@ -12,13 +12,13 @@ class BoardBackend {
 
     void     Initialize();
     void     Run();
-    uint64_t GetRealTime();
-    void     CleanupClients() { m_wifi.CleanupClients(); }
+    uint64_t GetRealTime() const;
+    void     CleanupClients() { m_Wifi.CleanupClients(); }
 
   public:
     // all data to be sent, this will likely get redone with canbus implementation
-    volatile int m_wheel  = 0;
-    volatile int m_engine = 0;
+    volatile double WheelRPM  = 0;
+    volatile double EngineRPM = 0;
 
   private:
     void                     SendData(const char* msg);
@@ -28,15 +28,15 @@ class BoardBackend {
     char                     m_Msg[200];
     int64_t                  m_BaseTimeMicros{0};
     int64_t                  m_LocalSyncMicros{0};
-    volatile bool            m_IsTimeSynced{0};
+    volatile bool            m_IsTimeSynced{false};
     volatile bool            m_WifiOn{true};
     volatile bool            m_LoRaOn{false};
     static int64_t           m_LastSend;
     static int64_t           m_LastCleanup;
-    BoardWifi                m_wifi;
-    SDCard                   m_sd;
-    RPMCollector             wheel_rc;
-    RPMCollector             engine_rc;
+    BoardWifi                m_Wifi;
+    SDCard                   m_Sd;
+    RPMCollector             m_WheelRC;
+    RPMCollector             m_EngineRC;
     char                     m_FileIndex[MAX_FILES][MAX_NAME_LEN]{};
     int                      m_FileCount = 0;
     std::vector<std::string> m_FileNames;
