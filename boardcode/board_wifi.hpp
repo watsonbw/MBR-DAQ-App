@@ -1,5 +1,4 @@
-#ifndef BOARD_WIFI_HPP
-#define BOARD_WIFI_HPP
+#pragma once
 
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
@@ -16,10 +15,6 @@ class BoardWifi {
     void          Start();
     void          SendData(const char* msg);
     char          m_CommandValue[128]{""};
-    void          CleanupClients() { m_WebSock.cleanupClients(); }
-    void          Start();
-    void          SendData(const char* msg);
-    char          m_CommandValue[128]{""};
     volatile bool m_NewCommand{false};
 
   private:
@@ -30,4 +25,4 @@ class BoardWifi {
     AsyncWebSocket m_WebSock;
 };
 
-#endif
+

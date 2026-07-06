@@ -1,4 +1,5 @@
 #include "board_wifi.hpp"
+#include "sd.hpp"
 #include "rpm.hpp"
 
 static constexpr int MAX_FILES    = 16;
