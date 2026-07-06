@@ -1,6 +1,4 @@
 #include "FS.h"
-#include "SD.h"
-#include "SPI.h"
 
 class SDCard {
   public:
@@ -8,13 +6,13 @@ class SDCard {
     bool        OpenSD(const char* name);
     void        WriteSD(const char* msg);
     bool        CloseSD();
-    bool        InitSD();
-    bool        isOpen  = 0;
-    bool        isWrite = 0;
-    const char* name;
+    bool        InitSD() const;
+    bool        IsOpen  = false;
+    bool        IsWrite = false;
+    const char* Name;
 
   private:
-    File      logFile;
-    const int chipselect = 5;
-    long      lastFlush  = 0;
+    File      m_LogFile;
+    const int m_Chipselect = 5;
+    int64_t      m_LastFlush  = 0;
 };

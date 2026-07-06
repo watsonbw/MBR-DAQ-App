@@ -14,8 +14,8 @@ class BoardWifi {
     void          CleanupClients() { m_WebSock.cleanupClients(); }
     void          Start();
     void          SendData(const char* msg);
-    char          m_CommandValue[128]{""};
-    volatile bool m_NewCommand{false};
+    char          CommandValue[128]{""};
+    volatile bool NewCommand{false};
 
   private:
     const char* m_SSID;

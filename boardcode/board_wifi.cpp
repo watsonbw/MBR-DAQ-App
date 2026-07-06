@@ -1,17 +1,18 @@
 #include "board_wifi.hpp"
+#include "WiFi.h"
 
 BoardWifi::BoardWifi(const char* ssid, const char* password)
     : m_SSID(ssid), m_Password(password), m_AsyncServer(80), m_WebSock("/ws") {}
 
 void BoardWifi::Start() {
     WiFi.softAPdisconnect(true);
-    WiFi.mode(WIFI_AP);
+    WiFiClass::mode(WIFI_AP);
     delay(100);
 
-    IPAddress local_IP(192, 168, 4, 1);
+    IPAddress local_ip(192, 168, 4, 1);
     IPAddress gateway(192, 168, 4, 1);
     IPAddress subnet(255, 255, 255, 0);
-    WiFi.softAPConfig(local_IP, gateway, subnet);
+    WiFi.softAPConfig(local_ip, gateway, subnet);
 
     if (WiFi.softAP(m_SSID, m_Password, 1, 0, 4)) {
         Serial.println("SoftAP Started Successfully");
@@ -24,19 +25,19 @@ void BoardWifi::Start() {
     if (MDNS.begin("telemetry")) { Serial.println("mDNS responder started"); }
 
     m_WebSock.onEvent([this](AsyncWebSocket*       server,
-                             AsyncWebSocketClient* client,
+                             AsyncWebSocketClient* /*client*/,
                              AwsEventType          type,
-                             void*                 arg,
+                             void*                 /*arg*/,
                              uint8_t*              data,
                              size_t                len) {
         if (type == WS_EVT_DATA) {
-            size_t copyLen = min(len, sizeof(m_CommandValue) - 1);
-            memcpy(m_CommandValue, data, copyLen);
-            m_CommandValue[copyLen] = '\0';
-            m_NewCommand            = true;
+            size_t copy_len = min(len, sizeof(CommandValue) - 1);
+            memcpy(CommandValue, data, copy_len);
+            CommandValue[copy_len] = '\0';
+            NewCommand            = true;
 
             Serial.print("Received Command: ");
-            Serial.println(m_CommandValue);
+            Serial.println(CommandValue);
         } else if (type == WS_EVT_CONNECT) {
             server->cleanupClients();
             Serial.println("Client connected");
