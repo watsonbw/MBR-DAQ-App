@@ -6,6 +6,8 @@
 #include <string_view>
 #include <thread>
 #include <vector>
+#include <functional>
+#include <unordered_map>
 
 #include <ixwebsocket/IXWebSocket.h>
 
@@ -15,6 +17,14 @@
 #include "esp32/serial.hpp"
 
 struct AppContext;
+
+enum class ResponseType {
+    SYNC,
+    SDSTART,
+    SDWRITE,
+    SDCLOSE,
+    UNKNOWN,
+};
 
 class TelemetryBackend {
   public:
@@ -49,9 +59,9 @@ class TelemetryBackend {
 
     std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
     ValidatePacket(std::string_view str) const;
-    auto
-    HandleCommand(std::optional<std::vector<std::pair<std::string_view, std::string_view>>> parsed)
-        -> void;
+    void HandleResponse(std::string_view line);
+    void RegisterHandlers();
+    ResponseType ResStringToEnum(std::string_view str) const;
 
   private:
     std::thread                           m_Worker;
@@ -61,4 +71,6 @@ class TelemetryBackend {
     IpV4                                  m_IpAddr;
     std::chrono::steady_clock::time_point m_LastDataTime{};
     std::atomic<bool>                     m_ShouldKill{false};
+
+    std::unordered_map<ResponseType, std::function<void(std::string_view)>> m_ResponseHandlers;
 };

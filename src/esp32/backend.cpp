@@ -1,9 +1,11 @@
 #include <cassert>
 #include <charconv>
 #include <format>
+#include <math.h>
 #include <string>
 
 #include <ixwebsocket/IXNetSystem.h>
+#include <type_traits>
 
 #include "app/context.hpp"
 
@@ -18,6 +20,7 @@ TelemetryBackend::TelemetryBackend(std::vector<std::string> packet_fields)
     m_PacketFields = std::move(packet_fields);
     m_Buffer.reserve(4096);
     m_IpAddr = DEFAULT_IP;
+    RegisterHandlers();
 }
 
 TelemetryBackend::~TelemetryBackend() { Kill(); }
@@ -108,18 +111,19 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
         while ((newline_pos = m_Buffer.find('\n')) != std::string::npos) {
             const auto line = m_Buffer.substr(0, newline_pos);
             m_Buffer.erase(0, newline_pos + 1);
+
+            // check for commands/responses first
+            if (line.starts_with("RES")) {
+                HandleResponse(line);
+                continue;
+            }
+
             const auto parsed = ValidatePacket(line);
             if (!parsed) { continue; }
 
             // Now we can safely unpack the packet
             const std::scoped_lock<std::mutex> lock{DataMutex};
 
-            // check for commands/responses first
-            auto pair = parsed.value()[0];
-            if (pair.first == "RES") {
-                HandleCommand(parsed);
-                continue;
-            }
 
             // write data
             if (!IsLogging) { continue; }
@@ -138,6 +142,9 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
     }
 }
 
+// This function serves to handle the incoming message recovered from OnMEssage.
+// The goal is to primarly handle the data packing itself and doesn't have any command
+// or response handling. See "HandleResponse" for response logic
 std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
 TelemetryBackend::ValidatePacket(std::string_view str) const {
     std::vector<std::pair<std::string_view, std::string_view>> parsed;
@@ -186,19 +193,14 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
         }
         parsed.emplace_back(key, value);
     }
-    bool hasT   = 0;
-    bool hasRES = 0;
+    bool hasT = 0;
     for (const auto& pair : parsed) {
         if (pair.first == "T") {
             hasT = 1;
             break;
         }
-        if (pair.first == "RES") {
-            hasRES = 1;
-            break;
-        }
     }
-    if (hasT == hasRES) { return std::nullopt; }
+    if (!hasT) { return std::nullopt; }
 
     return parsed;
 }
@@ -224,7 +226,96 @@ void TelemetryBackend::SetIp(const IpV4& ipv4) {
     Start();
     TryConnection = false;
 }
+// This function is the bridge between any RES sent from our car to our app
+// After checking for RES in OnMessage, this function is called to parse and act on the response
+// The response is parsed by checking the string with the response type ENUM and calling the corresponding handler
+// For reference, general responses look like this: RES CMD_TYPE CMD_PAYLOAD
+void TelemetryBackend::HandleResponse(std::string_view line) {
+    constexpr size_t res_length = 4;
+    if (line.size() <= res_length) {
+        LOG_ERROR("Invalid response length: {}", line.size());
+        return;
+    }
+    auto rest = line.substr(res_length);
+    auto space = rest.find(' ');
+    if (space == std::string::npos) {
+        LOG_ERROR("No space after response type: {}", rest);
+        return;
+    }
 
+    auto command = rest.substr(0, space);
+    ResponseType type = ResStringToEnum(command);
+    if (type == ResponseType::UNKNOWN) {
+        LOG_ERROR("Unknown response: {}", command);
+        return;
+    }
+    auto it = m_ResponseHandlers.find(type);
+    if (it != m_ResponseHandlers.end()) {
+        it->second(rest.substr(space + 1));
+    } else {
+        LOG_ERROR("No handler for response: {}", command);
+    }
+
+}
+
+// ALL responses should be created with a lambda that takes a std::string_view and returns void
+// The lambda should parse the response and log any errors or success messages
+// ENUMs are created in backend.hpp so when you add a new response, add it there first
+// This also requires additions to ResStringtoEnum as these are ENUM mapped lambdas,
+// not just a simple string mapped lambda
+void TelemetryBackend::RegisterHandlers() {
+    m_ResponseHandlers[ResponseType::SYNC] = [this](std::string_view line) {
+        uint64_t micros = 0;
+        std::from_chars(
+            line.data(), line.data() + line.size(), micros);
+        LocalTime t{micros};
+        LOG_INFO("Time successfully synced at: {}", t.String(false));
+    };
+
+    m_ResponseHandlers[ResponseType::SDSTART] = [this](std::string_view line) {
+        if (line == "deadbeef") {
+            LOG_ERROR("SD Card Failed Initialization");
+        } else {
+            LOG_INFO("SD Card Initialized At {}", line);
+            IsOpen = true;
+        }
+    };
+
+    m_ResponseHandlers[ResponseType::SDWRITE] = [this](std::string_view line) {
+        if (line == "1") {
+            LOG_INFO("SD Card Has Begun Writing");
+            IsWriting = true;
+        } else if (line == "0") {
+            LOG_INFO("SD Card Has Stopped Writing");
+            IsWriting = false;
+        }
+    };
+
+    m_ResponseHandlers[ResponseType::SDCLOSE] = [this](std::string_view line) {
+        if (line == "1") {
+            IsOpen = false;
+            LOG_INFO("SD Card Has Closed Succesfully");
+        } else if (line == "0") {
+            LOG_INFO("SD Card Failed Close");
+        }
+    };
+}
+// As mentioned before, you will need to update this string to enum function
+// EVERY TIME you add a new command. This works in series with RegisterHandlers
+// and HandleResponse
+ResponseType TelemetryBackend::ResStringToEnum(std::string_view command) const {
+    static const std::unordered_map<std::string_view, ResponseType> lookup{
+        {"SYNC",     ResponseType::SYNC},
+        {"SD_START", ResponseType::SDSTART},
+        {"SD_WRITE", ResponseType::SDWRITE},
+        {"SD_CLOSE", ResponseType::SDCLOSE},
+    };
+    auto it = lookup.find(command);
+    return it != lookup.end() ? it->second : ResponseType::UNKNOWN;
+}
+
+
+/*
 auto TelemetryBackend::HandleCommand(
     std::optional<std::vector<std::pair<std::string_view, std::string_view>>> parsed) -> void {
     if (!parsed || parsed->size() < 2) {
@@ -264,7 +355,6 @@ auto TelemetryBackend::HandleCommand(
         LOG_ERROR("Command Not Found");
     }
 }
-/*
 for (const auto& field : m_PacketFields) {
     const size_t ident_start = pos;
     while (pos < str.size() && str[pos] != ' ') {
