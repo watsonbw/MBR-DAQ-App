@@ -154,7 +154,7 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
     // runs through the whole sent packet. this ensures that the packet must be valid but doesn't
     // need every m_packetfield.
     while (pos < str.size()) {
-        bool         isKey       = 0;
+        bool         is_key       = false;
         const size_t ident_start = pos;
 
         // run until space to find key
@@ -183,9 +183,9 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
 
         // check key value pairs
         for (const auto& field : m_PacketFields) {
-            if (field == key) { isKey = 1; }
+            if (field == key) { is_key = 1; }
         }
-        if (!isKey) { return std::nullopt; }
+        if (!is_key) { return std::nullopt; }
         if (key == "T") {
             uint64_t t   = 0;
             auto     res = std::from_chars(value.data(), value.data() + value.size(), t);

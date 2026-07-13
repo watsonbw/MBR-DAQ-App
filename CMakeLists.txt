@@ -65,6 +65,16 @@ file(GLOB_RECURSE TEST_SOURCES "${TEST_DIR}/*.cpp")
 set(FRAMEWORK_REGEX "test_framework/*")
 list(FILTER TEST_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
 
+# nlohmann/json
+set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+set(JSON_Install OFF CACHE BOOL "" FORCE)
+set(JSON_MultipleHeaders OFF CACHE BOOL "" FORCE)
+cmake_policy(PUSH)
+cmake_policy(SET CMP0077 NEW)
+
+add_subdirectory(vendor/json)
+cmake_policy(POP)
+
 # Sokol
 add_library(sokol_setup STATIC src/vendor/sokol_impl.cpp)
 target_include_directories(sokol_setup SYSTEM PUBLIC
@@ -258,19 +268,19 @@ set(SERIAL_SOURCES
 )
 
 if(APPLE)
-    list(APPEND SERIAL_SOURCES 
+    list(APPEND SERIAL_SOURCES
         ${SERIAL_DIR}/src/impl/unix.cc
         ${SERIAL_DIR}/src/impl/list_ports/list_ports_osx.cc
     )
 elseif(WIN32)
-    list(APPEND SERIAL_SOURCES 
+    list(APPEND SERIAL_SOURCES
         ${SERIAL_DIR}/src/impl/win.cc
         ${SERIAL_DIR}/src/impl/list_ports/list_ports_win.cc
     )
 endif()
 
 add_library(serial_setup STATIC ${SERIAL_SOURCES})
-target_include_directories(serial_setup PUBLIC 
+target_include_directories(serial_setup PUBLIC
     ${SERIAL_DIR}/include
 )
 target_compile_options(serial_setup PRIVATE ${WARNING_IGNORE})
@@ -414,7 +424,7 @@ if(APPLE)
     else()
         message(ERROR "Cannot run asan with non-clang compilers on macOS")
     endif()
-    
+
     create_mbrdaq_suite("asan" "${ASAN_FLAGS}" "${CMAKE_BINARY_DIR}/asan")
     add_custom_target(asan
         COMMAND ${ASAN_RUN_CMD}
@@ -462,7 +472,7 @@ if(APPLE)
         ${TEST_DIR}/*.hpp
     )
     list(FILTER TIDY_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
-    
+
     find_program(RUN_CLANG_TIDY run-clang-tidy)
     find_program(CLANG_TIDY clang-tidy)
     if(RUN_CLANG_TIDY)
