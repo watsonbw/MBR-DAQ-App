@@ -4,27 +4,12 @@
 #include <string>
 #include <vector>
 
+#include <nlohmann/json.hpp>
 #include "core/time.hpp"
 
 struct AppContext;
 
-struct RPMData {
-    std::vector<double> EngineRPM;
-    std::vector<double> WheelRPM;
-
-    void Reserve(size_t size = 3000);
-    void Clear();
-};
-
-struct ShockData {
-    std::vector<double> FrontRight;
-    std::vector<double> FrontLeft;
-    std::vector<double> BackRight;
-    std::vector<double> BackLeft;
-
-    void Reserve(size_t size = 3000);
-    void Clear();
-};
+using json = nlohmann::json;
 
 class TelemetryData {
   public:
@@ -32,10 +17,18 @@ class TelemetryData {
         std::vector<uint64_t> TimeMicrosRaw;
         std::vector<double>   TimeMinutesNormalized;
 
-        RPMData   RPM;
-        ShockData Shock;
-
         std::vector<std::string> RawLines;
+    };
+
+
+    struct DataConfig {
+        std::string Key;
+        std::string Name;
+        std::string Type;
+        bool Required = false;
+        bool Plot     = false;
+        std::string Unit;
+        std::string Group;
     };
 
   public:
@@ -46,8 +39,7 @@ class TelemetryData {
     [[nodiscard]] const std::vector<uint64_t>& GetTimeNoNormal() const {
         return m_TimeNoNormalMicros;
     }
-    [[nodiscard]] const RPMData&                  GetRPMData() const { return m_RPMData; }
-    [[nodiscard]] const ShockData&                GetShockData() const { return m_ShockData; }
+
     [[nodiscard]] const std::vector<std::string>& GetRawLines() const { return m_RawLines; };
     [[nodiscard]] const std::optional<LocalTime>& GetSyncLT() const { return m_SyncLT; }
     [[nodiscard]] const std::string&              GetCurrentLine() { return m_CurrentLine; }
@@ -58,11 +50,13 @@ class TelemetryData {
     void Clear();
 
   private:
+
+    [[nodiscard]] bool InitJSON(std::vector<DataConfig>& out) const;
+    std::unordered_map<std::string, std::vector<double>> m_Series;
+    std::vector<DataConfig> m_DataValues;
     std::string              m_CurrentLine;
     std::vector<uint64_t>    m_TimeNoNormalMicros;
     std::vector<double>      m_Time;
-    RPMData                  m_RPMData;
-    ShockData                m_ShockData;
     std::vector<std::string> m_RawLines;
     double                   m_SyncStart;
     std::optional<LocalTime> m_SyncLT;
