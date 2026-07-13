@@ -28,7 +28,6 @@ enum class ResponseType {
 
 class TelemetryBackend {
   public:
-    TelemetryBackend() = delete;
     explicit TelemetryBackend(std::vector<std::string> packet_fields);
     ~TelemetryBackend();
 

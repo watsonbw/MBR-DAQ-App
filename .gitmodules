@@ -17,7 +17,7 @@
 [submodule "vendor/sokol"]
 	path = vendor/sokol
 	url = https://github.com/floooh/sokol
-	
+
 [submodule "vendor/spdlog"]
 	path = vendor/spdlog
 	url = https://github.com/gabime/spdlog
@@ -29,6 +29,11 @@
 [submodule "vendor/taglib"]
 	path = vendor/taglib
 	url = https://github.com/taglib/taglib
+
 [submodule "vendor/serial"]
 	path = vendor/serial
 	url = https://github.com/wjwwood/serial
+
+[submodule "vendor/json"]
+	path = vendor/json
+	url = https://github.com/nlohmann/json
