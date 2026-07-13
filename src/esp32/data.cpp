@@ -1,78 +1,45 @@
 #include <exception>
+#include <fstream>
 
 #include "esp32/data.hpp"
+
 
 #include "core/log.hpp"
 #include "core/time.hpp"
 
-void RPMData::Reserve(size_t size) {
-    EngineRPM.reserve(size);
-    WheelRPM.reserve(size);
-}
 
-void RPMData::Clear() {
-    EngineRPM.clear();
-    WheelRPM.clear();
-}
-
-void ShockData::Reserve(size_t size) {
-    FrontRight.reserve(size);
-    FrontLeft.reserve(size);
-    BackRight.reserve(size);
-    BackLeft.reserve(size);
-}
-
-void ShockData::Clear() {
-    FrontRight.clear();
-    FrontLeft.clear();
-    BackRight.clear();
-    BackLeft.clear();
-}
-
-TelemetryData::TelemetryData() {
-    m_RPMData.Reserve();
-    m_ShockData.Reserve();
-}
-
-void TelemetryData::WriteData(const std::string& identifier, const std::string& value) {
+bool TelemetryData::InitJSON(std::vector<DataConfig>& out) const {
+    std::ifstream f("MBR_data.json");
+    if (!f.is_open()){
+        LOG_ERROR("JSON FILE NOT OPENED");
+        return false;
+    }
+    DataConfig temp;
+    json jason = json::parse(f);
     try {
-        if (identifier == "T") {
-            const LocalTime lt{std::stoull(value)};
-            m_TimeNoNormalMicros.push_back(lt.MicrosSinceMidnight());
-
-            const auto minutes_from_mid = lt.MinutesSinceMidnight();
-            if (!m_SyncLT) {
-                m_SyncLT    = lt;
-                m_SyncStart = minutes_from_mid;
-            }
-            m_Time.push_back(minutes_from_mid - m_SyncStart);
-        } else if (identifier == "W") {
-            m_RPMData.WheelRPM.push_back(std::stod(value));
-        } else if (identifier == "E") {
-            m_RPMData.EngineRPM.push_back(std::stod(value));
-        } else if (identifier == "fr") {
-            m_ShockData.FrontRight.push_back(std::stod(value));
-        } else if (identifier == "fl") {
-            m_ShockData.FrontLeft.push_back(std::stod(value));
-        } else if (identifier == "br") {
-            m_ShockData.BackRight.push_back(std::stod(value));
-        } else if (identifier == "bl") {
-            m_ShockData.BackLeft.push_back(std::stod(value));
+        for (const auto &data : jason.at("fields")) {
+            temp.Key = data.at("key").get<std::string>();
+            temp.Name = data.at("name").get<std::string>();
+            temp.Required = data.at("required").get<bool>();
+            temp.Plot = data.at("plot").get<bool>();
+            temp.Unit = data.value("unit", "");
+            temp.Group = data.value("group", "");
+            out.push_back(temp);
         }
-    } catch (const std::exception& e) { LOG_ERROR("Failed to write data: {}", e.what()); }
+    } catch (const json::exception& e) {
+            LOG_ERROR("Invalid JSON config: {}", e.what());
+            return false;
+    }
+    return true;
 }
 
-void TelemetryData::WriteRawLine(const std::string& full_message) {
-    m_RawLines.push_back(full_message);
+
+
+void TelemetryData::WriteData(const std::string &identifier, const std::string &value){
+try {
+    double val = std::stod(value);
+    m_Series[identifier].push_back(val);
+} catch (const std::exception& e){
+    LOG_ERROR("Couldn't write to existng data vector");
 }
-
-void TelemetryData::SaveCurrentLine(const std::string& line) { m_CurrentLine = line; }
-
-void TelemetryData::Clear() {
-    m_RawLines.clear();
-    m_RPMData.Clear();
-    m_ShockData.Clear();
-    m_Time.clear();
-    m_TimeNoNormalMicros.clear();
-    m_SyncLT = std::nullopt;
 }

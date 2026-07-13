@@ -310,6 +310,7 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         stb_image_setup
         tag
         serial_setup
+        nlohmann_json::nlohmann_json
     )
 
     target_include_directories(mbrdaq_core_${TARGET_NAME} PUBLIC include)
