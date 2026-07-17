@@ -12,7 +12,7 @@
 
 #include "core/log.hpp"
 
-#include "app/assets/fonts/OpenSans.hpp"
+#include "app/assets/fonts/open_sans.hpp"
 #include "app/style.hpp"
 
 namespace mbr {
@@ -26,23 +26,22 @@ AppFonts LoadFonts() {
     ImFontConfig cfg;
     cfg.FontDataOwnedByAtlas = false;
 
-    auto* regular =
-        io.Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(OPEN_SANS_REGULAR_TTF),
-                                       static_cast<int>(OPEN_SANS_REGULAR_TTF_SIZE),
-                                       default_font_size,
-                                       &cfg);
+    auto* regular = io.Fonts->AddFontFromMemoryTTF(OPEN_SANS_REGULAR_TTF.data(),
+                                                   static_cast<int>(OPEN_SANS_REGULAR_TTF.size()),
+                                                   default_font_size,
+                                                   &cfg);
 
-    auto* bold   = io.Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(OPEN_SANS_BOLD_TTF),
-                                                static_cast<int>(OPEN_SANS_BOLD_TTF_SIZE),
+    auto* bold   = io.Fonts->AddFontFromMemoryTTF(OPEN_SANS_BOLD_TTF.data(),
+                                                static_cast<int>(OPEN_SANS_BOLD_TTF.size()),
                                                 default_font_size,
                                                 &cfg);
-    auto* italic = io.Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(OPEN_SANS_ITALIC_TTF),
-                                                  static_cast<int>(OPEN_SANS_ITALIC_TTF_SIZE),
+    auto* italic = io.Fonts->AddFontFromMemoryTTF(OPEN_SANS_ITALIC_TTF.data(),
+                                                  static_cast<int>(OPEN_SANS_ITALIC_TTF.size()),
                                                   default_font_size,
                                                   &cfg);
     auto* bold_italic =
-        io.Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(OPEN_SANS_BOLD_ITALIC_TTF),
-                                       static_cast<int>(OPEN_SANS_BOLD_ITALIC_TTF_SIZE),
+        io.Fonts->AddFontFromMemoryTTF(OPEN_SANS_BOLD_ITALIC_TTF.data(),
+                                       static_cast<int>(OPEN_SANS_BOLD_ITALIC_TTF.size()),
                                        default_font_size,
                                        &cfg);
 

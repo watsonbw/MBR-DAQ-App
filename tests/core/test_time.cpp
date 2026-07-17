@@ -16,4 +16,4 @@ TEST_CASE("Roundtrip time") {
     REQUIRE(actual.Microsecond == regenerated.Microsecond);
 }
 
-} // namespace mbr
+} // namespace mbr::tests

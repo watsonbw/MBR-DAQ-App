@@ -41,9 +41,9 @@ const char* ViewPage::DataTypeString(DataView type) {
 
 ViewPage::ViewPage(const std::shared_ptr<AppContext>& ctx)
     : Page{ctx}, m_IsAlive{std::make_shared<bool>(true)},
-      m_PlayButton{PLAY_BUTTON_PNG, PLAY_BUTTON_PNG_SIZE},
-      m_PauseButton{PAUSE_BUTTON_PNG, PAUSE_BUTTON_PNG_SIZE},
-      m_StepButton{STEP_BUTTON_PNG, STEP_BUTTON_PNG_SIZE} {}
+      m_PlayButton{PLAY_BUTTON_PNG.data(), PLAY_BUTTON_PNG.size()},
+      m_PauseButton{PAUSE_BUTTON_PNG.data(), PAUSE_BUTTON_PNG.size()},
+      m_StepButton{STEP_BUTTON_PNG.data(), STEP_BUTTON_PNG.size()} {}
 
 ViewPage::~ViewPage() {
     *m_IsAlive = false;
