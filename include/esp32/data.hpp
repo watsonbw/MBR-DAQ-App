@@ -7,6 +7,8 @@
 #include <nlohmann/json.hpp>
 #include "core/time.hpp"
 
+#define MBR_JSON "MBR_data.json"
+
 struct AppContext;
 
 using json = nlohmann::json;
@@ -16,15 +18,14 @@ class TelemetryData {
     struct PackedData {
         std::vector<uint64_t> TimeMicrosRaw;
         std::vector<double>   TimeMinutesNormalized;
-
+        std::unordered_map<std::string, std::vector<double>> Series;
         std::vector<std::string> RawLines;
     };
 
 
-    struct DataConfig {
+    struct DataInfo {
         std::string Key;
         std::string Name;
-        std::string Type;
         bool Required = false;
         bool Plot     = false;
         std::string Unit;
@@ -32,9 +33,14 @@ class TelemetryData {
     };
 
   public:
-    explicit TelemetryData();
+    explicit TelemetryData() {
+        InitJSON();
+        InitData();
+    }
     ~TelemetryData() = default;
 
+    std::vector<DataInfo> DataValues;
+    std::unordered_map<std::string, std::vector<double>> Series;
     [[nodiscard]] const std::vector<double>&   GetTime() const { return m_Time; }
     [[nodiscard]] const std::vector<uint64_t>& GetTimeNoNormal() const {
         return m_TimeNoNormalMicros;
@@ -51,9 +57,8 @@ class TelemetryData {
 
   private:
 
-    [[nodiscard]] bool InitJSON(std::vector<DataConfig>& out) const;
-    std::unordered_map<std::string, std::vector<double>> m_Series;
-    std::vector<DataConfig> m_DataValues;
+    void InitJSON();
+    void InitData();
     std::string              m_CurrentLine;
     std::vector<uint64_t>    m_TimeNoNormalMicros;
     std::vector<double>      m_Time;

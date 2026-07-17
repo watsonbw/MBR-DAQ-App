@@ -20,9 +20,8 @@ App::App([[maybe_unused]] int arc, [[maybe_unused]] char* argv[])
     : m_Context{std::make_shared<AppContext>()} /*, m_Manager{m_Context}*/ {
     Log::Init();
     ix::initNetSystem();
-    m_GUI                                        = std::make_unique<GUI>(m_Context);
-    m_Context->Backend = std::make_unique<TelemetryBackend>(packet_fields);
-    // m_Context->Backend->SerialMan.Start();
+    m_GUI = std::make_unique<GUI>(m_Context);
+    m_Context->Backend = std::make_unique<TelemetryBackend>();
 }
 
 App::~App() { ix::uninitNetSystem(); }
