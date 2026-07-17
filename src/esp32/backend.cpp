@@ -15,9 +15,8 @@
 
 using namespace std::chrono_literals;
 
-TelemetryBackend::TelemetryBackend(std::vector<std::string> packet_fields)
+TelemetryBackend::TelemetryBackend()
     : SerialMan(115200, 500) {
-    m_PacketFields = std::move(packet_fields);
     m_Buffer.reserve(4096);
     m_IpAddr = DEFAULT_IP;
     RegisterHandlers();
@@ -148,7 +147,7 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
 std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
 TelemetryBackend::ValidatePacket(std::string_view str) const {
     std::vector<std::pair<std::string_view, std::string_view>> parsed;
-    parsed.reserve(m_PacketFields.size());
+    parsed.reserve(Data.DataValues.size());
 
     size_t pos = 0;
     // runs through the whole sent packet. this ensures that the packet must be valid but doesn't
@@ -182,8 +181,8 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
         }
 
         // check key value pairs
-        for (const auto& field : m_PacketFields) {
-            if (field == key) { is_key = 1; }
+        for (const auto& field : Data.DataValues) {
+            if (field.Key == key) { is_key = true; }
         }
         if (!is_key) { return std::nullopt; }
         if (key == "T") {
@@ -193,14 +192,14 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
         }
         parsed.emplace_back(key, value);
     }
-    bool hasT = 0;
+    bool has_t = false;
     for (const auto& pair : parsed) {
         if (pair.first == "T") {
-            hasT = 1;
+            has_t = true;
             break;
         }
     }
-    if (!hasT) { return std::nullopt; }
+    if (!has_t) { return std::nullopt; }
 
     return parsed;
 }
@@ -209,8 +208,7 @@ TelemetryData::PackedData TelemetryBackend::PackData() {
     const std::scoped_lock<std::mutex> lock{DataMutex};
     return {.TimeMicrosRaw         = Data.GetTimeNoNormal(),
             .TimeMinutesNormalized = Data.GetTime(),
-            .RPM                   = Data.GetRPMData(),
-            .Shock                 = Data.GetShockData(),
+            .Series                = Data.Series,
             .RawLines              = Data.GetRawLines()};
 }
 

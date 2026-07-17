@@ -24,6 +24,7 @@ Checks: >
   -google-build-using-namespace,
   -bugprone-easily-swappable-parameters,
   -bugprone-unchecked-optional-access,
+  -readability-convert-member-functions-to-static,
   -bugprone-exception-escape,
 
 WarningsAsErrors: "*"

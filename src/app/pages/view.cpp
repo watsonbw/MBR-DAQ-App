@@ -304,9 +304,7 @@ void ViewPage::DrawRHS() {
         }
 
         const auto  data  = m_Context->Backend->PackData();
-        const auto& rpm   = data.RPM;
-        const auto& shock = data.Shock;
-
+        
         const auto sync_lt = m_Context->Backend->Data.GetSyncLT();
         const auto plot_title =
             sync_lt ? std::format("Data View from {}", sync_lt.value().String()) : "No Synced Time";
@@ -316,38 +314,38 @@ void ViewPage::DrawRHS() {
                 IMSCOPE_FN(ImPlot::BeginPlot(plot_title.c_str(), {-1, -1}))}) {
             PlotUtils::PlotIfNonEmpty("Wheel Speed",
                                       data.TimeMinutesNormalized,
-                                      rpm.WheelRPM,
+                                      data.Series.at("W"),
                                       m_DataShow == DataView::ALL ||
                                           m_DataShow == DataView::RPMDATA,
                                       m_PlotPercent);
             PlotUtils::PlotIfNonEmpty("Engine Speed",
                                       data.TimeMinutesNormalized,
-                                      rpm.EngineRPM,
+                                      data.Series.at("E"),
                                       m_DataShow == DataView::ALL ||
                                           m_DataShow == DataView::RPMDATA,
                                       m_PlotPercent);
 
             PlotUtils::PlotIfNonEmpty("Front Right Shock Travel",
                                       data.TimeMinutesNormalized,
-                                      shock.FrontRight,
+                                      data.Series.at("FR"),
                                       m_DataShow == DataView::ALL ||
                                           m_DataShow == DataView::SHOCKDATA,
                                       m_PlotPercent);
             PlotUtils::PlotIfNonEmpty("Front Left Shock Travel",
                                       data.TimeMinutesNormalized,
-                                      shock.FrontLeft,
+                                      data.Series.at("FL"),
                                       m_DataShow == DataView::ALL ||
                                           m_DataShow == DataView::SHOCKDATA,
                                       m_PlotPercent);
             PlotUtils::PlotIfNonEmpty("Rear Right Shock Travel",
                                       data.TimeMinutesNormalized,
-                                      shock.BackRight,
+                                      data.Series.at("RR"),
                                       m_DataShow == DataView::ALL ||
                                           m_DataShow == DataView::SHOCKDATA,
                                       m_PlotPercent);
             PlotUtils::PlotIfNonEmpty("Rear Left Shock Travel",
                                       data.TimeMinutesNormalized,
-                                      shock.BackLeft,
+                                      data.Series.at("RL"),
                                       m_DataShow == DataView::ALL ||
                                           m_DataShow == DataView::SHOCKDATA,
                                       m_PlotPercent);
@@ -668,12 +666,12 @@ void ViewPage::DeleteExtra(size_t erase_pos) {
     const std::scoped_lock<std::mutex> lock{m_Context->Backend->DataMutex};
     std::vector<double>* const         data[] = {
         &m_Context->Backend->Data.m_Time,
-        &m_Context->Backend->Data.m_RPMData.WheelRPM,
-        &m_Context->Backend->Data.m_RPMData.EngineRPM,
-        &m_Context->Backend->Data.m_ShockData.FrontRight,
-        &m_Context->Backend->Data.m_ShockData.FrontLeft,
-        &m_Context->Backend->Data.m_ShockData.BackRight,
-        &m_Context->Backend->Data.m_ShockData.BackLeft,
+        &m_Context->Backend->Data.Series.at("W"),
+        &m_Context->Backend->Data.Series.at("E"),
+        &m_Context->Backend->Data.Series.at("FR"),
+        &m_Context->Backend->Data.Series.at("FL"),
+        &m_Context->Backend->Data.Series.at("RR"),
+        &m_Context->Backend->Data.Series.at("RL"),
     };
 
     for (const auto& datum : data) {
