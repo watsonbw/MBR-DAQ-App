@@ -262,7 +262,7 @@ void TelemetryBackend::HandleResponse(std::string_view line) {
 // This also requires additions to ResStringtoEnum as these are ENUM mapped lambdas,
 // not just a simple string mapped lambda
 void TelemetryBackend::RegisterHandlers() {
-    m_ResponseHandlers[ResponseType::SYNC] = [this](std::string_view line) {
+    m_ResponseHandlers[ResponseType::SYNC] = [](std::string_view line) {
         uint64_t micros = 0;
         std::from_chars(
             line.data(), line.data() + line.size(), micros);
