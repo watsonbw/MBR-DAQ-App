@@ -28,7 +28,7 @@ enum class ResponseType {
 
 class TelemetryBackend {
   public:
-    explicit TelemetryBackend(std::vector<std::string> packet_fields);
+    explicit TelemetryBackend();
     ~TelemetryBackend();
 
     void Start();
@@ -60,13 +60,12 @@ class TelemetryBackend {
     ValidatePacket(std::string_view str) const;
     void HandleResponse(std::string_view line);
     void RegisterHandlers();
-    ResponseType ResStringToEnum(std::string_view str) const;
+    ResponseType ResStringToEnum(std::string_view command) const;
 
   private:
     std::thread                           m_Worker;
     ix::WebSocket                         m_WebSocket;
     std::string                           m_Buffer;
-    std::vector<std::string>              m_PacketFields;
     IpV4                                  m_IpAddr;
     std::chrono::steady_clock::time_point m_LastDataTime{};
     std::atomic<bool>                     m_ShouldKill{false};

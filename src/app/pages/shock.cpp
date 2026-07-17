@@ -17,16 +17,15 @@ void ShockPage::Update() {
     if (const ImGuiScope<ImGui::EndTable> split{IMSCOPE_FN(ImGui::BeginTable(
             "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable))}) {
         const auto  data  = m_Context->Backend->PackData();
-        const auto& shock = data.Shock;
 
         ImGui::TableNextColumn();
         DrawLHS(data.RawLines);
         ImGui::TableNextColumn();
         DrawRHS(data.TimeMinutesNormalized,
-                shock.FrontRight,
-                shock.FrontLeft,
-                shock.BackRight,
-                shock.BackLeft);
+                data.Series.at("FR"),
+                data.Series.at("FL"),
+                data.Series.at("RR"),
+                data.Series.at("RL"));
     }
 }
 

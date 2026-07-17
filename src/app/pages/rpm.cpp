@@ -18,12 +18,11 @@ void RPMPage::Update() {
     if (const ImGuiScope<ImGui::EndTable> split{IMSCOPE_FN(ImGui::BeginTable(
             "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable))}) {
         const auto  data = m_Context->Backend->PackData();
-        const auto& rpm  = data.RPM;
 
         ImGui::TableNextColumn();
         DrawLHS(data.RawLines);
         ImGui::TableNextColumn();
-        DrawRHS(data.TimeMinutesNormalized, rpm.WheelRPM, rpm.EngineRPM);
+        DrawRHS(data.TimeMinutesNormalized, data.Series.at("W"), data.Series.at("E"));
     }
 }
 

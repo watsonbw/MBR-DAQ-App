@@ -5,16 +5,15 @@
 
 
 #include "core/log.hpp"
-#include "core/time.hpp"
 
 
-bool TelemetryData::InitJSON(std::vector<DataConfig>& out) const {
-    std::ifstream f("MBR_data.json");
+void TelemetryData::InitJSON() {
+    std::ifstream f(MBR_JSON);
     if (!f.is_open()){
         LOG_ERROR("JSON FILE NOT OPENED");
-        return false;
+        return;
     }
-    DataConfig temp;
+    DataInfo temp;
     json jason = json::parse(f);
     try {
         for (const auto &data : jason.at("fields")) {
@@ -24,13 +23,18 @@ bool TelemetryData::InitJSON(std::vector<DataConfig>& out) const {
             temp.Plot = data.at("plot").get<bool>();
             temp.Unit = data.value("unit", "");
             temp.Group = data.value("group", "");
-            out.push_back(temp);
+            DataValues.push_back(temp);
         }
     } catch (const json::exception& e) {
             LOG_ERROR("Invalid JSON config: {}", e.what());
-            return false;
+            return;
     }
-    return true;
+}
+
+void TelemetryData::InitData() {
+    for (const auto& data : DataValues) {
+        Series.try_emplace(data.Key, std::vector<double>{});
+    }
 }
 
 
@@ -38,8 +42,26 @@ bool TelemetryData::InitJSON(std::vector<DataConfig>& out) const {
 void TelemetryData::WriteData(const std::string &identifier, const std::string &value){
 try {
     double val = std::stod(value);
-    m_Series[identifier].push_back(val);
+    Series[identifier].push_back(val);
 } catch (const std::exception& e){
     LOG_ERROR("Couldn't write to existng data vector");
 }
+}
+
+
+void TelemetryData::Clear() {
+    for (auto& [key, values] : Series) {
+        values.clear();
+    }
+    m_Time.clear();
+    m_TimeNoNormalMicros.clear();
+    m_RawLines.clear();
+    m_CurrentLine.clear();
+    m_SyncLT.reset();
+}
+
+void TelemetryData::SaveCurrentLine(const std::string& line) { m_CurrentLine = line; }
+
+void TelemetryData::WriteRawLine(const std::string& full_message) {
+    m_RawLines.push_back(full_message);
 }
