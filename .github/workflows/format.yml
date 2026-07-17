@@ -34,22 +34,22 @@ jobs:
                   echo "/opt/homebrew/opt/llvm@21/bin" >> $GITHUB_PATH
               env:
                   HOMEBREW_NO_AUTO_UPDATE: 1
-                  
+
             - name: Cache build directory
               uses: actions/cache@v4
               with:
                   path: build
                   key: >
-                      fmt-${{ runner.os }}-
+                      format-${{ runner.os }}-
                       ${{ hashFiles('CMakeLists.txt', 'src/**', 'include/**', 'tests/**') }}
                   restore-keys: |
-                      fmt-${{ runner.os }}-
+                      format-${{ runner.os }}-
 
             - name: Configure CMake
               run: cmake -G Ninja -B build
 
             - name: Check formatting
-              run: cmake --build build --target fmt-check
+              run: cmake --build build --target format-check
 
             - name: Static analysis
               run: cmake --build build --target tidy
