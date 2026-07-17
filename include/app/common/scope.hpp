@@ -4,6 +4,8 @@
 #include <type_traits>
 #include <utility>
 
+namespace mbr {
+
 template <auto EndFn> class RenderScope {
   public:
     template <typename BeginFn, typename... Args>
@@ -58,3 +60,5 @@ template <auto EndFn, int64_t Arg = NO_ARG> class ImGuiScope {
 };
 
 #define IMSCOPE_FN(begin) [&] { return (begin); }
+
+} // namespace mbr

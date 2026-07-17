@@ -15,6 +15,8 @@
 #include "app/context.hpp"
 #include "app/style.hpp"
 
+namespace mbr {
+
 void TextUtils::DrawStartLoggingButton() {
     HEADER({
         if (ImGui::Button(m_Context->Backend->IsLogging ? "Stop Logging" : "Start Logging")) {
@@ -65,9 +67,7 @@ void TextUtils::DrawDataDownloadButton(const std::vector<std::string>& raw_lines
                 if (!out.is_open()) {
                     LOG_ERROR("Failed to open output file: ", std::strerror(errno));
                 } else {
-                    for (const auto& line : raw_lines) {
-                        out << line << "\n";
-                    }
+                    for (const auto& line : raw_lines) { out << line << "\n"; }
                     buf = {};
                 }
             }
@@ -86,8 +86,8 @@ bool TextUtils::DrawInputBox(const char*                label,
 }
 
 void TextUtils::DrawDataLog(const std::vector<std::string>& raw_lines) {
-    for (const auto& msg : raw_lines) {
-        ImGui::TextUnformatted(msg.c_str());
-    }
+    for (const auto& msg : raw_lines) { ImGui::TextUnformatted(msg.c_str()); }
     if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) { ImGui::SetScrollHereY(1.0F); }
 }
+
+} // namespace mbr

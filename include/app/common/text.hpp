@@ -7,6 +7,8 @@
 
 #include <imgui.h>
 
+namespace mbr {
+
 struct AppContext;
 
 class TextUtils {
@@ -30,3 +32,5 @@ class TextUtils {
   private:
     std::shared_ptr<AppContext> m_Context;
 };
+
+} // namespace mbr

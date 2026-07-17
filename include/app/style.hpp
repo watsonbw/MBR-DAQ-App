@@ -2,6 +2,8 @@
 
 struct ImFont;
 
+namespace mbr {
+
 struct AppFonts {
     ImFont* Regular;
     ImFont* Bold;
@@ -40,3 +42,5 @@ extern float menu_item_font_size;
     WITH_FONT(m_Context->Style.DefaultFonts.Regular, main_menu_bar_font_size, B)
 #define MAIN_MENU_BAR_ITEM(B) \
     WITH_FONT(m_Context->Style.DefaultFonts.Regular, main_menu_item_font_size, B)
+
+} // namespace mbr

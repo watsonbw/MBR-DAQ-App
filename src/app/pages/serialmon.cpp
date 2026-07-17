@@ -1,13 +1,11 @@
-
 #include <imgui.h>
 
-#include "core/log.hpp"
-#include "core/time.hpp"
-
-#include "app/common/plot.hpp"
 #include "app/common/scope.hpp"
 #include "app/pages/serialmon.hpp"
 #include "app/style.hpp"
+#include "core/log.hpp"
+
+namespace mbr {
 
 void SerialPage::OnEnter() { LOG_INFO("Entered SerialPage"); }
 void SerialPage::OnExit() { LOG_INFO("Exited SerialPage"); }
@@ -92,7 +90,7 @@ void SerialPage::DrawTopLHS() {
                     std::to_string(m_Context->Backend->SerialMan.GetBaudRate()).c_str()))}) {
             // This can stay inside DrawTopLHS or be a static member
             static const uint32_t BAUD_RATES[] = {
-                300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200};
+                300, 1'200, 2'400, 4'800, 9'600, 19'200, 38'400, 57'600, 115'200};
 
             for (const uint32_t rate : BAUD_RATES) {
                 const bool is_selected = (m_Context->Backend->SerialMan.GetBaudRate() == rate);
@@ -133,3 +131,5 @@ void SerialPage::DrawBottom() {
         TextUtils::DrawDataLog(m_Context->Backend->SerialMan.ReturnDataStream());
     }
 }
+
+} // namespace mbr

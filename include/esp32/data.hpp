@@ -9,6 +9,8 @@
 
 #define MBR_JSON "MBR_data.json"
 
+namespace mbr {
+
 struct AppContext;
 
 using json = nlohmann::json;
@@ -66,3 +68,5 @@ class TelemetryData {
 
     friend class ViewPage;
 };
+
+} // namespace mbr

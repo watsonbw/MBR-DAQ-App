@@ -14,8 +14,10 @@
 
 using namespace std::chrono_literals;
 
-TelemetryBackend::TelemetryBackend() : SerialMan(115200, 500) {
-    m_Buffer.reserve(4096);
+namespace mbr {
+
+TelemetryBackend::TelemetryBackend() : SerialMan(115'200, 500) {
+    m_Buffer.reserve(4'096);
     m_IpAddr = DEFAULT_IP;
     RegisterHandlers();
 }
@@ -32,8 +34,8 @@ void TelemetryBackend::Start() {
     LOG_INFO("Attempting to connect with address: {}", real_addr);
     m_WebSocket.setUrl(real_addr);
 
-    m_WebSocket.setMaxWaitBetweenReconnectionRetries(5000);
-    m_WebSocket.setMinWaitBetweenReconnectionRetries(1000);
+    m_WebSocket.setMaxWaitBetweenReconnectionRetries(5'000);
+    m_WebSocket.setMinWaitBetweenReconnectionRetries(1'000);
     m_WebSocket.enableAutomaticReconnection();
     // m_WebSocket.setPingInterval(30);
     m_WebSocket.setHandshakeTimeout(10);
@@ -154,28 +156,20 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
         const size_t ident_start = pos;
 
         // run until space to find key
-        while (pos < str.size() && str[pos] != ' ') {
-            pos++;
-        }
+        while (pos < str.size() && str[pos] != ' ') { pos++; }
         std::string_view key = str.substr(ident_start, pos - ident_start);
 
         // run until start of value
-        while (pos < str.size() && str[pos] == ' ') {
-            pos++;
-        }
+        while (pos < str.size() && str[pos] == ' ') { pos++; }
         const size_t value_start = pos;
 
         // run until space again to find value
-        while (pos < str.size() && str[pos] != ' ') {
-            pos++;
-        }
+        while (pos < str.size() && str[pos] != ' ') { pos++; }
         if (value_start == pos) { return std::nullopt; }
         std::string_view value = str.substr(value_start, pos - value_start);
 
         // skip extra spaces
-        while (pos < str.size() && str[pos] == ' ') {
-            pos += 1;
-        }
+        while (pos < str.size() && str[pos] == ' ') { pos += 1; }
 
         // check key value pairs
         for (const auto& field : Data.DataValues) {
@@ -380,3 +374,5 @@ for (const auto& field : m_PacketFields) {
     }
 }
 */
+
+} // namespace mbr

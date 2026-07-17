@@ -9,13 +9,15 @@
 
 #include <serial/serial.h>
 
+namespace mbr {
+
 class SerialManager {
   public:
-    explicit SerialManager(int baud_rate = 115200, int timeout_ms = 0)
+    explicit SerialManager(int baud_rate = 115'200, int timeout_ms = 0)
         : m_BaudRate(baud_rate), m_TimeoutMs(timeout_ms) {}
     ~SerialManager() {
         m_KeepRunning = false;
-        if (m_Worker.joinable()) m_Worker.join();
+        if (m_Worker.joinable()) { m_Worker.join(); }
         CloseAll();
     };
 
@@ -50,3 +52,5 @@ class SerialManager {
     std::vector<std::string>               m_InputStream;
     std::mutex                             m_Mutex;
 };
+
+} // namespace mbr

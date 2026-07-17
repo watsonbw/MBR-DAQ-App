@@ -7,6 +7,8 @@
 
 #include "core/ip.hpp"
 
+namespace mbr {
+
 bool IpV4::Valid() const {
     const auto validate_digit = [](std::string_view sv) -> std::optional<uint64_t> {
         if (sv.empty()) { return std::nullopt; }
@@ -29,7 +31,7 @@ bool IpV4::Valid() const {
     }
 
     const auto port = validate_digit(Port).value_or(SIZE_MAX);
-    return port >= 1 && port <= 65535;
+    return port >= 1 && port <= 65'535;
 }
 
 bool IpV4::AnyEmpty() const {
@@ -39,3 +41,5 @@ bool IpV4::AnyEmpty() const {
 std::string IpV4::String() const {
     return fmt::format("{}.{}.{}.{}:{}", First, Second, Third, Fourth, Port);
 }
+
+} // namespace mbr

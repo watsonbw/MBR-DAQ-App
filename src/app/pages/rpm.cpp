@@ -10,6 +10,8 @@
 #include "app/pages/rpm.hpp"
 #include "app/style.hpp"
 
+namespace mbr {
+
 void RPMPage::OnEnter() { LOG_INFO("Entered RPMPage"); }
 void RPMPage::OnExit() { LOG_INFO("Exited RPMPage"); }
 
@@ -56,3 +58,5 @@ void RPMPage::DrawRHS(const std::vector<double>& time,
         }
     }
 }
+
+} // namespace mbr

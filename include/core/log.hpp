@@ -6,6 +6,8 @@
 
 #include <spdlog/spdlog.h>
 
+namespace mbr {
+
 class Log {
   public:
     static void                                           Init();
@@ -23,3 +25,5 @@ class Log {
 #define LOG_WARN(...) Log::GetCoreLogger()->warn(__VA_ARGS__)
 #define LOG_ERROR(...) Log::GetCoreLogger()->error(__VA_ARGS__)
 #define LOG_CRITICAL(...) Log::GetCoreLogger()->critical(__VA_ARGS__)
+
+} // namespace mbr

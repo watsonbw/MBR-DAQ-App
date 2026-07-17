@@ -4,6 +4,8 @@
 
 #include "core/log.hpp"
 
+namespace mbr {
+
 std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
 std::ostringstream              Log::s_OSS;
 std::mutex                      Log::s_ErrorMutex;
@@ -39,3 +41,5 @@ std::string Log::GetStreamedLogs() {
     const std::scoped_lock<std::mutex> lock{s_ErrorMutex};
     return s_OSS.str();
 }
+
+} // namespace mbr

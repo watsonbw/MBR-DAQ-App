@@ -26,18 +26,16 @@
 
 using namespace std::chrono_literals;
 
+namespace mbr {
+
 static constexpr size_t MAX_QUEUE_SIZE = 10;
 
 const char* ViewPage::DataTypeString(DataView type) {
     switch (type) {
-    case DataView::ALL:
-        return "All Data Shown";
-    case DataView::RPMDATA:
-        return "RPM Data Shown";
-    case DataView::SHOCKDATA:
-        return "Shock Data Shown";
-    default:
-        return "Unknown";
+    case DataView::ALL:       return "All Data Shown";
+    case DataView::RPMDATA:   return "RPM Data Shown";
+    case DataView::SHOCKDATA: return "Shock Data Shown";
+    default:                  return "Unknown";
     }
 }
 
@@ -120,9 +118,7 @@ void ViewPage::DrawLHS() {
 
                     const auto recoverable_frames =
                         std::min(static_cast<int>(m_FrameQueue.size()) - 1, frames_to_advance - 1);
-                    for (auto i = 0; i < recoverable_frames; i++) {
-                        m_FrameQueue.pop_front();
-                    }
+                    for (auto i = 0; i < recoverable_frames; i++) { m_FrameQueue.pop_front(); }
                 }
 
                 is_timer_tick = true;
@@ -485,9 +481,7 @@ void ViewPage::LoadData() {
     const std::scoped_lock<std::mutex> lock{m_Context->Backend->DataMutex};
     m_Context->Backend->Data.Clear();
     std::string ident, value;
-    while (file >> ident >> value) {
-        m_Context->Backend->Data.WriteData(ident, value);
-    }
+    while (file >> ident >> value) { m_Context->Backend->Data.WriteData(ident, value); }
 }
 
 void ViewPage::RequestSeek(int frame_index) {
@@ -709,3 +703,5 @@ void ViewPage::DynamicPlotLoop() {
     }
     m_PlotPercent = 0;
 }
+
+} // namespace mbr

@@ -2,6 +2,8 @@
 
 #include <vector>
 
+namespace mbr {
+
 class PlotUtils {
   public:
     template <typename T>
@@ -11,3 +13,5 @@ class PlotUtils {
                                bool                  extra_condition = true,
                                size_t                data_clip       = 0);
 };
+
+} // namespace mbr

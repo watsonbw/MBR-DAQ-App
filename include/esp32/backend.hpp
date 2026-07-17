@@ -16,6 +16,8 @@
 #include "esp32/data.hpp"
 #include "esp32/serial.hpp"
 
+namespace mbr {
+
 struct AppContext;
 
 enum class ResponseType {
@@ -72,3 +74,5 @@ class TelemetryBackend {
 
     std::unordered_map<ResponseType, std::function<void(std::string_view)>> m_ResponseHandlers;
 };
+
+} // namespace mbr

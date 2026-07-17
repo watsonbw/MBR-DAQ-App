@@ -28,6 +28,8 @@
 
 using namespace std::chrono;
 
+namespace mbr {
+
 GUI* GUI::s_Instance = nullptr;
 
 #define SOKOL_CB(F)     \
@@ -48,8 +50,8 @@ sapp_desc GUI::GetSokolDesc() {
     desc.frame_cb     = GUI::SokolFrameCB;
     desc.cleanup_cb   = GUI::SokolCleanupCB;
     desc.event_cb     = GUI::SokolEventCB;
-    desc.width        = 1920;
-    desc.height       = 1080;
+    desc.width        = 1'920;
+    desc.height       = 1'080;
     desc.window_title = "Michigan Baja Racing - Data Suite";
 
     desc.icon.sokol_default    = false;
@@ -112,11 +114,8 @@ void GUI::OnFrame() {
 
 void GUI::OnEvent(const sapp_event* event) { // NOLINT
     switch (event->type) {
-    case SAPP_EVENTTYPE_QUIT_REQUESTED:
-        sapp_quit();
-        break;
-    default:
-        break;
+    case SAPP_EVENTTYPE_QUIT_REQUESTED: sapp_quit(); break;
+    default:                            break;
     }
     simgui_handle_event(event);
 }
@@ -159,21 +158,11 @@ void GUI::ChangePage(PageType type) {
     if (m_CurrentPage) { m_CurrentPage->OnExit(); }
 
     switch (type) {
-    case PageType::HOME:
-        m_CurrentPage = std::make_unique<HomePage>(m_Context);
-        break;
-    case PageType::RPM:
-        m_CurrentPage = std::make_unique<RPMPage>(m_Context);
-        break;
-    case PageType::SHOCK:
-        m_CurrentPage = std::make_unique<ShockPage>(m_Context);
-        break;
-    case PageType::VIEW:
-        m_CurrentPage = std::make_unique<ViewPage>(m_Context);
-        break;
-    case PageType::SERIAL:
-        m_CurrentPage = std::make_unique<SerialPage>(m_Context);
-        break;
+    case PageType::HOME:   m_CurrentPage = std::make_unique<HomePage>(m_Context); break;
+    case PageType::RPM:    m_CurrentPage = std::make_unique<RPMPage>(m_Context); break;
+    case PageType::SHOCK:  m_CurrentPage = std::make_unique<ShockPage>(m_Context); break;
+    case PageType::VIEW:   m_CurrentPage = std::make_unique<ViewPage>(m_Context); break;
+    case PageType::SERIAL: m_CurrentPage = std::make_unique<SerialPage>(m_Context); break;
     }
 
     if (m_CurrentPage) { m_CurrentPage->OnEnter(); }
@@ -259,3 +248,5 @@ void GUI::DrawMainMenuBar() {
         ImGui::TextUnformatted(time_formatted.c_str());
     }
 }
+
+} // namespace mbr

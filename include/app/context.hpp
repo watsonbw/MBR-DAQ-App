@@ -8,6 +8,8 @@
 
 #include "esp32/backend.hpp"
 
+namespace mbr {
+
 enum class PageType : uint8_t {
     HOME,
     RPM,
@@ -31,3 +33,5 @@ struct AppContext {
     std::string                       Username;
     std::string                       Password;
 };
+
+} // namespace mbr

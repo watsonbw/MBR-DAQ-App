@@ -5,18 +5,19 @@
 
 #include "app/common/text.hpp"
 #include "app/pages/page.hpp"
-#include "esp32/serial.hpp"
+
+namespace mbr {
 
 enum class BaudRate : uint32_t {
     THREE           = 300,
-    TWELVE          = 1200,
-    TWENTYFOUR      = 2400,
-    FORTYEIGHT      = 4800,
-    NINETYSIX       = 9600,
-    ONENIGHTYTWO    = 19200,
-    THREEEIGHTYFOUR = 38400,
-    FIVESEVENTYSIX  = 57600,
-    ONEONEFIFTYTWO  = 115200,
+    TWELVE          = 1'200,
+    TWENTYFOUR      = 2'400,
+    FORTYEIGHT      = 4'800,
+    NINETYSIX       = 9'600,
+    ONENIGHTYTWO    = 19'200,
+    THREEEIGHTYFOUR = 38'400,
+    FIVESEVENTYSIX  = 57'600,
+    ONEONEFIFTYTWO  = 115'200,
 };
 
 class SerialPage : public Page {
@@ -38,3 +39,5 @@ class SerialPage : public Page {
     TextUtils   m_TextUtils;
     std::string m_SerialBuffer;
 };
+
+} // namespace mbr

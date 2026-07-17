@@ -2,6 +2,8 @@
 
 #include "core/time.hpp"
 
+namespace mbr::tests {
+
 TEST_CASE("Roundtrip time") {
     const LocalTime actual;
     const auto      micros = actual.MicrosSinceMidnight();
@@ -13,3 +15,5 @@ TEST_CASE("Roundtrip time") {
     REQUIRE(actual.Millisecond == regenerated.Millisecond);
     REQUIRE(actual.Microsecond == regenerated.Microsecond);
 }
+
+} // namespace mbr

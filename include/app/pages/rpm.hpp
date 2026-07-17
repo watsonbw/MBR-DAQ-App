@@ -5,6 +5,8 @@
 #include "app/common/text.hpp"
 #include "app/pages/page.hpp"
 
+namespace mbr {
+
 struct AppContext;
 
 class RPMPage : public Page {
@@ -26,3 +28,5 @@ class RPMPage : public Page {
     TextUtils   m_TextUtils;
     std::string m_DownloadFDText;
 };
+
+} // namespace mbr
