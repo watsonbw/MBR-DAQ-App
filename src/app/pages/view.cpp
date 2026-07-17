@@ -303,8 +303,8 @@ void ViewPage::DrawRHS() {
             }
         }
 
-        const auto  data  = m_Context->Backend->PackData();
-        
+        const auto data = m_Context->Backend->PackData();
+
         const auto sync_lt = m_Context->Backend->Data.GetSyncLT();
         const auto plot_title =
             sync_lt ? std::format("Data View from {}", sync_lt.value().String()) : "No Synced Time";

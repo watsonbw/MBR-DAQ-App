@@ -1,13 +1,13 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <thread>
-#include <vector>
-#include <functional>
 #include <unordered_map>
+#include <vector>
 
 #include <ixwebsocket/IXWebSocket.h>
 
@@ -57,9 +57,9 @@ class TelemetryBackend {
     void OnMessage(const ix::WebSocketMessagePtr& msg);
 
     std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
-    ValidatePacket(std::string_view str) const;
-    void HandleResponse(std::string_view line);
-    void RegisterHandlers();
+                 ValidatePacket(std::string_view str) const;
+    void         HandleResponse(std::string_view line);
+    void         RegisterHandlers();
     ResponseType ResStringToEnum(std::string_view command) const;
 
   private:

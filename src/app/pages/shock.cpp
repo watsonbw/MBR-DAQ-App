@@ -16,7 +16,7 @@ void ShockPage::OnExit() { LOG_INFO("Exited ShockPage"); }
 void ShockPage::Update() {
     if (const ImGuiScope<ImGui::EndTable> split{IMSCOPE_FN(ImGui::BeginTable(
             "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable))}) {
-        const auto  data  = m_Context->Backend->PackData();
+        const auto data = m_Context->Backend->PackData();
 
         ImGui::TableNextColumn();
         DrawLHS(data.RawLines);

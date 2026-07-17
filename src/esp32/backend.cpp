@@ -15,8 +15,7 @@
 
 using namespace std::chrono_literals;
 
-TelemetryBackend::TelemetryBackend()
-    : SerialMan(115200, 500) {
+TelemetryBackend::TelemetryBackend() : SerialMan(115200, 500) {
     m_Buffer.reserve(4096);
     m_IpAddr = DEFAULT_IP;
     RegisterHandlers();
@@ -123,7 +122,6 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
             // Now we can safely unpack the packet
             const std::scoped_lock<std::mutex> lock{DataMutex};
 
-
             // write data
             if (!IsLogging) { continue; }
 
@@ -153,7 +151,7 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
     // runs through the whole sent packet. this ensures that the packet must be valid but doesn't
     // need every m_packetfield.
     while (pos < str.size()) {
-        bool         is_key       = false;
+        bool         is_key      = false;
         const size_t ident_start = pos;
 
         // run until space to find key
@@ -226,23 +224,23 @@ void TelemetryBackend::SetIp(const IpV4& ipv4) {
 }
 // This function is the bridge between any RES sent from our car to our app
 // After checking for RES in OnMessage, this function is called to parse and act on the response
-// The response is parsed by checking the string with the response type ENUM and calling the corresponding handler
-// For reference, general responses look like this: RES CMD_TYPE CMD_PAYLOAD
+// The response is parsed by checking the string with the response type ENUM and calling the
+// corresponding handler For reference, general responses look like this: RES CMD_TYPE CMD_PAYLOAD
 void TelemetryBackend::HandleResponse(std::string_view line) {
     constexpr size_t res_length = 4;
     if (line.size() <= res_length) {
         LOG_ERROR("Invalid response length: {}", line.size());
         return;
     }
-    auto rest = line.substr(res_length);
+    auto rest  = line.substr(res_length);
     auto space = rest.find(' ');
     if (space == std::string::npos) {
         LOG_ERROR("No space after response type: {}", rest);
         return;
     }
 
-    auto command = rest.substr(0, space);
-    ResponseType type = ResStringToEnum(command);
+    auto         command = rest.substr(0, space);
+    ResponseType type    = ResStringToEnum(command);
     if (type == ResponseType::UNKNOWN) {
         LOG_ERROR("Unknown response: {}", command);
         return;
@@ -253,7 +251,6 @@ void TelemetryBackend::HandleResponse(std::string_view line) {
     } else {
         LOG_ERROR("No handler for response: {}", command);
     }
-
 }
 
 // ALL responses should be created with a lambda that takes a std::string_view and returns void
@@ -264,8 +261,7 @@ void TelemetryBackend::HandleResponse(std::string_view line) {
 void TelemetryBackend::RegisterHandlers() {
     m_ResponseHandlers[ResponseType::SYNC] = [](std::string_view line) {
         uint64_t micros = 0;
-        std::from_chars(
-            line.data(), line.data() + line.size(), micros);
+        std::from_chars(line.data(), line.data() + line.size(), micros);
         LocalTime t{micros};
         LOG_INFO("Time successfully synced at: {}", t.String(false));
     };
@@ -303,7 +299,7 @@ void TelemetryBackend::RegisterHandlers() {
 // and HandleResponse
 ResponseType TelemetryBackend::ResStringToEnum(std::string_view command) const {
     static const std::unordered_map<std::string_view, ResponseType> lookup{
-        {"SYNC",     ResponseType::SYNC},
+        {"SYNC", ResponseType::SYNC},
         {"SD_START", ResponseType::SDSTART},
         {"SD_WRITE", ResponseType::SDWRITE},
         {"SD_CLOSE", ResponseType::SDCLOSE},
@@ -311,7 +307,6 @@ ResponseType TelemetryBackend::ResStringToEnum(std::string_view command) const {
     auto it = lookup.find(command);
     return it != lookup.end() ? it->second : ResponseType::UNKNOWN;
 }
-
 
 /*
 auto TelemetryBackend::HandleCommand(

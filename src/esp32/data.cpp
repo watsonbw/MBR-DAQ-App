@@ -3,31 +3,29 @@
 
 #include "esp32/data.hpp"
 
-
 #include "core/log.hpp"
-
 
 void TelemetryData::InitJSON() {
     std::ifstream f(MBR_JSON);
-    if (!f.is_open()){
+    if (!f.is_open()) {
         LOG_ERROR("JSON FILE NOT OPENED");
         return;
     }
     DataInfo temp;
-    json jason = json::parse(f);
+    json     jason = json::parse(f);
     try {
-        for (const auto &data : jason.at("fields")) {
-            temp.Key = data.at("key").get<std::string>();
-            temp.Name = data.at("name").get<std::string>();
+        for (const auto& data : jason.at("fields")) {
+            temp.Key      = data.at("key").get<std::string>();
+            temp.Name     = data.at("name").get<std::string>();
             temp.Required = data.at("required").get<bool>();
-            temp.Plot = data.at("plot").get<bool>();
-            temp.Unit = data.value("unit", "");
-            temp.Group = data.value("group", "");
+            temp.Plot     = data.at("plot").get<bool>();
+            temp.Unit     = data.value("unit", "");
+            temp.Group    = data.value("group", "");
             DataValues.push_back(temp);
         }
     } catch (const json::exception& e) {
-            LOG_ERROR("Invalid JSON config: {}", e.what());
-            return;
+        LOG_ERROR("Invalid JSON config: {}", e.what());
+        return;
     }
 }
 
@@ -37,17 +35,12 @@ void TelemetryData::InitData() {
     }
 }
 
-
-
-void TelemetryData::WriteData(const std::string &identifier, const std::string &value){
-try {
-    double val = std::stod(value);
-    Series[identifier].push_back(val);
-} catch (const std::exception& e){
-    LOG_ERROR("Couldn't write to existng data vector");
+void TelemetryData::WriteData(const std::string& identifier, const std::string& value) {
+    try {
+        double val = std::stod(value);
+        Series[identifier].push_back(val);
+    } catch (const std::exception& e) { LOG_ERROR("Couldn't write to existng data vector"); }
 }
-}
-
 
 void TelemetryData::Clear() {
     for (auto& [key, values] : Series) {
