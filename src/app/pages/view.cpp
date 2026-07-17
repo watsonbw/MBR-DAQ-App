@@ -40,10 +40,8 @@ const char* ViewPage::DataTypeString(DataView type) {
 }
 
 ViewPage::ViewPage(const std::shared_ptr<AppContext>& ctx)
-    : Page{ctx}, m_IsAlive{std::make_shared<bool>(true)},
-      m_PlayButton{PLAY_BUTTON_PNG.data(), PLAY_BUTTON_PNG.size()},
-      m_PauseButton{PAUSE_BUTTON_PNG.data(), PAUSE_BUTTON_PNG.size()},
-      m_StepButton{STEP_BUTTON_PNG.data(), STEP_BUTTON_PNG.size()} {}
+    : Page{ctx}, m_IsAlive{std::make_shared<bool>(true)}, m_PlayButton{assets::PLAY_BUTTON_PNG},
+      m_PauseButton{assets::PAUSE_BUTTON_PNG}, m_StepButton{assets::STEP_BUTTON_PNG} {}
 
 ViewPage::~ViewPage() {
     *m_IsAlive = false;
@@ -171,7 +169,7 @@ void ViewPage::DrawLHSControls() {
     const auto tint_color = m_Context->Style.DarkMode ? ImVec4{1, 1, 1, 1} : ImVec4{-1, -1, -1, 1};
     ImGui::SameLine();
     if (ImGui::ImageButton("##stepback",
-                           m_StepButton.GetID(),
+                           m_StepButton.get_id(),
                            m_ButtonSize,
                            {1, 0},
                            {0, 1},
@@ -182,7 +180,7 @@ void ViewPage::DrawLHSControls() {
     }
     ImGui::SameLine();
     if (ImGui::ImageButton("##playpause",
-                           is_playing ? m_PauseButton.GetID() : m_PlayButton.GetID(),
+                           is_playing ? m_PauseButton.get_id() : m_PlayButton.get_id(),
                            m_ButtonSize,
                            {0, 0},
                            {1, 1},
@@ -193,7 +191,7 @@ void ViewPage::DrawLHSControls() {
     }
     ImGui::SameLine();
     if (ImGui::ImageButton("##stepforward",
-                           m_StepButton.GetID(),
+                           m_StepButton.get_id(),
                            m_ButtonSize,
                            {0, 0},
                            {1, 1},

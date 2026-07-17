@@ -2,7 +2,7 @@
 
 #include <array>
 
-namespace mbr {
+namespace mbr::assets {
 
 constinit inline auto OPEN_SANS_REGULAR_TTF = std::to_array<unsigned char>({
 #include "app/assets/fonts/OpenSans-Regular.ttf.inc"
@@ -20,4 +20,4 @@ constinit inline auto OPEN_SANS_BOLD_ITALIC_TTF = std::to_array<unsigned char>({
 #include "app/assets/fonts/OpenSans-BoldItalic.ttf.inc"
 });
 
-} // namespace mbr
+} // namespace mbr::assets

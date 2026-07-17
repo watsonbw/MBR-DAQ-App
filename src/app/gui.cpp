@@ -11,6 +11,7 @@
 
 #include <fmt/format.h>
 
+#include "app/assets/texture.hpp"
 #include "core/time.hpp"
 
 #include "app/assets/images/app_icon.hpp"
@@ -45,20 +46,21 @@ sapp_desc GUI::GetSokolDesc() {
     assert(s_Instance == nullptr);
     s_Instance = this;
 
-    sapp_desc desc    = {};
-    desc.init_cb      = GUI::SokolInitCB;
-    desc.frame_cb     = GUI::SokolFrameCB;
-    desc.cleanup_cb   = GUI::SokolCleanupCB;
-    desc.event_cb     = GUI::SokolEventCB;
-    desc.width        = 1'920;
-    desc.height       = 1'080;
-    desc.window_title = "Michigan Baja Racing - Data Suite";
+    sapp_desc desc          = {};
+    desc.init_cb            = GUI::SokolInitCB;
+    desc.frame_cb           = GUI::SokolFrameCB;
+    desc.cleanup_cb         = GUI::SokolCleanupCB;
+    desc.event_cb           = GUI::SokolEventCB;
+    desc.width              = 1'920;
+    desc.height             = 1'080;
+    desc.window_title       = "Michigan Baja Racing - Data Suite";
+    desc.icon.sokol_default = false;
 
-    desc.icon.sokol_default    = false;
-    m_AppIcon                  = {BAJA_LOGO_PNG.data(), BAJA_LOGO_PNG.size()};
-    desc.icon.images[0].width  = m_AppIcon.Width;
-    desc.icon.images[0].height = m_AppIcon.Height;
-    desc.icon.images[0].pixels = {.ptr = m_AppIcon.Pixels, .size = m_AppIcon.Size};
+    // The app description takes ownership of the icon here
+    assets::icon_texture app_icon{assets::BAJA_LOGO_PNG};
+    desc.icon.images[0].width  = app_icon.width;
+    desc.icon.images[0].height = app_icon.height;
+    desc.icon.images[0].pixels = {.ptr = app_icon.pixels.get(), .size = app_icon.size};
 
     return desc;
 }

@@ -2,7 +2,7 @@
 
 #include <array>
 
-namespace mbr {
+namespace mbr::assets {
 
 constexpr auto PLAY_BUTTON_PNG = std::to_array<unsigned char>({
 #include "app/assets/images/PlayButton.png.inc"
@@ -16,4 +16,4 @@ constexpr auto STEP_BUTTON_PNG = std::to_array<unsigned char>({
 #include "app/assets/images/StepButton.png.inc"
 });
 
-} // namespace mbr
+} // namespace mbr::assets

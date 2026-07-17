@@ -1,47 +1,52 @@
 #pragma once
 
+#include <gsl/pointers>
+#include <gsl/span>
 #include <imgui.h>
-
 #include <sokol_app.h>
 #include <sokol_gfx.h>
 #include <sokol_imgui.h>
 
-namespace mbr {
+namespace mbr::assets {
 
-class ButtonTexture {
+class button_texture {
   public:
-    ButtonTexture() = delete;
-    ButtonTexture(const unsigned char* data, size_t size);
-    ~ButtonTexture();
+    button_texture(gsl::span<const unsigned char> data);
+    ~button_texture();
 
-    [[nodiscard]] ImTextureID GetID() const { return m_ImTexID; }
-    [[nodiscard]] bool        IsValid() const { return m_ImTexID != 0; }
+    button_texture(const button_texture&)                = delete;
+    button_texture& operator=(const button_texture&)     = delete;
+    button_texture(button_texture&&) noexcept            = default;
+    button_texture& operator=(button_texture&&) noexcept = default;
+
+    [[nodiscard]] ImTextureID get_id() const { return im_tex_id_; }
+    [[nodiscard]] bool        is_valid() const { return im_tex_id_ != 0; }
 
   private:
-    sg_image    m_Image{SG_INVALID_ID};
-    sg_view     m_View{SG_INVALID_ID};
-    ImTextureID m_ImTexID{0};
+    sg_image    image_{SG_INVALID_ID};
+    sg_view     view_{SG_INVALID_ID};
+    ImTextureID im_tex_id_{0};
 };
 
-struct IconTexture {
-    IconTexture() = default;
-    IconTexture(const unsigned char* data, size_t size);
-    ~IconTexture() = default;
+struct icon_texture {
+    icon_texture(gsl::span<const unsigned char> data);
+    ~icon_texture() = default;
 
-    IconTexture(const IconTexture&)                = delete;
-    IconTexture& operator=(const IconTexture&)     = delete;
-    IconTexture(IconTexture&&) noexcept            = default;
-    IconTexture& operator=(IconTexture&&) noexcept = default;
+    icon_texture(const icon_texture&)                = delete;
+    icon_texture& operator=(const icon_texture&)     = delete;
+    icon_texture(icon_texture&&) noexcept            = default;
+    icon_texture& operator=(icon_texture&&) noexcept = default;
 
     // Free the allocated stb image.
     //
     // Never call this if you passed the texture to sokol as an app icon.
-    void Free();
+    void release();
 
-    int            Width;
-    int            Height;
-    unsigned char* Pixels;
-    size_t         Size;
+    int                           width;
+    int                           height;
+    int                           comp;
+    gsl::not_null<unsigned char*> pixels;
+    size_t                        size;
 };
 
-} // namespace mbr
+} // namespace mbr::assets

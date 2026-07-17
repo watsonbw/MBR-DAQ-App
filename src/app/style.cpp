@@ -26,22 +26,24 @@ AppFonts LoadFonts() {
     ImFontConfig cfg;
     cfg.FontDataOwnedByAtlas = false;
 
-    auto* regular = io.Fonts->AddFontFromMemoryTTF(OPEN_SANS_REGULAR_TTF.data(),
-                                                   static_cast<int>(OPEN_SANS_REGULAR_TTF.size()),
-                                                   default_font_size,
-                                                   &cfg);
+    auto* regular =
+        io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_REGULAR_TTF.data(),
+                                       static_cast<int>(assets::OPEN_SANS_REGULAR_TTF.size()),
+                                       default_font_size,
+                                       &cfg);
 
-    auto* bold   = io.Fonts->AddFontFromMemoryTTF(OPEN_SANS_BOLD_TTF.data(),
-                                                static_cast<int>(OPEN_SANS_BOLD_TTF.size()),
+    auto* bold = io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_BOLD_TTF.data(),
+                                                static_cast<int>(assets::OPEN_SANS_BOLD_TTF.size()),
                                                 default_font_size,
                                                 &cfg);
-    auto* italic = io.Fonts->AddFontFromMemoryTTF(OPEN_SANS_ITALIC_TTF.data(),
-                                                  static_cast<int>(OPEN_SANS_ITALIC_TTF.size()),
-                                                  default_font_size,
-                                                  &cfg);
+    auto* italic =
+        io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_ITALIC_TTF.data(),
+                                       static_cast<int>(assets::OPEN_SANS_ITALIC_TTF.size()),
+                                       default_font_size,
+                                       &cfg);
     auto* bold_italic =
-        io.Fonts->AddFontFromMemoryTTF(OPEN_SANS_BOLD_ITALIC_TTF.data(),
-                                       static_cast<int>(OPEN_SANS_BOLD_ITALIC_TTF.size()),
+        io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_BOLD_ITALIC_TTF.data(),
+                                       static_cast<int>(assets::OPEN_SANS_BOLD_ITALIC_TTF.size()),
                                        default_font_size,
                                        &cfg);
 

@@ -118,10 +118,10 @@ class ViewPage : public Page {
     std::deque<std::pair<cv::Mat, int>> m_FrameQueue;
     std::condition_variable             m_QueueCV;
 
-    ImVec2        m_ButtonSize{24, 24};
-    ButtonTexture m_PlayButton;
-    ButtonTexture m_PauseButton;
-    ButtonTexture m_StepButton;
+    ImVec2                 m_ButtonSize{24, 24};
+    assets::button_texture m_PlayButton;
+    assets::button_texture m_PauseButton;
+    assets::button_texture m_StepButton;
 
     sg_image    m_VideoTexture{SG_INVALID_ID};
     sg_view     m_VideoView{SG_INVALID_ID};
