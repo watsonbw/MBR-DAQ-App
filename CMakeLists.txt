@@ -75,6 +75,21 @@ cmake_policy(SET CMP0077 NEW)
 add_subdirectory(vendor/json)
 cmake_policy(POP)
 
+# Microsoft GSL
+add_subdirectory(vendor/gsl)
+
+# {fmt}
+cmake_policy(PUSH)
+cmake_policy(SET CMP0077 NEW)
+set(CMAKE_C_FLAGS_BACKUP "${CMAKE_C_FLAGS}")
+set(CMAKE_CXX_FLAGS_BACKUP "${CMAKE_CXX_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
+add_subdirectory(vendor/fmt)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_BACKUP}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
+cmake_policy(POP)
+
 # Sokol
 add_library(sokol_setup STATIC src/vendor/sokol_impl.cpp)
 target_include_directories(sokol_setup SYSTEM PUBLIC
@@ -311,6 +326,8 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         tag
         serial_setup
         nlohmann_json::nlohmann_json
+        Microsoft.GSL::GSL
+        fmt::fmt
     )
 
     target_include_directories(mbrdaq_core_${TARGET_NAME} PUBLIC include)
@@ -450,8 +467,8 @@ list(FILTER TOOLING_SOURCES EXCLUDE REGEX ${FRAMEWORK_REGEX})
 # Formatting
 find_program(CLANG_FORMAT clang-format)
 if(CLANG_FORMAT)
-    add_custom_target(fmt COMMAND ${CLANG_FORMAT} -i ${TOOLING_SOURCES})
-    add_custom_target(fmt-check COMMAND
+    add_custom_target(format COMMAND ${CLANG_FORMAT} -i ${TOOLING_SOURCES})
+    add_custom_target(format-check COMMAND
         ${CLANG_FORMAT}
         --dry-run
         --Werror
