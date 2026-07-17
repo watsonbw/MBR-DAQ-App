@@ -3,7 +3,7 @@
 #include <optional>
 
 #ifdef _WIN32
-#include <dwmapi.h>
+#    include <dwmapi.h>
 #endif
 
 #include <sokol_app.h>
@@ -15,7 +15,11 @@
 #include "app/assets/fonts/OpenSans.hpp"
 #include "app/style.hpp"
 
-static std::optional<std::array<ImVec4, ImGuiCol_COUNT>> color_cache = std::nullopt;
+namespace mbr {
+
+namespace {
+    constinit std::optional<std::array<ImVec4, ImGuiCol_COUNT>> color_cache = std::nullopt;
+} // namespace
 
 AppFonts LoadFonts() {
     ImGuiIO&     io = ImGui::GetIO();
@@ -47,16 +51,12 @@ AppFonts LoadFonts() {
 
 static void PopulateImGuiColorCache(ImVec4 colors[ImGuiCol_COUNT]) {
     color_cache = std::array<ImVec4, ImGuiCol_COUNT>{};
-    for (auto i = 0; i < ImGuiCol_COUNT; i++) {
-        color_cache.value()[i] = colors[i];
-    }
+    for (auto i = 0; i < ImGuiCol_COUNT; i++) { color_cache.value()[i] = colors[i]; }
 }
 
 static void RefreshImGuiColorCache(ImVec4 colors[ImGuiCol_COUNT]) {
     assert(color_cache);
-    for (auto i = 0; i < ImGuiCol_COUNT; i++) {
-        colors[i] = color_cache.value()[i];
-    }
+    for (auto i = 0; i < ImGuiCol_COUNT; i++) { colors[i] = color_cache.value()[i]; }
 }
 
 void AppStyle::SetDarkThemeColors() {
@@ -173,3 +173,5 @@ float main_menu_bar_font_size  = 30.0F;
 float main_menu_item_font_size = 28.0F;
 float menu_bar_font_size       = 26.0F;
 float menu_item_font_size      = 24.0F;
+
+} // namespace mbr

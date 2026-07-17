@@ -10,6 +10,8 @@
 #include "app/pages/home.hpp"
 #include "app/style.hpp"
 
+namespace mbr {
+
 void HomePage::OnEnter() { LOG_INFO("Entered HomePage"); }
 void HomePage::OnExit() { LOG_INFO("Exited HomePage"); }
 
@@ -211,3 +213,5 @@ void HomePage::DrawCredentialControls() {
     ImGui::SameLine();
     TextUtils::DrawInputBox("##password", m_PasswordBuf, "Password", 150.0F);
 }
+
+} // namespace mbr

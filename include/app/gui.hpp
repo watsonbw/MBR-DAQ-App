@@ -10,6 +10,8 @@
 struct sapp_event;
 struct sapp_desc;
 
+namespace mbr {
+
 class GUI {
   public:
     static void SokolInitCB();
@@ -44,3 +46,5 @@ class GUI {
     IconTexture                 m_AppIcon;
     std::string                 m_CommandBuf;
 };
+
+} // namespace mbr

@@ -2,6 +2,8 @@
 
 #include "app/common/plot.hpp"
 
+namespace mbr {
+
 template <typename T>
 void PlotUtils::PlotIfNonEmpty(const char*           label,
                                const std::vector<T>& x,
@@ -17,3 +19,5 @@ void PlotUtils::PlotIfNonEmpty(const char*           label,
 
 template void PlotUtils::PlotIfNonEmpty<double>(
     const char*, const std::vector<double>&, const std::vector<double>&, bool, size_t);
+
+} // namespace mbr

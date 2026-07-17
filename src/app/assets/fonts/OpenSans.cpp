@@ -1,5 +1,7 @@
 #include "app/assets/fonts/OpenSans.hpp"
 
+namespace mbr {
+
 const unsigned char OPEN_SANS_REGULAR_TTF[] = {
 #include "app/assets/fonts/OpenSans-Regular.ttf.inc"
 };
@@ -19,3 +21,5 @@ const unsigned char OPEN_SANS_BOLD_ITALIC_TTF[] = {
 #include "app/assets/fonts/OpenSans-BoldItalic.ttf.inc"
 };
 const size_t OPEN_SANS_BOLD_ITALIC_TTF_SIZE = sizeof(OPEN_SANS_BOLD_ITALIC_TTF);
+
+} // namespace mbr

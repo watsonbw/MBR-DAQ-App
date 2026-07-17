@@ -4,6 +4,8 @@
 
 #include "app/context.hpp"
 
+namespace mbr {
+
 class Page {
   public:
     Page()          = default;
@@ -17,3 +19,5 @@ class Page {
     explicit Page(const std::shared_ptr<AppContext>& ctx) : m_Context{ctx} {}
     std::shared_ptr<AppContext> m_Context; // NOLINT
 };
+
+} // namespace mbr

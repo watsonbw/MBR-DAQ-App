@@ -9,7 +9,9 @@
 
 using namespace std::chrono;
 
-const uint64_t UNIX_1904_DIFF = 2082844800ULL;
+namespace mbr {
+
+const uint64_t UNIX_1904_DIFF = 2'082'844'800ULL;
 
 LocalTime::LocalTime() {
     const auto now = system_clock::now();
@@ -27,10 +29,10 @@ LocalTime::LocalTime() {
     Second = static_cast<uint64_t>(lt.tm_sec);
 
     const auto duration = now.time_since_epoch();
-    auto       ms       = duration_cast<milliseconds>(duration) % 1000;
+    auto       ms       = duration_cast<milliseconds>(duration) % 1'000;
     Millisecond         = static_cast<uint64_t>(ms.count());
 
-    auto us     = duration_cast<microseconds>(duration) % 1000;
+    auto us     = duration_cast<microseconds>(duration) % 1'000;
     Microsecond = static_cast<uint64_t>(us.count());
 }
 
@@ -40,10 +42,10 @@ LocalTime::LocalTime(
       Microsecond{microsecond} {}
 
 LocalTime::LocalTime(uint64_t micros) {
-    Microsecond                  = micros % 1000;
-    const uint64_t total_ms      = micros / 1000;
-    Millisecond                  = total_ms % 1000;
-    const uint64_t total_seconds = total_ms / 1000;
+    Microsecond                  = micros % 1'000;
+    const uint64_t total_ms      = micros / 1'000;
+    Millisecond                  = total_ms % 1'000;
+    const uint64_t total_seconds = total_ms / 1'000;
     Second                       = total_seconds % 60;
     const uint64_t total_minutes = total_seconds / 60;
     Minute                       = total_minutes % 60;
@@ -55,10 +57,10 @@ LocalTime LocalTime::Zero() noexcept { return LocalTime{0, 0, 0, 0, 0}; }
 
 uint64_t LocalTime::MicrosSinceMidnight() const {
     uint64_t acc = 0;
-    acc += Hour * 3600000000;
-    acc += Minute * 60000000;
-    acc += Second * 1000000;
-    acc += Millisecond * 1000;
+    acc += Hour * 3'600'000'000;
+    acc += Minute * 60'000'000;
+    acc += Second * 1'000'000;
+    acc += Millisecond * 1'000;
     acc += Microsecond;
     return acc;
 }
@@ -118,7 +120,7 @@ DateTime::DateTime() {
     localtime_r(&time_now, &lt);
 #endif
 
-    Year  = lt.tm_year + 1900;
+    Year  = lt.tm_year + 1'900;
     Month = lt.tm_mon + 1;
     Day   = lt.tm_mday;
 
@@ -126,8 +128,8 @@ DateTime::DateTime() {
     Local               = LocalTime{static_cast<uint64_t>(lt.tm_hour),
                       static_cast<uint64_t>(lt.tm_min),
                       static_cast<uint64_t>(lt.tm_sec),
-                      static_cast<uint64_t>((total_us / 1000) % 1000),
-                      static_cast<uint64_t>(total_us % 1000)};
+                      static_cast<uint64_t>((total_us / 1'000) % 1'000),
+                      static_cast<uint64_t>(total_us % 1'000)};
 }
 
 DateTime::DateTime(uint64_t creation_time_seconds) {
@@ -141,7 +143,7 @@ DateTime::DateTime(uint64_t creation_time_seconds) {
     localtime_r(&time_now, &lt);
 #endif
 
-    Year  = lt.tm_year + 1900;
+    Year  = lt.tm_year + 1'900;
     Month = lt.tm_mon + 1;
     Day   = lt.tm_mday;
 
@@ -159,7 +161,7 @@ std::optional<DateTime> DateTime::FromVideoMetadata(const std::string& path) {
 
     // Search the first 100KB for the desired metadata block
     f.seek(0);
-    TagLib::ByteVector data = f.readBlock(static_cast<size_t>(100 * 1024));
+    TagLib::ByteVector data = f.readBlock(static_cast<size_t>(100 * 1'024));
 
     const int pos = data.find("mvhd");
     if (pos == -1) { return std::nullopt; }
@@ -208,7 +210,8 @@ std::string DateTime::String(StringFormat fmt) const {
                            Local.Hour,
                            Local.Minute,
                            Local.Second);
-    default:
-        return std::string{};
+    default: return std::string{};
     }
 }
+
+} // namespace mbr

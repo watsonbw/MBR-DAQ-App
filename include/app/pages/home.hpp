@@ -7,6 +7,8 @@
 
 #include "app/pages/page.hpp"
 
+namespace mbr {
+
 class HomePage : public Page {
   public:
     explicit HomePage(const std::shared_ptr<AppContext>& ctx)
@@ -34,3 +36,5 @@ class HomePage : public Page {
     std::string m_SDName;
     std::string m_SetName;
 };
+
+} // namespace mbr

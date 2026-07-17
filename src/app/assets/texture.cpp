@@ -5,6 +5,8 @@
 
 #include "app/assets/texture.hpp"
 
+namespace mbr {
+
 ButtonTexture::ButtonTexture(const unsigned char* data, size_t size) {
     int   width, height, comp;
     auto* pixels = stbi_load_from_memory(data, static_cast<int>(size), &width, &height, &comp, 4);
@@ -58,3 +60,5 @@ void IconTexture::Free() {
     stbi_image_free(Pixels);
     *this = {};
 }
+
+} // namespace mbr

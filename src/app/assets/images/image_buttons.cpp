@@ -1,5 +1,7 @@
 #include "app/assets/images/image_buttons.hpp"
 
+namespace mbr {
+
 const unsigned char PLAY_BUTTON_PNG[] = {
 #include "app/assets/images/PlayButton.png.inc"
 };
@@ -14,3 +16,5 @@ const unsigned char STEP_BUTTON_PNG[] = {
 #include "app/assets/images/StepButton.png.inc"
 };
 const size_t STEP_BUTTON_PNG_SIZE = sizeof(STEP_BUTTON_PNG);
+
+} // namespace mbr

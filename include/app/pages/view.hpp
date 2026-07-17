@@ -22,6 +22,8 @@
 #include "app/assets/texture.hpp"
 #include "app/pages/page.hpp"
 
+namespace mbr {
+
 class ViewPage : public Page {
   public:
     using SelectedVideo   = std::optional<std::pair<std::string, std::optional<DateTime>>>;
@@ -129,3 +131,5 @@ class ViewPage : public Page {
 
     bool m_TimestampInputFocused{false};
 };
+
+} // namespace mbr

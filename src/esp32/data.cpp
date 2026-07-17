@@ -5,6 +5,8 @@
 
 #include "core/log.hpp"
 
+namespace mbr {
+
 void TelemetryData::InitJSON() {
     std::ifstream f(MBR_JSON);
     if (!f.is_open()) {
@@ -30,9 +32,7 @@ void TelemetryData::InitJSON() {
 }
 
 void TelemetryData::InitData() {
-    for (const auto& data : DataValues) {
-        Series.try_emplace(data.Key, std::vector<double>{});
-    }
+    for (const auto& data : DataValues) { Series.try_emplace(data.Key, std::vector<double>{}); }
 }
 
 void TelemetryData::WriteData(const std::string& identifier, const std::string& value) {
@@ -43,9 +43,7 @@ void TelemetryData::WriteData(const std::string& identifier, const std::string& 
 }
 
 void TelemetryData::Clear() {
-    for (auto& [key, values] : Series) {
-        values.clear();
-    }
+    for (auto& [key, values] : Series) { values.clear(); }
     m_Time.clear();
     m_TimeNoNormalMicros.clear();
     m_RawLines.clear();
@@ -58,3 +56,5 @@ void TelemetryData::SaveCurrentLine(const std::string& line) { m_CurrentLine = l
 void TelemetryData::WriteRawLine(const std::string& full_message) {
     m_RawLines.push_back(full_message);
 }
+
+} // namespace mbr

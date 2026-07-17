@@ -6,6 +6,8 @@
 #include <sokol_gfx.h>
 #include <sokol_imgui.h>
 
+namespace mbr {
+
 class ButtonTexture {
   public:
     ButtonTexture() = delete;
@@ -41,3 +43,5 @@ struct IconTexture {
     unsigned char* Pixels;
     size_t         Size;
 };
+
+} // namespace mbr

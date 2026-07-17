@@ -1,7 +1,8 @@
 #pragma once
 
-#include "esp32/serial.hpp"
 #include <memory>
+
+namespace mbr {
 
 struct AppContext;
 class GUI;
@@ -17,3 +18,5 @@ class App {
     std::unique_ptr<GUI>        m_GUI;
     std::shared_ptr<AppContext> m_Context;
 };
+
+} // namespace mbr

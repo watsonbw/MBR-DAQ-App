@@ -1,6 +1,4 @@
-#include <iostream>
 #include <map>
-#include <stop_token>
 #include <string>
 #include <thread>
 #include <vector>
@@ -11,9 +9,11 @@
 
 using namespace std::chrono_literals;
 
+namespace mbr {
+
 // Initializes and maintains Serial behavior
 void SerialManager::Start() {
-    if (m_Worker.joinable()) return;
+    if (m_Worker.joinable()) { return; }
     m_KeepRunning = true;
     m_Worker      = std::thread([this]() {
         while (m_KeepRunning) {
@@ -64,9 +64,7 @@ void SerialManager::CleanPorts() {
         }
         if (!found) { to_remove.push_back(port); }
     }
-    for (const auto& port : to_remove) {
-        ClosePort(port);
-    }
+    for (const auto& port : to_remove) { ClosePort(port); }
 }
 // Send Data to all selected Serial ports
 void SerialManager::SendData(const std::string& msg) {
@@ -82,9 +80,7 @@ void SerialManager::SendData(const std::string& msg) {
             failed.push_back(port);
         }
     }
-    for (const auto& port : failed) {
-        ClosePort(port);
-    }
+    for (const auto& port : failed) { ClosePort(port); }
 }
 
 void SerialManager::ReceiveData() {
@@ -103,9 +99,7 @@ void SerialManager::ReceiveData() {
             failed.push_back(port);
         }
     }
-    for (const auto& port : failed) {
-        ClosePort(port);
-    }
+    for (const auto& port : failed) { ClosePort(port); }
 }
 // Close selected port
 void SerialManager::ClosePort(const std::string& port) {
@@ -143,10 +137,10 @@ void SerialManager::ChangeBaudRate(uint32_t baud) {
 bool SerialManager::IsRunning() const { return m_Worker.joinable(); }
 
 void SerialManager::Stop() {
-    if (!m_Worker.joinable()) return;
+    if (!m_Worker.joinable()) { return; }
     m_KeepRunning = false;
     std::thread cleanup([worker = std::move(m_Worker), this]() mutable {
-        if (worker.joinable()) worker.join();
+        if (worker.joinable()) { worker.join(); }
         CloseAll();
     });
     cleanup.detach();
@@ -157,3 +151,5 @@ bool SerialManager::IsPortSelected(const std::string& port) { return m_ChosenPor
 void SerialManager::AddPort(const std::string& port) { m_ChosenPorts.insert(port); }
 
 void SerialManager::RemovePort(const std::string& port) { m_ChosenPorts.erase(port); }
+
+} // namespace mbr

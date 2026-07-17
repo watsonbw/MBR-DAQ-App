@@ -9,6 +9,8 @@
 #include "app/pages/shock.hpp"
 #include "app/style.hpp"
 
+namespace mbr {
+
 void ShockPage::OnEnter() { LOG_INFO("Entered ShockPage"); }
 void ShockPage::OnExit() { LOG_INFO("Exited ShockPage"); }
 
@@ -64,3 +66,5 @@ void ShockPage::DrawRHS(const std::vector<double>& time,
         }
     }
 }
+
+} // namespace mbr

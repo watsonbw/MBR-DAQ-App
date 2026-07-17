@@ -4,6 +4,8 @@
 #include <optional>
 #include <string>
 
+namespace mbr {
+
 struct LocalTime {
     explicit LocalTime();
     explicit LocalTime(uint64_t hour,
@@ -48,3 +50,5 @@ struct DateTime {
     [[nodiscard]] static std::optional<DateTime> FromVideoMetadata(const std::string& path);
     [[nodiscard]] std::string String(StringFormat fmt = StringFormat::DISPLAY) const;
 };
+
+} // namespace mbr

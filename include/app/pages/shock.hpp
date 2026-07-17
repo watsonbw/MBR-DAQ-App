@@ -5,6 +5,8 @@
 #include "app/common/text.hpp"
 #include "app/pages/page.hpp"
 
+namespace mbr {
+
 class ShockPage : public Page {
   public:
     explicit ShockPage(const std::shared_ptr<AppContext>& ctx) : Page{ctx}, m_TextUtils{ctx} {}
@@ -25,3 +27,5 @@ class ShockPage : public Page {
     TextUtils   m_TextUtils;
     std::string m_DownloadFDText;
 };
+
+} // namespace mbr

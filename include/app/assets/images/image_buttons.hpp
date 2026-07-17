@@ -1,5 +1,8 @@
 #pragma once
+
 #include <cstddef>
+
+namespace mbr {
 
 extern const unsigned char PLAY_BUTTON_PNG[];
 extern const size_t        PLAY_BUTTON_PNG_SIZE;
@@ -9,3 +12,5 @@ extern const size_t        PAUSE_BUTTON_PNG_SIZE;
 
 extern const unsigned char STEP_BUTTON_PNG[];
 extern const size_t        STEP_BUTTON_PNG_SIZE;
+
+} // namespace mbr

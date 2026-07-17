@@ -2,6 +2,8 @@
 
 #include <string>
 
+namespace mbr {
+
 // https://en.wikipedia.org/wiki/IPv4
 struct IpV4 {
     std::string First;
@@ -17,3 +19,5 @@ struct IpV4 {
 
 static const IpV4 DEFAULT_IP = {
     .First = "192", .Second = "168", .Third = "4", .Fourth = "1", .Port = "80"};
+
+} // namespace mbr
