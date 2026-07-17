@@ -1,8 +1,8 @@
 #include <cassert>
 #include <chrono>
-#include <format>
 #include <sstream>
 
+#include <fmt/format.h>
 #include <taglib/mp4/mp4file.h>
 
 #include "core/time.hpp"
@@ -75,10 +75,10 @@ double LocalTime::MinutesSinceMidnight() const {
 
 std::string LocalTime::String(bool high_precision) const {
     if (high_precision) {
-        return std::format(
+        return fmt::format(
             "{:02}:{:02}:{:02}.{:03}{:03}", Hour, Minute, Second, Millisecond, Microsecond);
     }
-    return std::format("{:02}:{:02}:{:02}", Hour, Minute, Second);
+    return fmt::format("{:02}:{:02}:{:02}", Hour, Minute, Second);
 }
 
 std::optional<LocalTime> LocalTime::FromString(const std::string& input) {
@@ -191,7 +191,7 @@ std::optional<DateTime> DateTime::FromVideoMetadata(const std::string& path) {
 std::string DateTime::String(StringFormat fmt) const {
     switch (fmt) {
     case StringFormat::DISPLAY:
-        return std::format("{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}{:03}",
+        return fmt::format("{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}{:03}",
                            Year,
                            Month,
                            Day,
@@ -201,7 +201,7 @@ std::string DateTime::String(StringFormat fmt) const {
                            Local.Millisecond,
                            Local.Microsecond);
     case StringFormat::TEXT_FILE:
-        return std::format("{:04}-{:02}-{:02}_{:02}-{:02}-{:02}",
+        return fmt::format("{:04}-{:02}-{:02}_{:02}-{:02}-{:02}",
                            Year,
                            Month,
                            Day,

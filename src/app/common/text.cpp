@@ -1,4 +1,3 @@
-#include <format>
 #include <fstream>
 
 // clang-format off
@@ -6,6 +5,8 @@
 #include <misc/cpp/imgui_stdlib.h>
 #include <misc/cpp/imgui_stdlib.cpp> // NOLINT
 // clang-format on
+
+#include <fmt/format.h>
 
 #include "core/log.hpp"
 #include "core/time.hpp"
@@ -52,9 +53,9 @@ void TextUtils::DrawDataDownloadButton(const std::vector<std::string>& raw_lines
             std::string    filepath;
             if (!buf.empty()) {
                 filepath =
-                    std::format("{}_{}.txt", dt.String(DateTime::StringFormat::TEXT_FILE), buf);
+                    fmt::format("{}_{}.txt", dt.String(DateTime::StringFormat::TEXT_FILE), buf);
             } else {
-                filepath = std::format("{}.txt", dt.String(DateTime::StringFormat::TEXT_FILE));
+                filepath = fmt::format("{}.txt", dt.String(DateTime::StringFormat::TEXT_FILE));
             }
 
             if (raw_lines.empty()) {

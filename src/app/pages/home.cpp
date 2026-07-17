@@ -1,5 +1,6 @@
 #include <imgui.h>
 
+#include <fmt/format.h>
 #include <sokol_app.h>
 
 #include "core/log.hpp"
@@ -52,25 +53,25 @@ void HomePage::DrawTopLHS() {
             "##sd_control", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
         LocalTime t;
         HEADER(TextUtils::DrawInputBox(
-            "##sd_name", m_SetName, std::format("Name ({})", t.String(0)).c_str()));
+            "##sd_name", m_SetName, fmt::format("Name ({})", t.String(false)).c_str()));
         ImGui::SameLine();
         if (ImGui::Button("Create File")) {
             if (m_SetName.empty()) {
-                m_SDName = t.String(0);
+                m_SDName = t.String(false);
             } else {
                 m_SDName = m_SetName;
             }
             for (char& c : m_SDName) {
-                if (c == ':' || c == ' ') c = '-';
+                if (c == ':' || c == ' ') { c = '-'; }
             }
-            const auto command = std::format("SD_START /{}.txt", m_SDName);
+            const auto command = fmt::format("SD_START /{}.txt", m_SDName);
             m_Context->Backend->SendCMD(command);
             m_SetName.clear();
         }
         ImGui::SameLine();
         ImGui::PushStyleColor(ImGuiCol_Button,
-                              m_Context->Backend->IsWriting ? ImVec4(0, 0.7f, 0, 1)
-                                                            : ImVec4(0.7f, 0, 0, 1));
+                              m_Context->Backend->IsWriting ? ImVec4(0, 0.7F, 0, 1)
+                                                            : ImVec4(0.7F, 0, 0, 1));
         if (ImGui::Button(m_Context->Backend->IsWriting ? "Write ON" : "Write OFF")) {
             if (m_Context->Backend->IsWriting) {
                 m_Context->Backend->SendCMD("SD_WRITE 0");
@@ -86,7 +87,7 @@ void HomePage::DrawTopLHS() {
                 if (m_Context->Backend->IsOpen) {
                     m_Context->Backend->SendCMD("SD_CLOSE");
                 } else {
-                    const auto command = std::format("SD_START /{}.txt", m_SDName);
+                    const auto command = fmt::format("SD_START /{}.txt", m_SDName);
                     m_Context->Backend->SendCMD(command);
                 }
             }

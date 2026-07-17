@@ -1,8 +1,9 @@
 #include <algorithm>
 #include <cstdint>
-#include <format>
 #include <optional>
 #include <string_view>
+
+#include <fmt/format.h>
 
 #include "core/ip.hpp"
 
@@ -36,5 +37,5 @@ bool IpV4::AnyEmpty() const {
 }
 
 std::string IpV4::String() const {
-    return std::format("{}.{}.{}.{}:{}", First, Second, Third, Fourth, Port);
+    return fmt::format("{}.{}.{}.{}:{}", First, Second, Third, Fourth, Port);
 }

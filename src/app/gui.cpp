@@ -9,6 +9,8 @@
 #include <sokol_imgui.h>
 #include <sokol_log.h>
 
+#include <fmt/format.h>
+
 #include "core/time.hpp"
 
 #include "app/assets/images/app_icon.hpp"
@@ -210,7 +212,7 @@ void GUI::DrawMainMenuBar() {
         const LocalTime lt;
         const auto      sync_time = lt.MicrosSinceMidnight();
 
-        const auto command = std::format("CMD SYNC {}", sync_time);
+        const auto command = fmt::format("CMD SYNC {}", sync_time);
         if (ImGui::Button("Sync Time")) { m_Context->Backend->SendCMD(command); }
 
         ImGui::Separator();

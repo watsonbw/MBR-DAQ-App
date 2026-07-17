@@ -1,6 +1,7 @@
 CompileFlags:
-  CompilationDatabase: build
-  Remove:
-    - -mlongcalls
-    - -fstrict-volatile-bitfields
-    - -fno-tree-switch-conversion
+    CompilationDatabase: build
+    Remove:
+        - -mlongcalls
+        - -fstrict-volatile-bitfields
+        - -fno-tree-switch-conversion
+        - -deprecated-declarations
