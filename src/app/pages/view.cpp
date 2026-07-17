@@ -6,10 +6,10 @@
 
 #include <tinyfiledialogs.h>
 
+#include <fmt/format.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <implot.h>
-
 #include <sokol_app.h>
 #include <sokol_gfx.h>
 #include <sokol_glue.h>
@@ -307,7 +307,7 @@ void ViewPage::DrawRHS() {
 
         const auto sync_lt = m_Context->Backend->Data.GetSyncLT();
         const auto plot_title =
-            sync_lt ? std::format("Data View from {}", sync_lt.value().String()) : "No Synced Time";
+            sync_lt ? fmt::format("Data View from {}", sync_lt.value().String()) : "No Synced Time";
 
         ViewPage::DynamicPlotLoop();
         if (const ImGuiScope<ImPlot::EndPlot, REQUIRE_ALIVE_FOR_DTOR> plot{

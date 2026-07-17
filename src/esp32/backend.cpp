@@ -1,11 +1,10 @@
 #include <cassert>
 #include <charconv>
-#include <format>
-#include <math.h>
 #include <string>
-
-#include <ixwebsocket/IXNetSystem.h>
 #include <type_traits>
+
+#include <fmt/format.h>
+#include <ixwebsocket/IXNetSystem.h>
 
 #include "app/context.hpp"
 
@@ -29,7 +28,7 @@ void TelemetryBackend::Start() {
     m_ShouldKill = false;
 
     assert(m_IpAddr.Valid());
-    const auto real_addr = std::format("ws://{}/ws", m_IpAddr.String());
+    const auto real_addr = fmt::format("ws://{}/ws", m_IpAddr.String());
     LOG_INFO("Attempting to connect with address: {}", real_addr);
     m_WebSocket.setUrl(real_addr);
 

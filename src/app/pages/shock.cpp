@@ -1,5 +1,4 @@
-#include <format>
-
+#include <fmt/format.h>
 #include <imgui.h>
 #include <implot.h>
 
@@ -53,7 +52,7 @@ void ShockPage::DrawRHS(const std::vector<double>& time,
     if (const ImGuiScope<ImGui::EndChild> graph{IMSCOPE_FN(ImGui::BeginChild("##graph"))}) {
         const auto sync_lt = m_Context->Backend->Data.GetSyncLT();
         const auto plot_title =
-            sync_lt ? std::format("Shock Travel Data from {}", sync_lt.value().String())
+            sync_lt ? fmt::format("Shock Travel Data from {}", sync_lt.value().String())
                     : "No Synced Time";
 
         if (const ImGuiScope<ImPlot::EndPlot, REQUIRE_ALIVE_FOR_DTOR> plot{

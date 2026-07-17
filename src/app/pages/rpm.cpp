@@ -1,5 +1,4 @@
-#include <format>
-
+#include <fmt/format.h>
 #include <imgui.h>
 #include <implot.h>
 
@@ -48,7 +47,7 @@ void RPMPage::DrawRHS(const std::vector<double>& time,
     if (const ImGuiScope<ImGui::EndChild> graph{IMSCOPE_FN(ImGui::BeginChild("##graph"))}) {
         const auto sync_lt = m_Context->Backend->Data.GetSyncLT();
         const auto plot_title =
-            sync_lt ? std::format("RPM Data from {}", sync_lt.value().String()) : "No Synced Time";
+            sync_lt ? fmt::format("RPM Data from {}", sync_lt.value().String()) : "No Synced Time";
 
         if (const ImGuiScope<ImPlot::EndPlot, REQUIRE_ALIVE_FOR_DTOR> plot{
                 IMSCOPE_FN(ImPlot::BeginPlot(plot_title.c_str(), {-1, -1}))}) {
