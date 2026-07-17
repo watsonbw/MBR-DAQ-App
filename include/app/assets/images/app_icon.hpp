@@ -1,10 +1,11 @@
 #pragma once
 
-#include <cstddef>
+#include <array>
 
 namespace mbr {
 
-extern const unsigned char BAJA_LOGO_PNG[];
-extern const size_t        BAJA_LOGO_PNG_SIZE;
+constexpr auto BAJA_LOGO_PNG = std::to_array<unsigned char>({
+#include "app/assets/images/BajaLogo.png.inc"
+});
 
 } // namespace mbr

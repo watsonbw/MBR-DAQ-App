@@ -55,7 +55,7 @@ sapp_desc GUI::GetSokolDesc() {
     desc.window_title = "Michigan Baja Racing - Data Suite";
 
     desc.icon.sokol_default    = false;
-    m_AppIcon                  = {BAJA_LOGO_PNG, BAJA_LOGO_PNG_SIZE};
+    m_AppIcon                  = {BAJA_LOGO_PNG.data(), BAJA_LOGO_PNG.size()};
     desc.icon.images[0].width  = m_AppIcon.Width;
     desc.icon.images[0].height = m_AppIcon.Height;
     desc.icon.images[0].pixels = {.ptr = m_AppIcon.Pixels, .size = m_AppIcon.Size};

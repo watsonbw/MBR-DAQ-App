@@ -1,16 +1,19 @@
 #pragma once
 
-#include <cstddef>
+#include <array>
 
 namespace mbr {
 
-extern const unsigned char PLAY_BUTTON_PNG[];
-extern const size_t        PLAY_BUTTON_PNG_SIZE;
+constexpr auto PLAY_BUTTON_PNG = std::to_array<unsigned char>({
+#include "app/assets/images/PlayButton.png.inc"
+});
 
-extern const unsigned char PAUSE_BUTTON_PNG[];
-extern const size_t        PAUSE_BUTTON_PNG_SIZE;
+constexpr auto PAUSE_BUTTON_PNG = std::to_array<unsigned char>({
+#include "app/assets/images/PauseButton.png.inc"
+});
 
-extern const unsigned char STEP_BUTTON_PNG[];
-extern const size_t        STEP_BUTTON_PNG_SIZE;
+constexpr auto STEP_BUTTON_PNG = std::to_array<unsigned char>({
+#include "app/assets/images/StepButton.png.inc"
+});
 
 } // namespace mbr
