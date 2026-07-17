@@ -5,11 +5,12 @@
 
 #include "app/assets/texture.hpp"
 
-namespace mbr {
+namespace mbr::assets {
 
-ButtonTexture::ButtonTexture(const unsigned char* data, size_t size) {
+button_texture::button_texture(gsl::span<const unsigned char> data) {
     int   width, height, comp;
-    auto* pixels = stbi_load_from_memory(data, static_cast<int>(size), &width, &height, &comp, 4);
+    auto* pixels = stbi_load_from_memory(
+        data.data(), static_cast<int>(data.size()), &width, &height, &comp, 4);
     assert(pixels);
 
     sg_image_desc img_desc           = {};
@@ -20,45 +21,43 @@ ButtonTexture::ButtonTexture(const unsigned char* data, size_t size) {
     img_desc.data.mip_levels[0].ptr  = pixels;
     img_desc.data.mip_levels[0].size = static_cast<size_t>(width * height) * comp;
 
-    m_Image = sg_make_image(&img_desc);
+    image_ = sg_make_image(&img_desc);
     stbi_image_free(pixels);
-    assert(m_Image.id != SG_INVALID_ID);
+    assert(image_.id != SG_INVALID_ID);
 
     sg_view_desc view_desc  = {};
-    view_desc.texture.image = m_Image;
+    view_desc.texture.image = image_;
 
-    m_View = sg_make_view(&view_desc);
-    assert(m_View.id != SG_INVALID_ID);
-    m_ImTexID = simgui_imtextureid(m_View);
+    view_ = sg_make_view(&view_desc);
+    assert(view_.id != SG_INVALID_ID);
+    im_tex_id_ = simgui_imtextureid(view_);
 }
 
-ButtonTexture::~ButtonTexture() {
-    if (m_View.id != SG_INVALID_ID) {
-        sg_destroy_view(m_View);
-        m_View.id = SG_INVALID_ID;
+button_texture::~button_texture() {
+    if (view_.id != SG_INVALID_ID) {
+        sg_destroy_view(view_);
+        view_.id = SG_INVALID_ID;
     }
 
-    if (m_Image.id != SG_INVALID_ID) {
-        sg_destroy_image(m_Image);
-        m_Image.id = SG_INVALID_ID;
-        m_ImTexID  = 0;
+    if (image_.id != SG_INVALID_ID) {
+        sg_destroy_image(image_);
+        image_.id  = SG_INVALID_ID;
+        im_tex_id_ = 0;
     }
 }
 
-IconTexture::IconTexture(const unsigned char* data, size_t size) {
-    int   width, height, comp;
-    auto* pixels = stbi_load_from_memory(data, static_cast<int>(size), &width, &height, &comp, 4);
-    assert(pixels);
-
-    Width  = width;
-    Height = height;
-    Pixels = pixels;
-    Size   = static_cast<size_t>(width * height) * comp;
+icon_texture::icon_texture(gsl::span<const unsigned char> data)
+    : pixels{stbi_load_from_memory(
+          data.data(), static_cast<int>(data.size()), &width, &height, &comp, 4)} {
+    size = static_cast<size_t>(width * height) * comp;
 }
 
-void IconTexture::Free() {
-    stbi_image_free(Pixels);
-    *this = {};
+void icon_texture::release() {
+    stbi_image_free(pixels);
+    width  = 0;
+    height = 0;
+    comp   = 0;
+    size   = 0;
 }
 
-} // namespace mbr
+} // namespace mbr::assets

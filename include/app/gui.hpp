@@ -43,7 +43,6 @@ class GUI {
 
     std::unique_ptr<Page>       m_CurrentPage;
     std::shared_ptr<AppContext> m_Context;
-    IconTexture                 m_AppIcon;
     std::string                 m_CommandBuf;
 };
 
