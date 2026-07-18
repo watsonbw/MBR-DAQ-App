@@ -1,31 +1,26 @@
 #include <cassert>
 
+#include <fmt/format.h>
+#include <gsl/util>
 #include <imgui.h>
 #include <implot.h>
-
 #include <sokol_app.h>
 #include <sokol_gfx.h>
 #include <sokol_glue.h>
 #include <sokol_imgui.h>
 #include <sokol_log.h>
 
-#include <fmt/format.h>
-
-#include "app/assets/texture.hpp"
-#include "core/time.hpp"
-
 #include "app/assets/images/app_icon.hpp"
-
-#include "app/common/scope.hpp"
+#include "app/assets/texture.hpp"
 #include "app/common/text.hpp"
 #include "app/gui.hpp"
-#include "app/style.hpp"
-
 #include "app/pages/home.hpp"
 #include "app/pages/rpm.hpp"
 #include "app/pages/serialmon.hpp"
 #include "app/pages/shock.hpp"
 #include "app/pages/view.hpp"
+#include "app/style.hpp"
+#include "core/time.hpp"
 
 using namespace std::chrono;
 
@@ -86,7 +81,8 @@ void GUI::OnInit() {
 }
 
 void GUI::OnFrame() {
-    const RenderScope<SokolEndFrame> frame{SokolStartFrame};
+    SokolStartFrame();
+    const auto cleanup_frame{gsl::finally(SokolEndFrame)};
     MAIN_MENU_BAR(DrawMainMenuBar());
 
     if (m_CurrentPage) {
@@ -94,18 +90,18 @@ void GUI::OnFrame() {
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
 
-        const ImGuiScope<ImGui::PopStyleVar, 1> sv1{
-            IMSCOPE_FN(ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0F))};
-        const ImGuiScope<ImGui::PopStyleVar, 1> sv2{
-            IMSCOPE_FN(ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0F))};
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0F);
+        const auto sv1{gsl::finally([] { ImGui::PopStyleVar(1); })};
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0F);
+        const auto sv2{gsl::finally([] { ImGui::PopStyleVar(1); })};
 
-        constexpr ImGuiWindowFlags window_flags =
+        static constexpr ImGuiWindowFlags window_flags =
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
             ImGuiWindowFlags_NoNavFocus;
 
-        if (const ImGuiScope<ImGui::End> page{
-                IMSCOPE_FN(ImGui::Begin("##currpage", nullptr, window_flags))}) {
+        if (ImGui::Begin("##currpage", nullptr, window_flags)) {
+            const auto cleanup_page{gsl::finally(ImGui::End)};
             m_CurrentPage->Update();
         }
     }
@@ -115,10 +111,7 @@ void GUI::OnFrame() {
 }
 
 void GUI::OnEvent(const sapp_event* event) { // NOLINT
-    switch (event->type) {
-    case SAPP_EVENTTYPE_QUIT_REQUESTED: sapp_quit(); break;
-    default:                            break;
-    }
+    if (event->type == SAPP_EVENTTYPE_QUIT_REQUESTED) { sapp_quit(); }
     simgui_handle_event(event);
 }
 
@@ -173,10 +166,10 @@ void GUI::ChangePage(PageType type) {
 
 void GUI::DrawMainMenuBar() {
     // DO NOT MOVE THIS BEGIN CALL IT WILL BREAK
-    if (const ImGuiScope<ImGui::EndMainMenuBar, REQUIRE_ALIVE_FOR_DTOR> main_menu_bar{
-            IMSCOPE_FN(ImGui::BeginMainMenuBar())}) {
-        if (const ImGuiScope<ImGui::EndMenu, REQUIRE_ALIVE_FOR_DTOR> menu{
-                IMSCOPE_FN(ImGui::BeginMenu("Menu"))}) {
+    if (ImGui::BeginMainMenuBar()) {
+        const auto cleanup_mm{gsl::finally(ImGui::EndMainMenuBar)};
+        if (ImGui::BeginMenu("Menu")) {
+            const auto cleanup_m{gsl::finally(ImGui::EndMenu)};
             MAIN_MENU_BAR_ITEM({
                 if (ImGui::MenuItem("Home")) { ChangePage(PageType::HOME); }
                 if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
