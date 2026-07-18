@@ -25,59 +25,60 @@
 
 using namespace std::chrono_literals;
 
-namespace mbr {
+namespace mbr::pages {
 
 static constexpr size_t MAX_QUEUE_SIZE = 10;
 
-const char* ViewPage::DataTypeString(DataView type) {
+const char* view_page::data_type_string(data_view_t type) {
     switch (type) {
-    case DataView::ALL:       return "All Data Shown";
-    case DataView::RPMDATA:   return "RPM Data Shown";
-    case DataView::SHOCKDATA: return "Shock Data Shown";
-    default:                  return "Unknown";
+    case data_view_t::ALL:       return "All Data Shown";
+    case data_view_t::RPMDATA:   return "RPM Data Shown";
+    case data_view_t::SHOCKDATA: return "Shock Data Shown";
+    default:                     return "Unknown";
     }
 }
 
-ViewPage::ViewPage(const std::shared_ptr<app_context>& ctx)
-    : Page{ctx}, m_IsAlive{std::make_shared<bool>(true)}, m_PlayButton{assets::PLAY_BUTTON_PNG},
-      m_PauseButton{assets::PAUSE_BUTTON_PNG}, m_StepButton{assets::STEP_BUTTON_PNG} {}
+view_page::view_page(const std::shared_ptr<app_context>& ctx)
+    : page_base{ctx}, is_alive_{std::make_shared<bool>(true)},
+      play_button_{assets::PLAY_BUTTON_PNG}, pause_button_{assets::PAUSE_BUTTON_PNG},
+      step_button_{assets::STEP_BUTTON_PNG} {}
 
-ViewPage::~ViewPage() {
-    *m_IsAlive = false;
-    Cleanup();
+view_page::~view_page() {
+    *is_alive_ = false;
+    cleanup();
     LOG_INFO("Destroyed ViewPage");
 }
 
-void ViewPage::OnEnter() { LOG_INFO("Entered ViewPage"); }
+void view_page::on_enter() { LOG_INFO("Entered ViewPage"); }
 
-void ViewPage::OnExit() {
-    Cleanup();
+void view_page::on_exit() {
+    cleanup();
     LOG_INFO("Exited ViewPage");
 }
 
-void ViewPage::Update() {
+void view_page::update() {
     if (ImGui::BeginTable(
             "##viewsplt", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
-        const auto cleanup{gsl::finally(ImGui::EndTable)};
+        const auto cleanup_table{gsl::finally(ImGui::EndTable)};
         ImGui::TableNextColumn();
-        DrawLHS();
+        draw_lhs();
         ImGui::TableNextColumn();
-        DrawRHS();
+        draw_rhs();
     }
 }
 
-void ViewPage::Cleanup() {
-    StopDecodingThread();
-    TryCleanupSokolResources();
+void view_page::cleanup() {
+    stop_decoding_thread();
+    try_cleanup_sokol_resources();
 }
 
-void ViewPage::DrawLHS() {
+void view_page::draw_lhs() {
     if (ImGui::BeginChild("##video")) {
-        const auto cleanup{gsl::finally(ImGui::EndChild)};
-        DrawOpenVideo();
-        if (m_VideoLoaded && !m_VideoPath.empty()) {
+        const auto cleanup_video{gsl::finally(ImGui::EndChild)};
+        draw_open_video();
+        if (video_loaded_ && !video_path_.empty()) {
             ImGui::SameLine();
-            const std::filesystem::path path{m_VideoPath};
+            const std::filesystem::path path{video_path_};
             const auto                  filename_str = path.filename().string();
             BOLD_DEFAULT(ImGui::TextUnformatted("Current File: "));
             ImGui::SameLine();
@@ -93,10 +94,10 @@ void ViewPage::DrawLHS() {
 
         ImGui::SetCursorPosX(right_x);
         if (ImGui::Button(label)) {
-            StopDecodingThread();
-            m_IsPlaying = false;
-            m_VideoPath = {};
-            TryCleanupSokolResources();
+            stop_decoding_thread();
+            is_playing_ = false;
+            video_path_ = {};
+            try_cleanup_sokol_resources();
             return;
         }
 
@@ -104,175 +105,176 @@ void ViewPage::DrawLHS() {
 
         // Playback logic and frame skipping can be ignored if paused
         bool is_timer_tick = false;
-        if (m_IsPlaying && m_VideoFPS > 0.0F) {
-            m_TimeAccumulator += ImGui::GetIO().DeltaTime;
-            const auto frames_to_advance = static_cast<int>(m_TimeAccumulator / m_FrameDuration);
+        if (is_playing_ && video_fps_ > 0.0F) {
+            time_accumulator_ += ImGui::GetIO().DeltaTime;
+            const auto frames_to_advance = static_cast<int>(time_accumulator_ / frame_duration_);
 
             // We have to handle skipped frames gracefully
             if (frames_to_advance > 0) {
-                m_TimeAccumulator -= (frames_to_advance * m_FrameDuration);
+                time_accumulator_ -= (frames_to_advance * frame_duration_);
 
                 if (frames_to_advance > 1) {
-                    const std::scoped_lock<std::mutex> lock{m_FrameMutex};
+                    const std::scoped_lock<std::mutex> lock{frame_mutex_};
 
                     const auto recoverable_frames =
-                        std::min(static_cast<int>(m_FrameQueue.size()) - 1, frames_to_advance - 1);
-                    for (auto i = 0; i < recoverable_frames; i++) { m_FrameQueue.pop_front(); }
+                        std::min(static_cast<int>(frame_queue_.size()) - 1, frames_to_advance - 1);
+                    for (auto i = 0; i < recoverable_frames; i++) { frame_queue_.pop_front(); }
                 }
 
                 is_timer_tick = true;
             }
         }
 
-        UpdateTexture(is_timer_tick);
+        update_texture(is_timer_tick);
 
-        if (m_VideoTexture.id != SG_INVALID_ID && m_TexWidth > 0) {
-            const float aspect  = static_cast<float>(m_TexWidth) / static_cast<float>(m_TexHeight);
+        if (video_texture_.id != SG_INVALID_ID && texture_width_ > 0) {
+            const float aspect =
+                static_cast<float>(texture_width_) / static_cast<float>(texture_height_);
             const float avail_w = ImGui::GetContentRegionAvail().x;
             const float h       = avail_w / aspect;
 
-            ImGui::Image(m_VideoTextureID, {avail_w, h});
-            m_VideoHovered = ImGui::IsItemHovered();
+            ImGui::Image(video_texture_id_, {avail_w, h});
+            video_hovered_ = ImGui::IsItemHovered();
         }
 
-        if (m_ThreadRunning) {
+        if (thread_running_) {
             ImGui::Separator();
-            DrawLHSControls();
+            draw_lhs_controls();
         }
     }
 }
 
-void ViewPage::DrawLHSControls() {
+void view_page::draw_lhs_controls() {
     // Slider
     const auto current_timestamp_min =
-        (static_cast<double>(m_CurrentFrameUI) / m_TotalFrames) * m_VideoLengthMin;
+        (static_cast<double>(current_frame_ui) / total_frames_) * video_length_minutes_;
     const auto current_timestamp = local_time::from_minutes(current_timestamp_min);
     const auto formatted_timestamp =
         current_timestamp.value_or(local_time::zero()).to_string(false);
-    ImGui::Text("%s / %s", formatted_timestamp.c_str(), m_VideoLengthFormatted.c_str());
+    ImGui::Text("%s / %s", formatted_timestamp.c_str(), video_length_formatted_.c_str());
     ImGui::SameLine();
 
     {
         ImGui::PushItemWidth(-1);
-        const auto cleanup{gsl::finally(ImGui::PopItemWidth)};
+        const auto cleanup_width{gsl::finally(ImGui::PopItemWidth)};
 
-        int slider_pos = m_CurrentFrameUI;
+        int slider_pos = current_frame_ui;
         if (ImGui::SliderInt(
-                "##scrub", &slider_pos, 0, m_TotalFrames, "", ImGuiSliderFlags_NoInput)) {
-            m_IsPlaying.exchange(false);
-            RequestSeek(slider_pos);
+                "##scrub", &slider_pos, 0, total_frames_, "", ImGuiSliderFlags_NoInput)) {
+            is_playing_.exchange(false);
+            request_seek(slider_pos);
         }
     }
 
     // Loop checkbox
-    bool looping = m_IsLooping;
-    if (ImGui::Checkbox("Looping", &looping)) { m_IsLooping = looping; }
+    bool looping = is_looping_;
+    if (ImGui::Checkbox("Looping", &looping)) { is_looping_ = looping; }
     ImGui::SameLine();
 
     // Play/Pause
-    const auto is_playing = m_IsPlaying.load();
+    const auto is_playing = is_playing_.load();
     const auto tint_color = context_->style.dark_mode ? ImVec4{1, 1, 1, 1} : ImVec4{-1, -1, -1, 1};
     ImGui::SameLine();
     if (ImGui::ImageButton("##stepback",
-                           m_StepButton.get_id(),
-                           m_ButtonSize,
+                           step_button_.get_id(),
+                           button_size_,
                            {1, 0},
                            {0, 1},
                            {0, 0, 0, 0},
                            tint_color)) {
-        RequestSeek(m_CurrentFrameUI - 5);
-        m_IsPlaying.exchange(false);
+        request_seek(current_frame_ui - 5);
+        is_playing_.exchange(false);
     }
     ImGui::SameLine();
     if (ImGui::ImageButton("##playpause",
-                           is_playing ? m_PauseButton.get_id() : m_PlayButton.get_id(),
-                           m_ButtonSize,
+                           is_playing ? pause_button_.get_id() : play_button_.get_id(),
+                           button_size_,
                            {0, 0},
                            {1, 1},
                            {0, 0, 0, 0},
                            tint_color)) {
-        m_IsPlaying.exchange(!is_playing);
-        m_TimeAccumulator = 0.0;
+        is_playing_.exchange(!is_playing);
+        time_accumulator_ = 0.0;
     }
     ImGui::SameLine();
     if (ImGui::ImageButton("##stepforward",
-                           m_StepButton.get_id(),
-                           m_ButtonSize,
+                           step_button_.get_id(),
+                           button_size_,
                            {0, 0},
                            {1, 1},
                            {0, 0, 0, 0},
                            tint_color)) {
-        RequestSeek(m_CurrentFrameUI + 5);
-        m_IsPlaying.exchange(false);
+        request_seek(current_frame_ui + 5);
+        is_playing_.exchange(false);
     }
 
     // Keyboard shortcuts
-    if (m_VideoHovered && !m_TimestampInputFocused && !context_->is_cmd_input_focused) {
+    if (video_hovered_ && !timestamp_input_focused_ && !context_->is_cmd_input_focused) {
         if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
-            m_IsPlaying.exchange(!is_playing);
-            m_TimeAccumulator = 0.0;
+            is_playing_.exchange(!is_playing);
+            time_accumulator_ = 0.0;
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow, false)) {
-            RequestSeek(m_CurrentFrameUI - 1);
-            m_IsPlaying.exchange(false);
+            request_seek(current_frame_ui - 1);
+            is_playing_.exchange(false);
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, false)) {
-            RequestSeek(m_CurrentFrameUI - 10);
-            m_IsPlaying.exchange(false);
+            request_seek(current_frame_ui - 10);
+            is_playing_.exchange(false);
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_RightArrow, false)) {
-            RequestSeek(m_CurrentFrameUI + 1);
-            m_IsPlaying.exchange(false);
+            request_seek(current_frame_ui + 1);
+            is_playing_.exchange(false);
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, false)) {
-            RequestSeek(m_CurrentFrameUI + 10);
-            m_IsPlaying.exchange(false);
+            request_seek(current_frame_ui + 10);
+            is_playing_.exchange(false);
         }
     }
 }
 
-void ViewPage::DrawOpenVideo() {
+void view_page::draw_open_video() {
     // Check if the file is ready
     {
-        const std::scoped_lock<std::mutex> lock{m_VideoPathMutex};
-        if (m_SelectedVideo) {
-            StopDecodingThread();
-            TryCleanupSokolResources();
-            m_VideoPath     = m_SelectedVideo.value().first;
-            m_SelectedVideo = std::nullopt;
-            m_VideoLoaded   = true;
-            StartDecodingThread();
+        const std::scoped_lock<std::mutex> lock{video_path_mutex_};
+        if (selected_video_) {
+            stop_decoding_thread();
+            try_cleanup_sokol_resources();
+            video_path_     = selected_video_.value().first;
+            selected_video_ = std::nullopt;
+            video_loaded_   = true;
+            start_decoding_thread();
         }
     }
 
     // File selection can happen at any point during playback
-    const bool is_disabled_by_video = m_VideoDialogRunning.load();
+    const bool is_disabled_by_video = video_dialog_running_.load();
     if (is_disabled_by_video) { ImGui::BeginDisabled(); }
     if (ImGui::Button("Open Video")) {
-        m_VideoDialogRunning = true;
-        m_VideoLoaded        = false;
-        m_DynamicPlotting    = false;
+        video_dialog_running_ = true;
+        video_loaded_         = false;
+        dynamic_plotting_     = false;
 
-        const auto  alive         = m_IsAlive;
-        const auto& previous_file = m_VideoPath;
+        const auto  alive         = is_alive_;
+        const auto& previous_file = video_path_;
 
         std::thread([this, alive, previous_file]() noexcept {
             try {
-                const auto path = OpenVideoFile(previous_file);
+                const auto path = open_video_file(previous_file);
                 if (*alive) {
-                    const std::scoped_lock<std::mutex> lock{m_VideoPathMutex};
-                    m_SelectedVideo      = path;
-                    m_VideoDialogRunning = false;
+                    const std::scoped_lock<std::mutex> lock{video_path_mutex_};
+                    selected_video_       = path;
+                    video_dialog_running_ = false;
                 }
             } catch (const std::exception& e) {
-                m_VideoDialogRunning = false;
+                video_dialog_running_ = false;
                 LOG_CRITICAL("Fatal error occurred while opening video dialog: {}", e.what());
             } catch (...) {
-                m_VideoDialogRunning = false;
+                video_dialog_running_ = false;
                 LOG_CRITICAL("Unknown fatal error occurred");
             }
         }).detach();
@@ -280,26 +282,26 @@ void ViewPage::DrawOpenVideo() {
     if (is_disabled_by_video) { ImGui::EndDisabled(); }
 }
 
-void ViewPage::DrawRHS() {
+void view_page::draw_rhs() {
     if (ImGui::BeginChild("##data")) {
         const auto cleanup_data{gsl::finally(ImGui::EndChild)};
         HEADER({
-            DrawOpenText();
+            draw_open_text();
             ImGui::SameLine();
-            DrawSyncVideoButtons();
+            draw_sync_video_buttons();
             ImGui::Separator();
         });
 
-        if (ImGui::BeginCombo("##DataView", DataTypeString(m_DataShow))) {
+        if (ImGui::BeginCombo("##DataView", data_type_string(data_show_))) {
             const auto cleanup_combo{gsl::finally(ImGui::EndCombo)};
-            if (ImGui::Selectable("All Data", m_DataShow == DataView::ALL)) {
-                m_DataShow = DataView::ALL;
+            if (ImGui::Selectable("All Data", data_show_ == data_view_t::ALL)) {
+                data_show_ = data_view_t::ALL;
             }
-            if (ImGui::Selectable("RPM", m_DataShow == DataView::RPMDATA)) {
-                m_DataShow = DataView::RPMDATA;
+            if (ImGui::Selectable("RPM", data_show_ == data_view_t::RPMDATA)) {
+                data_show_ = data_view_t::RPMDATA;
             }
-            if (ImGui::Selectable("Shock", m_DataShow == DataView::SHOCKDATA)) {
-                m_DataShow = DataView::SHOCKDATA;
+            if (ImGui::Selectable("Shock", data_show_ == data_view_t::SHOCKDATA)) {
+                data_show_ = data_view_t::SHOCKDATA;
             }
         }
 
@@ -310,87 +312,87 @@ void ViewPage::DrawRHS() {
                                     ? fmt::format("Data View from {}", sync_lt.value().to_string())
                                     : "No Synced Time";
 
-        ViewPage::DynamicPlotLoop();
+        view_page::dynamic_plot_loop();
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
             pages::utils::plot_if_non_empty<double>("Wheel Speed",
                                                     data.time_minutes_normalized,
                                                     data.series.at("W"),
-                                                    m_DataShow == DataView::ALL ||
-                                                        m_DataShow == DataView::RPMDATA,
-                                                    m_PlotPercent);
+                                                    data_show_ == data_view_t::ALL ||
+                                                        data_show_ == data_view_t::RPMDATA,
+                                                    plot_percent_);
             pages::utils::plot_if_non_empty<double>("Engine Speed",
                                                     data.time_minutes_normalized,
                                                     data.series.at("E"),
-                                                    m_DataShow == DataView::ALL ||
-                                                        m_DataShow == DataView::RPMDATA,
-                                                    m_PlotPercent);
+                                                    data_show_ == data_view_t::ALL ||
+                                                        data_show_ == data_view_t::RPMDATA,
+                                                    plot_percent_);
 
             pages::utils::plot_if_non_empty<double>("Front Right Shock Travel",
                                                     data.time_minutes_normalized,
                                                     data.series.at("FR"),
-                                                    m_DataShow == DataView::ALL ||
-                                                        m_DataShow == DataView::SHOCKDATA,
-                                                    m_PlotPercent);
+                                                    data_show_ == data_view_t::ALL ||
+                                                        data_show_ == data_view_t::SHOCKDATA,
+                                                    plot_percent_);
             pages::utils::plot_if_non_empty<double>("Front Left Shock Travel",
                                                     data.time_minutes_normalized,
                                                     data.series.at("FL"),
-                                                    m_DataShow == DataView::ALL ||
-                                                        m_DataShow == DataView::SHOCKDATA,
-                                                    m_PlotPercent);
+                                                    data_show_ == data_view_t::ALL ||
+                                                        data_show_ == data_view_t::SHOCKDATA,
+                                                    plot_percent_);
             pages::utils::plot_if_non_empty<double>("Rear Right Shock Travel",
                                                     data.time_minutes_normalized,
                                                     data.series.at("RR"),
-                                                    m_DataShow == DataView::ALL ||
-                                                        m_DataShow == DataView::SHOCKDATA,
-                                                    m_PlotPercent);
+                                                    data_show_ == data_view_t::ALL ||
+                                                        data_show_ == data_view_t::SHOCKDATA,
+                                                    plot_percent_);
             pages::utils::plot_if_non_empty<double>("Rear Left Shock Travel",
                                                     data.time_minutes_normalized,
                                                     data.series.at("RL"),
-                                                    m_DataShow == DataView::ALL ||
-                                                        m_DataShow == DataView::SHOCKDATA,
-                                                    m_PlotPercent);
+                                                    data_show_ == data_view_t::ALL ||
+                                                        data_show_ == data_view_t::SHOCKDATA,
+                                                    plot_percent_);
         }
     }
 }
 
-void ViewPage::DrawOpenText() {
+void view_page::draw_open_text() {
     // Check if the file is ready
     {
-        const std::scoped_lock<std::mutex> lock{m_TxtPathMutex};
-        if (m_SelectedTxt) {
-            m_TxtPath     = m_SelectedTxt.value();
-            m_SelectedTxt = std::nullopt;
-            m_TxtLoaded   = true;
-            LoadData();
+        const std::scoped_lock<std::mutex> lock{txt_path_mutex_};
+        if (selected_txt_) {
+            txt_path_     = selected_txt_.value();
+            selected_txt_ = std::nullopt;
+            txt_loaded_   = true;
+            load_data();
         }
     }
 
     // File selection can happen at any point during playback
-    const bool is_disabled_by_txt = m_TxtDialogRunning.load();
+    const bool is_disabled_by_txt = txt_dialog_running_.load();
     if (is_disabled_by_txt) { ImGui::BeginDisabled(); }
     if (ImGui::Button("Open Text File")) {
-        m_TxtDialogRunning = true;
-        m_TxtLoaded        = false;
-        m_DynamicPlotting  = false;
+        txt_dialog_running_ = true;
+        txt_loaded_         = false;
+        dynamic_plotting_   = false;
 
-        const auto alive         = m_IsAlive;
-        const auto previous_path = m_TxtPath;
+        const auto alive         = is_alive_;
+        const auto previous_path = txt_path_;
 
         std::thread([this, alive, previous_path]() noexcept {
             try {
-                const auto path = OpenTextFile(previous_path);
+                const auto path = open_text_file(previous_path);
                 if (*alive) {
-                    const std::scoped_lock<std::mutex> lock{m_TxtPathMutex};
-                    m_SelectedTxt                 = path;
-                    m_TxtDialogRunning            = false;
+                    const std::scoped_lock<std::mutex> lock{txt_path_mutex_};
+                    selected_txt_                 = path;
+                    txt_dialog_running_           = false;
                     context_->backend->is_logging = false;
                 }
             } catch (const std::exception& e) {
-                m_TxtDialogRunning = false;
+                txt_dialog_running_ = false;
                 LOG_CRITICAL("Fatal error occurred while opening text file dialog: {}", e.what());
             } catch (...) {
-                m_TxtDialogRunning = false;
+                txt_dialog_running_ = false;
                 LOG_CRITICAL("Unknown fatal error occurred");
             }
         }).detach();
@@ -398,30 +400,30 @@ void ViewPage::DrawOpenText() {
     if (is_disabled_by_txt) { ImGui::EndDisabled(); }
 }
 
-void ViewPage::DrawSyncVideoButtons() {
+void view_page::draw_sync_video_buttons() {
     if (ImGui::Button("Sync Data/Video")) {
-        m_DataAndTimeSync = false;
-        m_DynamicPlotting = false;
+        data_and_time_sync_ = false;
+        dynamic_plotting_   = false;
 
-        LoadData();
-        if (!m_TxtLoaded || !m_VideoLoaded) {
+        load_data();
+        if (!txt_loaded_ || !video_loaded_) {
             LOG_ERROR("Could not sync data with video:");
-            LOG_ERROR("  Text Loaded: {}", m_TxtLoaded);
-            LOG_ERROR("  Video Loaded: {}", m_VideoLoaded);
+            LOG_ERROR("  Text Loaded: {}", txt_loaded_);
+            LOG_ERROR("  Video Loaded: {}", video_loaded_);
             return;
         }
 
-        m_VideoCreationTimestamp = local_time::from_string(m_CreationMetadataTextBuf);
-        if (!m_VideoCreationTimestamp) {
+        video_creation_ts_ = local_time::from_string(creation_metadata_text_buf_);
+        if (!video_creation_ts_) {
             LOG_ERROR("Could not parse provided timestamp, or it was not provided.");
             return;
         }
-        m_CreationMetadataTextBuf = {};
+        creation_metadata_text_buf_ = {};
 
         std::optional<size_t> sync_time_pos;
         {
             const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
-            sync_time_pos = SyncDataVideo(context_->backend->data.get_time_no_normal());
+            sync_time_pos = sync_data_video(context_->backend->data.get_time_no_normal());
         }
 
         if (!sync_time_pos) {
@@ -430,18 +432,20 @@ void ViewPage::DrawSyncVideoButtons() {
         }
 
         // This is probably mega unsafe...
-        DeleteExtra(sync_time_pos.value());
-        RequestSeek(0);
+        delete_extra(sync_time_pos.value());
+        request_seek(0);
     }
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##extra_view", m_CreationMetadataTextBuf, "HH:MM:SS", 120.0F);
-    m_TimestampInputFocused = ImGui::IsItemFocused();
+    pages::utils::draw_input_box("##extra_view", creation_metadata_text_buf_, "HH:MM:SS", 120.0F);
+    timestamp_input_focused_ = ImGui::IsItemFocused();
     ImGui::SameLine();
-    if (ImGui::Checkbox("Dynamic Plotting", &m_DynamicPlotting)) { ViewPage::DynamicPlotStart(); }
+    if (ImGui::Checkbox("Dynamic Plotting", &dynamic_plotting_)) {
+        view_page::dynamic_plot_start();
+    }
 }
 
-ViewPage::SelectedVideo ViewPage::OpenVideoFile(const std::string& previous_file) {
+view_page::selected_video_t view_page::open_video_file(const std::string& previous_file) {
     const char* const filters[] = {"*.mp4", "*.mov"};
     const char*       path      = tinyfd_openFileDialog(
         "Select a video file", previous_file.c_str(), std::size(filters), filters, nullptr, 0);
@@ -463,7 +467,7 @@ ViewPage::SelectedVideo ViewPage::OpenVideoFile(const std::string& previous_file
     return std::pair{path, dt};
 }
 
-ViewPage::SelectedTxtFile ViewPage::OpenTextFile(const std::string& previous_file) {
+view_page::selected_txt_file_ view_page::open_text_file(const std::string& previous_file) {
     const char* const filters[] = {"*.txt"};
     const char*       path      = tinyfd_openFileDialog(
         "Select a text file", previous_file.c_str(), std::size(filters), filters, nullptr, 0);
@@ -476,10 +480,10 @@ ViewPage::SelectedTxtFile ViewPage::OpenTextFile(const std::string& previous_fil
     return path;
 }
 
-void ViewPage::LoadData() {
-    std::ifstream file{m_TxtPath};
+void view_page::load_data() {
+    std::ifstream file{txt_path_};
     if (!file.is_open()) {
-        LOG_ERROR("Failed to open file: {}", m_TxtPath);
+        LOG_ERROR("Failed to open file: {}", txt_path_);
         return;
     }
 
@@ -489,69 +493,69 @@ void ViewPage::LoadData() {
     while (file >> ident >> value) { context_->backend->data.write_data(ident, value); }
 }
 
-void ViewPage::RequestSeek(int frame_index) {
+void view_page::request_seek(int frame_index) {
     // Prevent stepping out of bounds, though it is recoverable
-    const auto clamped_frame = std::clamp(frame_index, 0, m_TotalFrames);
+    const auto clamped_frame = std::clamp(frame_index, 0, total_frames_);
 
     {
-        const std::scoped_lock<std::mutex> lock{m_FrameMutex};
-        m_FrameQueue.clear();
+        const std::scoped_lock<std::mutex> lock{frame_mutex_};
+        frame_queue_.clear();
     }
 
-    m_SeekTarget       = clamped_frame;
-    m_ForceUpdateFrame = true;
-    m_CurrentFrameUI   = clamped_frame;
-    m_QueueCV.notify_one();
+    seek_target_        = clamped_frame;
+    force_update_frame_ = true;
+    current_frame_ui    = clamped_frame;
+    queue_cv_.notify_one();
 }
 
-void ViewPage::StartDecodingThread() {
-    m_ThreadRunning = true;
-    m_IsPlaying     = true;
+void view_page::start_decoding_thread() {
+    thread_running_ = true;
+    is_playing_     = true;
 
-    m_DecodeThread = std::thread([this]() {
-        cv::VideoCapture cap{m_VideoPath};
+    decode_thread_ = std::thread([this]() {
+        cv::VideoCapture cap{video_path_};
         if (!cap.isOpened()) {
             LOG_ERROR("Failed to open video");
-            m_ThreadRunning = false;
+            thread_running_ = false;
             return;
         }
 
-        m_VideoFPS                 = cap.get(cv::CAP_PROP_FPS);
-        m_FrameDuration            = 1.0 / m_VideoFPS;
-        m_TotalFrames              = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
-        m_VideoLengthMin           = (static_cast<double>(m_TotalFrames) / m_VideoFPS) / 60.0;
-        const auto video_length_lt = local_time::from_minutes(m_VideoLengthMin);
+        video_fps_                 = cap.get(cv::CAP_PROP_FPS);
+        frame_duration_            = 1.0 / video_fps_;
+        total_frames_              = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
+        video_length_minutes_      = (static_cast<double>(total_frames_) / video_fps_) / 60.0;
+        const auto video_length_lt = local_time::from_minutes(video_length_minutes_);
         if (!video_length_lt) {
             LOG_ERROR("Video length could not be determined");
-            m_ThreadRunning = false;
+            thread_running_ = false;
             return;
         }
-        m_VideoLengthFormatted = video_length_lt.value().to_string(false);
+        video_length_formatted_ = video_length_lt.value().to_string(false);
 
         cv::Mat raw_frame, rgba_frame;
-        while (m_ThreadRunning) {
+        while (thread_running_) {
             // Keep the buffer from becoming too large
             {
-                std::unique_lock<std::mutex> lock{m_FrameMutex};
-                m_QueueCV.wait(lock, [this] {
-                    return m_FrameQueue.size() < MAX_QUEUE_SIZE || !m_ThreadRunning;
+                std::unique_lock<std::mutex> lock{frame_mutex_};
+                queue_cv_.wait(lock, [this] {
+                    return frame_queue_.size() < MAX_QUEUE_SIZE || !thread_running_;
                 });
 
-                if (!m_ThreadRunning) { break; }
+                if (!thread_running_) { break; }
             }
 
-            const int seek_req    = m_SeekTarget.exchange(-1);
+            const int seek_req    = seek_target_.exchange(-1);
             bool      just_sought = false;
 
             if (seek_req != -1) {
                 cap.set(cv::CAP_PROP_POS_FRAMES, seek_req);
-                const std::scoped_lock<std::mutex> lock{m_FrameMutex};
-                m_FrameQueue.clear();
+                const std::scoped_lock<std::mutex> lock{frame_mutex_};
+                frame_queue_.clear();
                 just_sought = true;
             }
 
             // Don't decode if seeking or paused to prevent jitters
-            if (!m_IsPlaying && !just_sought) {
+            if (!is_playing_ && !just_sought) {
                 std::this_thread::sleep_for(5ms);
                 continue;
             }
@@ -561,10 +565,10 @@ void ViewPage::StartDecodingThread() {
                 cv::cvtColor(raw_frame, rgba_frame, cv::COLOR_BGR2RGBA);
                 const cv::Mat frame_copy = rgba_frame.clone();
 
-                const std::scoped_lock<std::mutex> lock{m_FrameMutex};
-                m_FrameQueue.emplace_back(frame_copy, current_frame_index);
+                const std::scoped_lock<std::mutex> lock{frame_mutex_};
+                frame_queue_.emplace_back(frame_copy, current_frame_index);
             } else {
-                if (m_IsLooping) {
+                if (is_looping_) {
                     cap.set(cv::CAP_PROP_POS_FRAMES, 0);
                 } else {
                     std::this_thread::sleep_for(10ms);
@@ -574,86 +578,86 @@ void ViewPage::StartDecodingThread() {
     });
 }
 
-void ViewPage::StopDecodingThread() {
-    m_ThreadRunning = false;
-    m_QueueCV.notify_all();
-    if (m_DecodeThread.joinable()) { m_DecodeThread.join(); }
+void view_page::stop_decoding_thread() {
+    thread_running_ = false;
+    queue_cv_.notify_all();
+    if (decode_thread_.joinable()) { decode_thread_.join(); }
 
-    const std::scoped_lock<std::mutex> lock{m_FrameMutex};
-    m_FrameQueue.clear();
+    const std::scoped_lock<std::mutex> lock{frame_mutex_};
+    frame_queue_.clear();
 }
 
-void ViewPage::UpdateTexture(bool is_timer_tick) {
+void view_page::update_texture(bool is_timer_tick) {
     cv::Mat frame_to_upload;
     bool    frame_ready = false;
     {
-        const std::scoped_lock<std::mutex> lock{m_FrameMutex};
-        const bool                         should_consume = is_timer_tick || m_ForceUpdateFrame;
+        const std::scoped_lock<std::mutex> lock{frame_mutex_};
+        const bool                         should_consume = is_timer_tick || force_update_frame_;
 
-        if (should_consume && !m_FrameQueue.empty()) {
-            const auto p     = m_FrameQueue.front();
+        if (should_consume && !frame_queue_.empty()) {
+            const auto p     = frame_queue_.front();
             frame_to_upload  = p.first;
-            m_CurrentFrameUI = p.second;
+            current_frame_ui = p.second;
 
-            m_FrameQueue.pop_front();
+            frame_queue_.pop_front();
             frame_ready = true;
-            m_QueueCV.notify_one();
-            m_ForceUpdateFrame.exchange(false);
+            queue_cv_.notify_one();
+            force_update_frame_.exchange(false);
         }
     }
 
     if (frame_ready && !frame_to_upload.empty()) {
         // Initialize Texture if resolution changed or first run
-        if (m_TexWidth != frame_to_upload.cols || m_TexHeight != frame_to_upload.rows) {
-            TryCleanupSokolResources();
+        if (texture_width_ != frame_to_upload.cols || texture_height_ != frame_to_upload.rows) {
+            try_cleanup_sokol_resources();
 
-            m_TexWidth  = frame_to_upload.cols;
-            m_TexHeight = frame_to_upload.rows;
+            texture_width_  = frame_to_upload.cols;
+            texture_height_ = frame_to_upload.rows;
 
             sg_image_desc desc       = {};
-            desc.width               = m_TexWidth;
-            desc.height              = m_TexHeight;
+            desc.width               = texture_width_;
+            desc.height              = texture_height_;
             desc.pixel_format        = SG_PIXELFORMAT_RGBA8;
             desc.usage.stream_update = true;
             desc.num_mipmaps         = 1;
-            m_VideoTexture           = sg_make_image(&desc);
-            assert(m_VideoTexture.id != SG_INVALID_ID);
+            video_texture_           = sg_make_image(&desc);
+            assert(video_texture_.id != SG_INVALID_ID);
 
             sg_view_desc view_desc  = {};
-            view_desc.texture.image = m_VideoTexture;
-            m_VideoView             = sg_make_view(&view_desc);
-            m_VideoTextureID        = simgui_imtextureid(m_VideoView);
+            view_desc.texture.image = video_texture_;
+            video_view_             = sg_make_view(&view_desc);
+            video_texture_id_       = simgui_imtextureid(video_view_);
         }
 
         // Perform the actual upload
         sg_image_data data      = {};
         data.mip_levels[0].ptr  = frame_to_upload.data;
         data.mip_levels[0].size = frame_to_upload.total() * frame_to_upload.elemSize();
-        sg_update_image(m_VideoTexture, &data);
+        sg_update_image(video_texture_, &data);
     }
 };
 
-void ViewPage::TryCleanupSokolResources() {
-    if (m_VideoView.id != SG_INVALID_ID) {
-        sg_destroy_view(m_VideoView);
-        m_VideoView.id = SG_INVALID_ID;
+void view_page::try_cleanup_sokol_resources() {
+    if (video_view_.id != SG_INVALID_ID) {
+        sg_destroy_view(video_view_);
+        video_view_.id = SG_INVALID_ID;
     }
 
-    if (m_VideoTexture.id != SG_INVALID_ID) {
-        sg_destroy_image(m_VideoTexture);
-        m_VideoTexture.id = SG_INVALID_ID;
-        m_VideoTextureID  = 0;
+    if (video_texture_.id != SG_INVALID_ID) {
+        sg_destroy_image(video_texture_);
+        video_texture_.id = SG_INVALID_ID;
+        video_texture_id_ = 0;
     }
 
-    m_TexWidth  = 0;
-    m_TexHeight = 0;
+    texture_width_  = 0;
+    texture_height_ = 0;
 }
 
-std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<uint64_t>& micros_times) {
-    if (!m_VideoCreationTimestamp) { return std::nullopt; }
+std::optional<size_t> view_page::sync_data_video(const std::vector<uint64_t>& micros_times) {
+    if (!video_creation_ts_) { return std::nullopt; }
 
-    m_DataAndTimeSync                 = true;
-    const auto     creation_timestamp = m_VideoCreationTimestamp.value();
+    data_and_time_sync_               = true;
+    const auto     creation_timestamp = video_creation_ts_.value();
     const uint64_t micros_to_sync     = creation_timestamp.micros_since_midnight();
     const auto     it                 = std::ranges::lower_bound(micros_times, micros_to_sync);
     if (it != micros_times.end()) { return std::distance(micros_times.begin(), it); }
@@ -661,7 +665,7 @@ std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<uint64_t>& micro
     return std::nullopt;
 }
 
-void ViewPage::DeleteExtra(size_t erase_pos) {
+void view_page::delete_extra(size_t erase_pos) {
     const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
     std::vector<double>* const         data[] = {
         &context_->backend->data.time_,
@@ -682,31 +686,31 @@ void ViewPage::DeleteExtra(size_t erase_pos) {
     }
 }
 
-void ViewPage::DynamicPlotStart() {
-    if (m_DynamicPlotting) {
+void view_page::dynamic_plot_start() {
+    if (dynamic_plotting_) {
         const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
         const auto&                        time_vec = context_->backend->data.time_;
         if (time_vec.empty()) { return; }
         const auto begin_time_min = context_->backend->data.time_[0];
 
-        const double target_end_time = begin_time_min + m_VideoLengthMin;
+        const double target_end_time = begin_time_min + video_length_minutes_;
         const auto   end_it          = std::ranges::lower_bound(time_vec, target_end_time);
 
         const size_t end_idx = std::distance(time_vec.begin(), end_it);
         const size_t end_idy = std::distance(end_it, time_vec.end());
-        m_DataFromEnd        = static_cast<double>(end_idy);
-        m_DataCount          = static_cast<double>(end_idx);
-        m_PointsPer          = static_cast<double>(end_idx) / m_TotalFrames;
+        data_from_end_       = static_cast<double>(end_idy);
+        data_count_          = static_cast<double>(end_idx);
+        points_per_          = static_cast<double>(end_idx) / total_frames_;
     }
 }
 
-void ViewPage::DynamicPlotLoop() {
-    if (m_DynamicPlotting) {
-        m_PlotPercent = static_cast<size_t>(std::max(
-            m_DataCount - (m_PointsPer * m_CurrentFrameUI) + m_DataFromEnd, m_DataFromEnd));
+void view_page::dynamic_plot_loop() {
+    if (dynamic_plotting_) {
+        plot_percent_ = static_cast<size_t>(std::max(
+            data_count_ - (points_per_ * current_frame_ui) + data_from_end_, data_from_end_));
         return;
     }
-    m_PlotPercent = 0;
+    plot_percent_ = 0;
 }
 
-} // namespace mbr
+} // namespace mbr::pages

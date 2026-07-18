@@ -7,18 +7,17 @@
 #include "app/pages/page.hpp"
 #include "app/pages/utils.hpp"
 
-namespace mbr {
+namespace mbr::pages {
 
-struct app_context;
-
-class RPMPage : public Page {
+class rpm_page : public page_base {
   public:
-    explicit RPMPage(const std::shared_ptr<app_context>& ctx) : Page{ctx}, m_TextUtils{ctx} {}
-    ~RPMPage() override = default;
+    explicit rpm_page(const std::shared_ptr<app_context>& ctx)
+        : page_base{ctx}, text_drawer_{ctx} {}
+    ~rpm_page() override = default;
 
-    void OnEnter() override;
-    void OnExit() override;
-    void Update() override;
+    void on_enter() override;
+    void on_exit() override;
+    void update() override;
 
   private:
     void DrawLHS(const std::vector<std::string>& raw_lines);
@@ -27,8 +26,8 @@ class RPMPage : public Page {
                  gsl::span<const double> engine);
 
   private:
-    pages::utils::text_drawers m_TextUtils;
-    std::string                m_DownloadFDText;
+    pages::utils::text_drawers text_drawer_;
+    std::string                download_fd_text_;
 };
 
-} // namespace mbr
+} // namespace mbr::pages

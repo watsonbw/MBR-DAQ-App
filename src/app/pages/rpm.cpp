@@ -10,12 +10,12 @@
 #include "app/pages/utils.hpp"
 #include "app/style.hpp"
 
-namespace mbr {
+namespace mbr::pages {
 
-void RPMPage::OnEnter() { LOG_INFO("Entered RPMPage"); }
-void RPMPage::OnExit() { LOG_INFO("Exited RPMPage"); }
+void rpm_page::on_enter() { LOG_INFO("Entered RPMPage"); }
+void rpm_page::on_exit() { LOG_INFO("Exited RPMPage"); }
 
-void RPMPage::Update() {
+void rpm_page::update() {
     if (ImGui::BeginTable(
             "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
         const auto cleanup_split{gsl::finally(ImGui::EndTable)};
@@ -28,26 +28,26 @@ void RPMPage::Update() {
     }
 }
 
-void RPMPage::DrawLHS(const std::vector<std::string>& raw_lines) {
+void rpm_page::DrawLHS(const std::vector<std::string>& raw_lines) {
     if (ImGui::BeginChild("##datalog")) {
         const auto cleanup_data{gsl::finally(ImGui::EndChild)};
         BOLD_HEADER(ImGui::Text("Data Log"));
 
         ImGui::Separator();
-        m_TextUtils.start_logging_button();
+        text_drawer_.start_logging_button();
         ImGui::SameLine();
-        m_TextUtils.data_download_button(raw_lines, m_DownloadFDText);
+        text_drawer_.data_download_button(raw_lines, download_fd_text_);
         ImGui::SameLine();
 
-        HEADER(pages::utils::draw_input_box("##extra_rpm", m_DownloadFDText, "File descriptor"));
+        HEADER(pages::utils::draw_input_box("##extra_rpm", download_fd_text_, "File descriptor"));
         ImGui::Separator();
         pages::utils::draw_data_log(raw_lines);
     }
 }
 
-void RPMPage::DrawRHS(gsl::span<const double> time,
-                      gsl::span<const double> wheel,
-                      gsl::span<const double> engine) {
+void rpm_page::DrawRHS(gsl::span<const double> time,
+                       gsl::span<const double> wheel,
+                       gsl::span<const double> engine) {
     if (ImGui::BeginChild("##graph")) {
         const auto cleanup_graph{gsl::finally(ImGui::EndChild)};
         const auto sync_lt    = context_->backend->data.get_sync_lt();
@@ -63,4 +63,4 @@ void RPMPage::DrawRHS(gsl::span<const double> time,
     }
 }
 
-} // namespace mbr
+} // namespace mbr::pages

@@ -22,114 +22,114 @@
 #include "app/assets/texture.hpp"
 #include "app/pages/page.hpp"
 
-namespace mbr {
+namespace mbr::pages {
 
-class ViewPage : public Page {
+class view_page : public page_base {
   public:
-    using SelectedVideo   = std::optional<std::pair<std::string, std::optional<date_time>>>;
-    using SelectedTxtFile = std::optional<std::string>;
+    using selected_video_t   = std::optional<std::pair<std::string, std::optional<date_time>>>;
+    using selected_txt_file_ = std::optional<std::string>;
 
-    enum class DataView : uint8_t {
+    enum class data_view_t : uint8_t {
         ALL,
         RPMDATA,
         SHOCKDATA,
     };
 
-    static const char* DataTypeString(DataView type);
+    [[nodiscard]] static const char* data_type_string(data_view_t type);
 
   public:
-    explicit ViewPage(const std::shared_ptr<app_context>& ctx);
-    ~ViewPage() override;
+    explicit view_page(const std::shared_ptr<app_context>& ctx);
+    ~view_page() override;
 
-    void OnEnter() override;
-    void OnExit() override;
-    void Update() override;
-
-  private:
-    void Cleanup();
-
-    void DrawLHS();
-    void DrawLHSControls();
-    void DrawOpenVideo();
-
-    void DrawRHS();
-    void DrawOpenText();
-    void DrawSyncVideoButtons();
-
-    static SelectedVideo OpenVideoFile(const std::string& previous_file);
-    void                 RequestSeek(int frame_index);
-
-    static SelectedTxtFile OpenTextFile(const std::string& previous_file);
-    void                   LoadData();
-    std::optional<size_t>  SyncDataVideo(const std::vector<uint64_t>& micros_times);
-    void                   DeleteExtra(size_t erase_pos);
-    void                   DynamicPlotStart();
-    void                   DynamicPlotLoop();
-
-    void StartDecodingThread();
-    void StopDecodingThread();
-    void UpdateTexture(bool is_timer_tick);
-
-    void TryCleanupSokolResources();
+    void on_enter() override;
+    void on_exit() override;
+    void update() override;
 
   private:
-    std::shared_ptr<bool> m_IsAlive;
+    void cleanup();
 
-    std::string               m_VideoPath;
-    std::optional<local_time> m_VideoCreationTimestamp;
-    std::string               m_CreationMetadataTextBuf;
-    std::atomic<bool>         m_VideoDialogRunning{false};
-    std::mutex                m_VideoPathMutex;
-    SelectedVideo             m_SelectedVideo;
-    std::string               m_InputTime;
-    bool                      m_VideoLoaded{false};
-    bool                      m_VideoHovered{false};
+    void draw_lhs();
+    void draw_lhs_controls();
+    void draw_open_video();
 
-    bool   m_DynamicPlotting{false};
-    size_t m_PlotPercent;
-    double m_PointsPer{0.0};
-    double m_DataCount{0.0};
-    double m_DataFromEnd{0.0};
+    void draw_rhs();
+    void draw_open_text();
+    void draw_sync_video_buttons();
 
-    std::string       m_TxtPath;
-    std::atomic<bool> m_TxtDialogRunning{false};
-    std::mutex        m_TxtPathMutex;
-    SelectedTxtFile   m_SelectedTxt;
-    bool              m_TxtLoaded{false};
-    bool              m_DataAndTimeSync{false};
+    static selected_video_t open_video_file(const std::string& previous_file);
+    void                    request_seek(int frame_index);
 
-    int         m_TotalFrames{0};
-    double      m_VideoFPS{0.0};
-    double      m_VideoLengthMin{0.0};
-    std::string m_VideoLengthFormatted;
-    double      m_FrameDuration{0.0};
-    double      m_TimeAccumulator{0.0};
-    int         m_CurrentFrameUI{0};
+    static selected_txt_file_ open_text_file(const std::string& previous_file);
+    void                      load_data();
+    std::optional<size_t>     sync_data_video(const std::vector<uint64_t>& micros_times);
+    void                      delete_extra(size_t erase_pos);
+    void                      dynamic_plot_start();
+    void                      dynamic_plot_loop();
 
-    std::atomic<bool> m_IsPlaying{false};
-    std::atomic<bool> m_IsLooping{false};
-    std::atomic<int>  m_SeekTarget{-1};
-    std::atomic<bool> m_ForceUpdateFrame{false};
-    DataView          m_DataShow{DataView::ALL};
+    void start_decoding_thread();
+    void stop_decoding_thread();
+    void update_texture(bool is_timer_tick);
 
-    std::thread                         m_DecodeThread;
-    std::atomic<bool>                   m_ThreadRunning{false};
-    std::mutex                          m_FrameMutex;
-    std::deque<std::pair<cv::Mat, int>> m_FrameQueue;
-    std::condition_variable             m_QueueCV;
+    void try_cleanup_sokol_resources();
 
-    ImVec2                 m_ButtonSize{24, 24};
-    assets::button_texture m_PlayButton;
-    assets::button_texture m_PauseButton;
-    assets::button_texture m_StepButton;
+  private:
+    std::shared_ptr<bool> is_alive_;
 
-    sg_image    m_VideoTexture{SG_INVALID_ID};
-    sg_view     m_VideoView{SG_INVALID_ID};
-    ImTextureID m_VideoTextureID{0};
-    int         m_TexWidth{0};
-    int         m_TexHeight{0};
+    std::string               video_path_;
+    std::optional<local_time> video_creation_ts_;
+    std::string               creation_metadata_text_buf_;
+    std::atomic<bool>         video_dialog_running_{false};
+    std::mutex                video_path_mutex_;
+    selected_video_t          selected_video_;
+    std::string               input_time_;
+    bool                      video_loaded_{false};
+    bool                      video_hovered_{false};
 
-    bool m_TimestampInputFocused{false};
+    bool   dynamic_plotting_{false};
+    size_t plot_percent_;
+    double points_per_{0.0};
+    double data_count_{0.0};
+    double data_from_end_{0.0};
+
+    std::string        txt_path_;
+    std::atomic<bool>  txt_dialog_running_{false};
+    std::mutex         txt_path_mutex_;
+    selected_txt_file_ selected_txt_;
+    bool               txt_loaded_{false};
+    bool               data_and_time_sync_{false};
+
+    int         total_frames_{0};
+    double      video_fps_{0.0};
+    double      video_length_minutes_{0.0};
+    std::string video_length_formatted_;
+    double      frame_duration_{0.0};
+    double      time_accumulator_{0.0};
+    int         current_frame_ui{0};
+
+    std::atomic<bool> is_playing_{false};
+    std::atomic<bool> is_looping_{false};
+    std::atomic<int>  seek_target_{-1};
+    std::atomic<bool> force_update_frame_{false};
+    data_view_t       data_show_{data_view_t::ALL};
+
+    std::thread                         decode_thread_;
+    std::atomic<bool>                   thread_running_{false};
+    std::mutex                          frame_mutex_;
+    std::deque<std::pair<cv::Mat, int>> frame_queue_;
+    std::condition_variable             queue_cv_;
+
+    ImVec2                 button_size_{24, 24};
+    assets::button_texture play_button_;
+    assets::button_texture pause_button_;
+    assets::button_texture step_button_;
+
+    sg_image    video_texture_{SG_INVALID_ID};
+    sg_view     video_view_{SG_INVALID_ID};
+    ImTextureID video_texture_id_{0};
+    int         texture_width_{0};
+    int         texture_height_{0};
+
+    bool timestamp_input_focused_{false};
 };
 
-} // namespace mbr
+} // namespace mbr::pages

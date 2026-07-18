@@ -7,33 +7,33 @@
 
 #include "app/pages/page.hpp"
 
-namespace mbr {
+namespace mbr::pages {
 
-class HomePage : public Page {
+class home_page : public page_base {
   public:
-    explicit HomePage(const std::shared_ptr<app_context>& ctx) : Page{ctx} {}
-    ~HomePage() override = default;
+    explicit home_page(const std::shared_ptr<app_context>& ctx) : page_base{ctx} {}
+    ~home_page() override = default;
 
-    void OnEnter() override;
-    void OnExit() override;
-    void Update() override;
-
-  private:
-    void DrawTopLHS();
-    void DrawTopRHS();
-
-    void DrawBottomLHS();
-    void DrawBottomRHS();
-    void DrawIPControls();
-    void DrawCredentialControls();
+    void on_enter() override;
+    void on_exit() override;
+    void update() override;
 
   private:
-    ipv4_t      m_PreviousIp;
-    ipv4_t      m_IpBuf;
-    std::string m_UsernameBuf;
-    std::string m_PasswordBuf;
-    std::string m_SDName;
-    std::string m_SetName;
+    void draw_top_lhs();
+    void draw_top_rhs();
+
+    void draw_bottom_lhs();
+    void draw_bottom_rhs();
+    void draw_ip_controls();
+    void draw_credential_controls();
+
+  private:
+    ipv4_t      previous_ip_;
+    ipv4_t      ip_buf_;
+    std::string username_buf_;
+    std::string password_buf_;
+    std::string sd_name_;
+    std::string set_name_;
 };
 
-} // namespace mbr
+} // namespace mbr::pages

@@ -6,9 +6,9 @@
 #include "app/pages/page.hpp"
 #include "app/pages/utils.hpp"
 
-namespace mbr {
+namespace mbr::pages {
 
-enum class BaudRate : uint32_t {
+enum class baud_rate : uint32_t {
     THREE           = 300,
     TWELVE          = 1'200,
     TWENTYFOUR      = 2'400,
@@ -20,24 +20,24 @@ enum class BaudRate : uint32_t {
     ONEONEFIFTYTWO  = 115'200,
 };
 
-class SerialPage : public Page {
+class serial_page : public page_base {
   public:
-    explicit SerialPage(const std::shared_ptr<app_context>& ctx) : Page{ctx}, m_TextUtils{ctx} {}
-    ~SerialPage() override = default;
+    explicit serial_page(const std::shared_ptr<app_context>& ctx)
+        : page_base{ctx}, text_drawer_{ctx} {}
+    ~serial_page() override = default;
 
-    void OnEnter() override;
-    void OnExit() override;
-    void Update() override;
-
-  private:
-    void DrawTopLHS();
-    void DrawTopRHS();
-
-    void DrawBottom();
+    void on_enter() override;
+    void on_exit() override;
+    void update() override;
 
   private:
-    pages::utils::text_drawers m_TextUtils;
-    std::string                m_SerialBuffer;
+    void draw_top_lhs();
+    void draw_top_rhs();
+    void draw_bottom();
+
+  private:
+    pages::utils::text_drawers text_drawer_;
+    std::string                serial_buffer_;
 };
 
-} // namespace mbr
+} // namespace mbr::pages

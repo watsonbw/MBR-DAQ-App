@@ -9,50 +9,50 @@
 #include "app/pages/utils.hpp"
 #include "app/style.hpp"
 
-namespace mbr {
+namespace mbr::pages {
 
-void ShockPage::OnEnter() { LOG_INFO("Entered ShockPage"); }
-void ShockPage::OnExit() { LOG_INFO("Exited ShockPage"); }
+void shock_page::on_enter() { LOG_INFO("Entered ShockPage"); }
+void shock_page::on_exit() { LOG_INFO("Exited ShockPage"); }
 
-void ShockPage::Update() {
+void shock_page::update() {
     if (ImGui::BeginTable(
             "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
         const auto cleanup_split{gsl::finally(ImGui::EndTable)};
         const auto data = context_->backend->pack_data();
 
         ImGui::TableNextColumn();
-        DrawLHS(data.raw_lines);
+        draw_lhs(data.raw_lines);
         ImGui::TableNextColumn();
-        DrawRHS(data.time_minutes_normalized,
-                data.series.at("FR"),
-                data.series.at("FL"),
-                data.series.at("RR"),
-                data.series.at("RL"));
+        draw_rhs(data.time_minutes_normalized,
+                 data.series.at("FR"),
+                 data.series.at("FL"),
+                 data.series.at("RR"),
+                 data.series.at("RL"));
     }
 }
 
-void ShockPage::DrawLHS(const std::vector<std::string>& raw_lines) {
+void shock_page::draw_lhs(const std::vector<std::string>& raw_lines) {
     if (ImGui::BeginChild("##datalog")) {
         const auto cleanup_data{gsl::finally(ImGui::EndChild)};
         BOLD_HEADER(ImGui::Text("Data Log"));
 
         ImGui::Separator();
-        m_TextUtils.start_logging_button();
+        text_utils_.start_logging_button();
         ImGui::SameLine();
-        m_TextUtils.data_download_button(raw_lines, m_DownloadFDText);
+        text_utils_.data_download_button(raw_lines, download_fd_text_);
         ImGui::SameLine();
 
-        HEADER(pages::utils::draw_input_box("##extra_shock", m_DownloadFDText, "File descriptor"));
+        HEADER(pages::utils::draw_input_box("##extra_shock", download_fd_text_, "File descriptor"));
         ImGui::Separator();
         pages::utils::draw_data_log(raw_lines);
     }
 }
 
-void ShockPage::DrawRHS(gsl::span<const double> time,
-                        gsl::span<const double> fr,
-                        gsl::span<const double> fl,
-                        gsl::span<const double> br,
-                        gsl::span<const double> bl) {
+void shock_page::draw_rhs(gsl::span<const double> time,
+                          gsl::span<const double> fr,
+                          gsl::span<const double> fl,
+                          gsl::span<const double> br,
+                          gsl::span<const double> bl) {
     if (ImGui::BeginChild("##graph")) {
         const auto cleanup_graph{gsl::finally(ImGui::EndChild)};
         const auto sync_lt = context_->backend->data.get_sync_lt();
@@ -70,4 +70,4 @@ void ShockPage::DrawRHS(gsl::span<const double> time,
     }
 }
 
-} // namespace mbr
+} // namespace mbr::pages

@@ -11,6 +11,8 @@
 
 namespace mbr {
 
+namespace pages { class view_page; } // namespace pages
+
 struct app_context;
 
 using json = nlohmann::json;
@@ -68,7 +70,7 @@ class telemetry_data {
     double                    sync_start_;
     std::optional<local_time> sync_lt_;
 
-    friend class ViewPage;
+    friend class pages::view_page;
 };
 
 } // namespace mbr
