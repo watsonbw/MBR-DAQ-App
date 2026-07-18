@@ -5,12 +5,12 @@
 #include "app/style.hpp"
 #include "core/log.hpp"
 
-namespace mbr {
+namespace mbr::pages {
 
-void SerialPage::OnEnter() { LOG_INFO("Entered SerialPage"); }
-void SerialPage::OnExit() { LOG_INFO("Exited SerialPage"); }
+void serial_page::on_enter() { LOG_INFO("Entered SerialPage"); }
+void serial_page::on_exit() { LOG_INFO("Exited SerialPage"); }
 
-void SerialPage::Update() {
+void serial_page::update() {
     const float full_height   = ImGui::GetContentRegionAvail().y;
     const float top_height    = full_height * 0.66F;
     const float bottom_height = full_height - top_height;
@@ -20,26 +20,26 @@ void SerialPage::Update() {
         if (ImGui::BeginTable("##topsplt", 2, ImGuiTableFlags_BordersInnerV)) {
             const auto cleanup_split{gsl::finally(ImGui::EndTable)};
             ImGui::TableNextColumn();
-            DrawTopLHS();
+            draw_top_lhs();
             ImGui::TableNextColumn();
-            DrawTopRHS();
+            draw_top_rhs();
         }
     }
     ImGui::Separator();
 
     if (ImGui::BeginChild("##botsec", {0, bottom_height})) {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
-        DrawBottom();
+        draw_bottom();
     }
 }
 
-void SerialPage::DrawTopLHS() {
+void serial_page::draw_top_lhs() {
     if (ImGui::BeginChild("##datalog")) {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
         BOLD_HEADER(ImGui::Text("Serial Monitor Settings"));
 
         ImGui::Separator();
-        if (m_TextUtils.start_serial_button()) {
+        if (text_drawer_.start_serial_button()) {
             if (!context_->backend->serial_manager.is_running()) {
                 context_->backend->serial_manager.start();
             } else {
@@ -47,7 +47,7 @@ void SerialPage::DrawTopLHS() {
             }
         }
         ImGui::SameLine();
-        m_TextUtils.send_data_button();
+        text_drawer_.send_data_button();
         if (context_->backend->serial_manager.should_send_data) {
             context_->backend->serial_manager.send_data(context_->backend->data.get_current_line());
         }
@@ -104,7 +104,7 @@ void SerialPage::DrawTopLHS() {
     }
 }
 
-void SerialPage::DrawTopRHS() {
+void serial_page::draw_top_rhs() {
     BOLD_HEADER(ImGui::Text("LOG Info"));
 
     ImGui::Separator();
@@ -117,14 +117,14 @@ void SerialPage::DrawTopRHS() {
     }
 }
 
-void SerialPage::DrawBottom() {
+void serial_page::draw_bottom() {
     if (pages::utils::draw_input_box("##command",
-                                     m_SerialBuffer,
+                                     serial_buffer_,
                                      "Send Serial Data Here",
                                      1900.0F,
                                      ImGuiInputTextFlags_EnterReturnsTrue)) {
-        context_->backend->serial_manager.send_data(m_SerialBuffer + "\n");
-        m_SerialBuffer = {};
+        context_->backend->serial_manager.send_data(serial_buffer_ + "\n");
+        serial_buffer_ = {};
         ImGui::SetKeyboardFocusHere(-1);
     }
     if (ImGui::BeginChild("##datalog")) {
@@ -134,4 +134,4 @@ void SerialPage::DrawBottom() {
     }
 }
 
-} // namespace mbr
+} // namespace mbr::pages

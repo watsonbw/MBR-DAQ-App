@@ -9,12 +9,12 @@
 #include "app/pages/utils.hpp"
 #include "app/style.hpp"
 
-namespace mbr {
+namespace mbr::pages {
 
-void HomePage::OnEnter() { LOG_INFO("Entered HomePage"); }
-void HomePage::OnExit() { LOG_INFO("Exited HomePage"); }
+void home_page::on_enter() { LOG_INFO("Entered HomePage"); }
+void home_page::on_exit() { LOG_INFO("Exited HomePage"); }
 
-void HomePage::Update() {
+void home_page::update() {
     const float full_height   = ImGui::GetContentRegionAvail().y;
     const float top_height    = full_height * 0.66F;
     const float bottom_height = full_height - top_height;
@@ -24,9 +24,9 @@ void HomePage::Update() {
         if (ImGui::BeginTable("##topsplt", 2, ImGuiTableFlags_BordersInnerV)) {
             const auto cleanup_split{gsl::finally(ImGui::EndTable)};
             ImGui::TableNextColumn();
-            DrawTopLHS();
+            draw_top_lhs();
             ImGui::TableNextColumn();
-            DrawTopRHS();
+            draw_top_rhs();
         }
     }
     ImGui::Separator();
@@ -39,14 +39,14 @@ void HomePage::Update() {
             ImGui::TableSetupColumn("##action", ImGuiTableColumnFlags_WidthStretch, 0.66F);
 
             ImGui::TableNextColumn();
-            DrawBottomLHS();
+            draw_bottom_lhs();
             ImGui::TableNextColumn();
-            DrawBottomRHS();
+            draw_bottom_rhs();
         }
     }
 }
 
-void HomePage::DrawTopLHS() {
+void home_page::draw_top_lhs() {
     BOLD_HEADER(ImGui::Text("SD Card Control"));
     ImGui::Separator();
 
@@ -54,20 +54,20 @@ void HomePage::DrawTopLHS() {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
         local_time t;
         HEADER(pages::utils::draw_input_box(
-            "##sd_name", m_SetName, fmt::format("Name ({})", t.to_string(false)).c_str()));
+            "##sd_name", set_name_, fmt::format("Name ({})", t.to_string(false)).c_str()));
         ImGui::SameLine();
         if (ImGui::Button("Create File")) {
-            if (m_SetName.empty()) {
-                m_SDName = t.to_string(false);
+            if (set_name_.empty()) {
+                sd_name_ = t.to_string(false);
             } else {
-                m_SDName = m_SetName;
+                sd_name_ = set_name_;
             }
-            for (char& c : m_SDName) {
+            for (char& c : sd_name_) {
                 if (c == ':' || c == ' ') { c = '-'; }
             }
-            const auto command = fmt::format("SD_START /{}.txt", m_SDName);
+            const auto command = fmt::format("SD_START /{}.txt", sd_name_);
             context_->backend->send_cmd(command);
-            m_SetName.clear();
+            set_name_.clear();
         }
         ImGui::SameLine();
         ImGui::PushStyleColor(ImGuiCol_Button,
@@ -83,18 +83,18 @@ void HomePage::DrawTopLHS() {
         }
         ImGui::PopStyleColor();
         ImGui::SameLine();
-        if (!m_SDName.empty()) {
+        if (!sd_name_.empty()) {
             if (ImGui::Button(context_->backend->is_open ? "Close SD" : "Open SD")) {
                 if (context_->backend->is_open) {
                     context_->backend->send_cmd("SD_CLOSE");
                 } else {
-                    const auto command = fmt::format("SD_START /{}.txt", m_SDName);
+                    const auto command = fmt::format("SD_START /{}.txt", sd_name_);
                     context_->backend->send_cmd(command);
                 }
             }
         }
         ImGui::SameLine();
-        ImGui::TextDisabled("%s", !m_SDName.empty() ? m_SDName.c_str() : "No file created");
+        ImGui::TextDisabled("%s", !sd_name_.empty() ? sd_name_.c_str() : "No file created");
         /*
         ImGui::BulletText("Connect to Wifi on laptop");
         ImGui::BulletText(
@@ -124,13 +124,13 @@ void HomePage::DrawTopLHS() {
     }
 }
 
-void HomePage::DrawTopRHS() {
+void home_page::draw_top_rhs() {
     BOLD_HEADER(ImGui::Text("Control Panel"));
     ImGui::Separator();
 
     BOLD_DEFAULT(ImGui::SeparatorText("Metrics"));
     ImGui::BulletText("Backend Status: %s", context_->backend->is_connected ? "Online" : "Offline");
-    ImGui::BulletText("Last IP Update: %s", m_PreviousIp.to_string().c_str());
+    ImGui::BulletText("Last IP Update: %s", previous_ip_.to_string().c_str());
     ImGui::BulletText("Application FPS: %.2f", ImGui::GetIO().Framerate);
 
     BOLD_DEFAULT(ImGui::SeparatorText("UI Settings"));
@@ -147,7 +147,7 @@ void HomePage::DrawTopRHS() {
     if (ImGui::Checkbox("Fullscreen", &fullscreen)) { sapp_toggle_fullscreen(); }
 }
 
-void HomePage::DrawBottomLHS() {
+void home_page::draw_bottom_lhs() {
     BOLD_HEADER(ImGui::Text("Error Log"));
     ImGui::Separator();
 
@@ -159,58 +159,58 @@ void HomePage::DrawBottomLHS() {
     }
 }
 
-void HomePage::DrawBottomRHS() {
+void home_page::draw_bottom_rhs() {
     BOLD_HEADER(ImGui::Text("Command Center"));
     ImGui::Separator();
 
     if (ImGui::BeginChild("##commandcenter", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
-        DrawIPControls();
-        DrawCredentialControls();
+        draw_ip_controls();
+        draw_credential_controls();
     }
 }
 
-void HomePage::DrawIPControls() {
-    if (ImGui::Button("Update IP") && !m_IpBuf.any_empty()) {
-        context_->backend->set_ip(m_IpBuf);
-        m_PreviousIp = std::exchange(m_IpBuf, {});
+void home_page::draw_ip_controls() {
+    if (ImGui::Button("Update IP") && !ip_buf_.any_empty()) {
+        context_->backend->set_ip(ip_buf_);
+        previous_ip_ = std::exchange(ip_buf_, {});
     }
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_FIRST", m_IpBuf.first, m_PreviousIp.first.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_FIRST", ip_buf_.first, previous_ip_.first.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_SECOND", m_IpBuf.second, m_PreviousIp.second.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_SECOND", ip_buf_.second, previous_ip_.second.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_THIRD", m_IpBuf.third, m_PreviousIp.third.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_THIRD", ip_buf_.third, previous_ip_.third.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_FOURTH", m_IpBuf.fourth, m_PreviousIp.fourth.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_FOURTH", ip_buf_.fourth, previous_ip_.fourth.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(":");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_PORT", m_IpBuf.port, m_PreviousIp.port.c_str(), 50.0F);
+    pages::utils::draw_input_box("##ip_PORT", ip_buf_.port, previous_ip_.port.c_str(), 50.0F);
 }
 
-void HomePage::DrawCredentialControls() {
+void home_page::draw_credential_controls() {
     // TODO(blake): Do something with user/password
-    if (ImGui::Button("Upload Credentials") && (!m_UsernameBuf.empty() && !m_PasswordBuf.empty())) {
-        m_UsernameBuf = {};
-        m_PasswordBuf = {};
+    if (ImGui::Button("Upload Credentials") && (!username_buf_.empty() && !password_buf_.empty())) {
+        username_buf_ = {};
+        password_buf_ = {};
     }
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##username", m_UsernameBuf, "Username", 150.0F);
+    pages::utils::draw_input_box("##username", username_buf_, "Username", 150.0F);
     ImGui::SameLine();
-    pages::utils::draw_input_box("##password", m_PasswordBuf, "Password", 150.0F);
+    pages::utils::draw_input_box("##password", password_buf_, "Password", 150.0F);
 }
 
-} // namespace mbr
+} // namespace mbr::pages

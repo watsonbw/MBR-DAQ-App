@@ -129,7 +129,7 @@ void gui_t::on_frame() {
 
         if (ImGui::Begin("##currpage", nullptr, window_flags)) {
             const auto cleanup_page{gsl::finally(ImGui::End)};
-            current_page_->Update();
+            current_page_->update();
         }
     }
 
@@ -144,7 +144,7 @@ void gui_t::on_event(const sapp_event* event) { // NOLINT
 
 void gui_t::on_cleanup() {
     context_->should_exit = true;
-    if (current_page_) { current_page_->OnExit(); }
+    if (current_page_) { current_page_->on_exit(); }
     current_page_.reset();
 
     simgui_shutdown();
@@ -153,17 +153,17 @@ void gui_t::on_cleanup() {
 }
 
 void gui_t::change_page(page_type_t type) {
-    if (current_page_) { current_page_->OnExit(); }
+    if (current_page_) { current_page_->on_exit(); }
 
     switch (type) {
-    case page_type_t::HOME:   current_page_ = std::make_unique<HomePage>(context_); break;
-    case page_type_t::RPM:    current_page_ = std::make_unique<RPMPage>(context_); break;
-    case page_type_t::SHOCK:  current_page_ = std::make_unique<ShockPage>(context_); break;
-    case page_type_t::VIEW:   current_page_ = std::make_unique<ViewPage>(context_); break;
-    case page_type_t::SERIAL: current_page_ = std::make_unique<SerialPage>(context_); break;
+    case page_type_t::HOME:   current_page_ = std::make_unique<pages::home_page>(context_); break;
+    case page_type_t::RPM:    current_page_ = std::make_unique<pages::rpm_page>(context_); break;
+    case page_type_t::SHOCK:  current_page_ = std::make_unique<pages::shock_page>(context_); break;
+    case page_type_t::VIEW:   current_page_ = std::make_unique<pages::view_page>(context_); break;
+    case page_type_t::SERIAL: current_page_ = std::make_unique<pages::serial_page>(context_); break;
     }
 
-    if (current_page_) { current_page_->OnEnter(); }
+    if (current_page_) { current_page_->on_enter(); }
     context_->current_page_type = type;
 }
 

@@ -4,20 +4,20 @@
 
 #include "app/context.hpp"
 
-namespace mbr {
+namespace mbr::pages {
 
-class Page {
+class page_base {
   public:
-    Page()          = default;
-    virtual ~Page() = default;
+    page_base()          = default;
+    virtual ~page_base() = default;
 
-    virtual void OnEnter() = 0;
-    virtual void OnExit()  = 0;
-    virtual void Update()  = 0;
+    virtual void on_enter() = 0;
+    virtual void on_exit()  = 0;
+    virtual void update()   = 0;
 
   protected:
-    explicit Page(const std::shared_ptr<app_context>& ctx) : context_{ctx} {}
+    explicit page_base(const std::shared_ptr<app_context>& ctx) : context_{ctx} {}
     std::shared_ptr<app_context> context_; // NOLINT
 };
 
-} // namespace mbr
+} // namespace mbr::pages
