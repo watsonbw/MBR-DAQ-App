@@ -50,13 +50,13 @@ void text_drawers::data_download_button(const std::vector<std::string>& raw_line
                                         std::string&                    buf) {
     HEADER({
         if (ImGui::Button("Download Data")) {
-            const DateTime dt;
+            const date_time dt;
             std::string    filepath;
             if (!buf.empty()) {
                 filepath =
-                    fmt::format("{}_{}.txt", dt.String(DateTime::StringFormat::TEXT_FILE), buf);
+                    fmt::format("{}_{}.txt", dt.to_string(date_time::fmt_t::TEXT_FILE), buf);
             } else {
-                filepath = fmt::format("{}.txt", dt.String(DateTime::StringFormat::TEXT_FILE));
+                filepath = fmt::format("{}.txt", dt.to_string(date_time::fmt_t::TEXT_FILE));
             }
 
             if (raw_lines.empty()) {

@@ -18,7 +18,6 @@ namespace mbr {
 
 TelemetryBackend::TelemetryBackend() : SerialMan(115'200, 500) {
     m_Buffer.reserve(4'096);
-    m_IpAddr = DEFAULT_IP;
     RegisterHandlers();
 }
 
@@ -29,8 +28,8 @@ void TelemetryBackend::Start() {
     Kill();
     m_ShouldKill = false;
 
-    assert(m_IpAddr.Valid());
-    const auto real_addr = fmt::format("ws://{}/ws", m_IpAddr.String());
+    assert(m_IpAddr.is_valid());
+    const auto real_addr = fmt::format("ws://{}/ws", m_IpAddr.to_string());
     LOG_INFO("Attempting to connect with address: {}", real_addr);
     m_WebSocket.setUrl(real_addr);
 
@@ -203,9 +202,9 @@ TelemetryData::PackedData TelemetryBackend::PackData() {
             .RawLines              = Data.GetRawLines()};
 }
 
-void TelemetryBackend::SetIp(const IpV4& ipv4) {
-    if (!ipv4.Valid()) {
-        LOG_ERROR("Requested Ip was invalid: {}", ipv4.String());
+void TelemetryBackend::SetIp(const ipv4_t& ipv4) {
+    if (!ipv4.is_valid()) {
+        LOG_ERROR("Requested Ip was invalid: {}", ipv4.to_string());
         return;
     }
 
@@ -255,8 +254,8 @@ void TelemetryBackend::RegisterHandlers() {
     m_ResponseHandlers[ResponseType::SYNC] = [](std::string_view line) {
         uint64_t micros = 0;
         std::from_chars(line.data(), line.data() + line.size(), micros);
-        LocalTime t{micros};
-        LOG_INFO("Time successfully synced at: {}", t.String(false));
+        local_time t{micros};
+        LOG_INFO("Time successfully synced at: {}", t.to_string(false));
     };
 
     m_ResponseHandlers[ResponseType::SDSTART] = [this](std::string_view line) {

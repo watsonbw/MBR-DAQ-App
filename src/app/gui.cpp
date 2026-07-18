@@ -196,8 +196,8 @@ void gui_t::draw_main_menu_bar() {
         // ImGui::TextUnformatted(page_type_str(m_Context->CurrentPageType));
         // ImGui::Separator();
 
-        const LocalTime lt;
-        const auto      sync_time = lt.MicrosSinceMidnight();
+        const local_time lt;
+        const auto      sync_time = lt.micros_since_midnight();
 
         const auto command = fmt::format("CMD SYNC {}", sync_time);
         if (ImGui::Button("Sync Time")) { context_->backend->SendCMD(command); }
@@ -242,7 +242,7 @@ void gui_t::draw_main_menu_bar() {
 
         ImGui::Separator();
 
-        const std::string time_formatted = lt.String();
+        const std::string time_formatted = lt.to_string();
         ImGui::TextUnformatted(time_formatted.c_str());
     }
 }

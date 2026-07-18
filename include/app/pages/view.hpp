@@ -26,7 +26,7 @@ namespace mbr {
 
 class ViewPage : public Page {
   public:
-    using SelectedVideo   = std::optional<std::pair<std::string, std::optional<DateTime>>>;
+    using SelectedVideo   = std::optional<std::pair<std::string, std::optional<date_time>>>;
     using SelectedTxtFile = std::optional<std::string>;
 
     enum class DataView : uint8_t {
@@ -76,7 +76,7 @@ class ViewPage : public Page {
     std::shared_ptr<bool> m_IsAlive;
 
     std::string              m_VideoPath;
-    std::optional<LocalTime> m_VideoCreationTimestamp;
+    std::optional<local_time> m_VideoCreationTimestamp;
     std::string              m_CreationMetadataTextBuf;
     std::atomic<bool>        m_VideoDialogRunning{false};
     std::mutex               m_VideoPathMutex;

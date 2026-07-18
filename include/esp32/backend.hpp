@@ -41,7 +41,7 @@ class TelemetryBackend {
     //
     // This automatically manages the Data's mutex!
     [[nodiscard]] TelemetryData::PackedData PackData();
-    void                                    SetIp(const IpV4& ipv4);
+    void                                    SetIp(const ipv4_t& ipv4);
 
   public:
     std::mutex        DataMutex;
@@ -68,7 +68,7 @@ class TelemetryBackend {
     std::thread                           m_Worker;
     ix::WebSocket                         m_WebSocket;
     std::string                           m_Buffer;
-    IpV4                                  m_IpAddr;
+    ipv4_t                                  m_IpAddr;
     std::chrono::steady_clock::time_point m_LastDataTime{};
     std::atomic<bool>                     m_ShouldKill{false};
 
