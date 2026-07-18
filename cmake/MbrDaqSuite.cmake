@@ -17,6 +17,8 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         nlohmann_json::nlohmann_json
         Microsoft.GSL::GSL
         fmt::fmt
+        magic_enum::magic_enum
+        unordered_dense::unordered_dense
     )
 
     target_include_directories(mbrdaq_core_${TARGET_NAME} PUBLIC include)

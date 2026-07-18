@@ -193,3 +193,10 @@ if(APPLE)
 elseif(WIN32)
     target_link_libraries(serial_setup INTERFACE setupapi)
 endif()
+
+# Magic Enum
+add_vendor_subdirectory(vendor/magic_enum)
+
+# unordered_dense
+add_vendor_subdirectory(vendor/unordered_dense)
+
