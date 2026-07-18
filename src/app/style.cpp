@@ -60,8 +60,8 @@ static void RefreshImGuiColorCache(ImVec4 colors[ImGuiCol_COUNT]) {
     for (auto i = 0; i < ImGuiCol_COUNT; i++) { colors[i] = color_cache.value()[i]; }
 }
 
-void app_style::set_dark_theme() {
-    LOG_INFO("Setting dark mode");
+void app_style::set_dark_theme(const log_fn_t& log) {
+    log_info(log, "Setting dark mode");
 #ifdef _WIN32
     HWND hwnd          = reinterpret_cast<HWND>(const_cast<void*>(sapp_win32_get_hwnd()));
     BOOL use_dark_mode = TRUE;
@@ -108,8 +108,8 @@ void app_style::set_dark_theme() {
     dark_mode = true;
 }
 
-void app_style::set_light_theme() {
-    LOG_INFO("Setting light mode");
+void app_style::set_light_theme(const log_fn_t& log) {
+    log_info(log, "Setting light mode");
 #ifdef _WIN32
     HWND hwnd          = reinterpret_cast<HWND>(const_cast<void*>(sapp_win32_get_hwnd()));
     BOOL use_dark_mode = FALSE;

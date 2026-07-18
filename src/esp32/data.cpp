@@ -7,10 +7,15 @@
 
 namespace mbr {
 
+telemetry_data::telemetry_data(log_fn_t log) : log_{std::move(log)} {
+    init_json();
+    init_data();
+}
+
 void telemetry_data::init_json() {
     std::ifstream f(MBR_JSON);
     if (!f.is_open()) {
-        LOG_ERROR("JSON FILE NOT OPENED");
+        log_error(log_, "JSON FILE NOT OPENED");
         return;
     }
     data_info temp;
@@ -26,7 +31,7 @@ void telemetry_data::init_json() {
             data_values.push_back(temp);
         }
     } catch (const json::exception& e) {
-        LOG_ERROR("Invalid JSON config: {}", e.what());
+        log_error(log_, "Invalid JSON config: {}", e.what());
         return;
     }
 }
@@ -39,7 +44,7 @@ void telemetry_data::write_data(const std::string& identifier, const std::string
     try {
         double val = std::stod(value);
         series[identifier].push_back(val);
-    } catch (const std::exception& e) { LOG_ERROR("Couldn't write to existng data vector"); }
+    } catch (const std::exception& e) { log_error(log_, "Couldn't write to existng data vector"); }
 }
 
 void telemetry_data::clear() {

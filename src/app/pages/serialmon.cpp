@@ -7,8 +7,8 @@
 
 namespace mbr::pages {
 
-void serial_page::on_enter() { LOG_INFO("Entered SerialPage"); }
-void serial_page::on_exit() { LOG_INFO("Exited SerialPage"); }
+void serial_page::on_enter() { log_info(context_->log, "Entered SerialPage"); }
+void serial_page::on_exit() { log_info(context_->log, "Exited SerialPage"); }
 
 void serial_page::update() {
     const float full_height   = ImGui::GetContentRegionAvail().y;
@@ -63,10 +63,10 @@ void serial_page::draw_top_lhs() {
                         port.c_str(), is_selected, ImGuiSelectableFlags_NoAutoClosePopups)) {
                     if (!is_selected) {
                         context_->backend->serial_manager.add_port(port);
-                        LOG_INFO("Added port " + port);
+                        log_info(context_->log, "Added port {}", port);
                     } else {
                         context_->backend->serial_manager.remove_port(port);
-                        LOG_INFO("Removed port " + port);
+                        log_info(context_->log, "Removed port {}", port);
                     }
                 }
             }
@@ -111,7 +111,7 @@ void serial_page::draw_top_rhs() {
 
     if (ImGui::BeginChild("##errscroll", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
         const auto        cleanup{gsl::finally(ImGui::EndChild)};
-        const std::string all_errors = Log::GetStreamedLogs();
+        const std::string all_errors = context_->logger.get_streamed_logs();
         ImGui::TextUnformatted(all_errors.c_str());
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) { ImGui::SetScrollHereY(1.0F); }
     }

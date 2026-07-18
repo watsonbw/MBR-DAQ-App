@@ -12,6 +12,7 @@
 #include <ixwebsocket/IXWebSocket.h>
 
 #include "core/ip.hpp"
+#include "core/log.hpp"
 
 #include "esp32/data.hpp"
 #include "esp32/serial.hpp"
@@ -30,7 +31,7 @@ enum class response_type_t {
 
 class telemetry_backend {
   public:
-    explicit telemetry_backend();
+    explicit telemetry_backend(log_fn_t log = nullptr);
     ~telemetry_backend();
 
     void start();
@@ -42,6 +43,9 @@ class telemetry_backend {
     // This automatically manages the Data's mutex!
     [[nodiscard]] telemetry_data::packed_data pack_data();
     void                                      set_ip(const ipv4_t& ipv4);
+
+  private:
+    log_fn_t log_;
 
   public:
     std::mutex        data_mutex;

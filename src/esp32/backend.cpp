@@ -16,7 +16,8 @@ using namespace std::chrono_literals;
 
 namespace mbr {
 
-telemetry_backend::telemetry_backend() : serial_manager(115'200, 500) {
+telemetry_backend::telemetry_backend(log_fn_t log)
+    : log_{std::move(log)}, data{log_}, serial_manager(115'200, 500, log_) {
     buffer_.reserve(4'096);
     register_handlers();
 }
@@ -24,13 +25,13 @@ telemetry_backend::telemetry_backend() : serial_manager(115'200, 500) {
 telemetry_backend::~telemetry_backend() { kill(); }
 
 void telemetry_backend::start() {
-    LOG_INFO("Started Connection Attempt");
+    log_info(log_, "Started Connection Attempt");
     kill();
     should_kill_ = false;
 
     assert(ip_addr_.is_valid());
     const auto real_addr = fmt::format("ws://{}/ws", ip_addr_.to_string());
-    LOG_INFO("Attempting to connect with address: {}", real_addr);
+    log_info(log_, "Attempting to connect with address: {}", real_addr);
     web_sockets_.setUrl(real_addr);
 
     web_sockets_.setMaxWaitBetweenReconnectionRetries(5'000);
@@ -44,7 +45,7 @@ void telemetry_backend::start() {
             is_connected = true;
             is_receiving = false;
             send_cmd("STATUS");
-            LOG_INFO("Connected to ESP32");
+            log_info(log_, "Connected to ESP32");
         }
 
         if (msg->type == ix::WebSocketMessageType::Close ||
@@ -52,11 +53,11 @@ void telemetry_backend::start() {
             is_connected = false;
             is_receiving = false;
         }
-        if (msg->type == ix::WebSocketMessageType::Close) { LOG_WARN("WebSocket closed"); }
+        if (msg->type == ix::WebSocketMessageType::Close) { log_warn(log_, "WebSocket closed"); }
 
         if (msg->type == ix::WebSocketMessageType::Error) {
-            LOG_ERROR("WebSocket error: {}", msg->errorInfo.reason.c_str());
-            LOG_ERROR("HTTP Status: {}", msg->errorInfo.http_status);
+            log_error(log_, "WebSocket error: {}", msg->errorInfo.reason.c_str());
+            log_error(log_, "HTTP Status: {}", msg->errorInfo.http_status);
         }
 
         if (msg->type == ix::WebSocketMessageType::Message) {
@@ -82,16 +83,16 @@ void telemetry_backend::send_cmd(const std::string& text) {
     if (web_sockets_.getReadyState() == ix::ReadyState::Open) {
         const ix::WebSocketSendInfo info = web_sockets_.send(text);
         if (!info.success) {
-            LOG_WARN("Send failed:");
+            log_warn(log_, "Send failed:");
             is_connected = false;
             return;
         }
 
-        LOG_INFO("Sent command: {}", text);
+        log_info(log_, "Sent command: {}", text);
         return;
     }
 
-    LOG_WARN("Failed to send message as WebSocket was not open");
+    log_warn(log_, "Failed to send message as WebSocket was not open");
 }
 
 void telemetry_backend::worker_loop() {
@@ -204,7 +205,7 @@ telemetry_data::packed_data telemetry_backend::pack_data() {
 
 void telemetry_backend::set_ip(const ipv4_t& ipv4) {
     if (!ipv4.is_valid()) {
-        LOG_ERROR("Requested Ip was invalid: {}", ipv4.to_string());
+        log_error(log_, "Requested Ip was invalid: {}", ipv4.to_string());
         return;
     }
 
@@ -221,27 +222,27 @@ void telemetry_backend::set_ip(const ipv4_t& ipv4) {
 void telemetry_backend::handle_response(std::string_view line) {
     constexpr size_t res_length = 4;
     if (line.size() <= res_length) {
-        LOG_ERROR("Invalid response length: {}", line.size());
+        log_error(log_, "Invalid response length: {}", line.size());
         return;
     }
     auto rest  = line.substr(res_length);
     auto space = rest.find(' ');
     if (space == std::string::npos) {
-        LOG_ERROR("No space after response type: {}", rest);
+        log_error(log_, "No space after response type: {}", rest);
         return;
     }
 
     auto            command = rest.substr(0, space);
     response_type_t type    = res_string_to_enum(command);
     if (type == response_type_t::UNKNOWN) {
-        LOG_ERROR("Unknown response: {}", command);
+        log_error(log_, "Unknown response: {}", command);
         return;
     }
     auto it = response_handlers.find(type);
     if (it != response_handlers.end()) {
         it->second(rest.substr(space + 1));
     } else {
-        LOG_ERROR("No handler for response: {}", command);
+        log_error(log_, "No handler for response: {}", command);
     }
 }
 
@@ -251,28 +252,28 @@ void telemetry_backend::handle_response(std::string_view line) {
 // This also requires additions to ResStringtoEnum as these are ENUM mapped lambdas,
 // not just a simple string mapped lambda
 void telemetry_backend::register_handlers() {
-    response_handlers[response_type_t::SYNC] = [](std::string_view line) {
+    response_handlers[response_type_t::SYNC] = [this](std::string_view line) {
         uint64_t micros = 0;
         std::from_chars(line.data(), line.data() + line.size(), micros);
         local_time t{micros};
-        LOG_INFO("Time successfully synced at: {}", t.to_string(false));
+        log_info(log_, "Time successfully synced at: {}", t.to_string(false));
     };
 
     response_handlers[response_type_t::SDSTART] = [this](std::string_view line) {
         if (line == "deadbeef") {
-            LOG_ERROR("SD Card Failed Initialization");
+            log_error(log_, "SD Card Failed Initialization");
         } else {
-            LOG_INFO("SD Card Initialized At {}", line);
+            log_info(log_, "SD Card Initialized At {}", line);
             is_open = true;
         }
     };
 
     response_handlers[response_type_t::SDWRITE] = [this](std::string_view line) {
         if (line == "1") {
-            LOG_INFO("SD Card Has Begun Writing");
+            log_info(log_, "SD Card Has Begun Writing");
             is_writing = true;
         } else if (line == "0") {
-            LOG_INFO("SD Card Has Stopped Writing");
+            log_info(log_, "SD Card Has Stopped Writing");
             is_writing = false;
         }
     };
@@ -280,9 +281,9 @@ void telemetry_backend::register_handlers() {
     response_handlers[response_type_t::SDCLOSE] = [this](std::string_view line) {
         if (line == "1") {
             is_open = false;
-            LOG_INFO("SD Card Has Closed Succesfully");
+            log_info(log_, "SD Card Has Closed Succesfully");
         } else if (line == "0") {
-            LOG_INFO("SD Card Failed Close");
+            log_info(log_, "SD Card Failed Close");
         }
     };
 }

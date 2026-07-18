@@ -35,13 +35,13 @@ bool serial_manager_t::open_port(const std::string& port, const std::string& des
         auto* ser                        = new serial::Serial(port, baud_rate_, timeout);
         if (ser->isOpen()) {
             ports_[port] = ser;
-            LOG_INFO("[SerialManager] Opened: " + port);
-            if (!description.empty()) { LOG_INFO(description); }
+            log_info(log_, "[SerialManager] Opened: {}", port);
+            if (!description.empty()) { log_info(log_, description); }
             return true;
         }
         delete ser;
     } catch (const std::exception& e) {
-        LOG_ERROR("[SerialManager] Failed to open " + port + ": " + e.what());
+        log_error(log_, "[SerialManager] Failed to open {}: {}", port, e.what());
     }
     return false;
 }
@@ -76,7 +76,7 @@ void serial_manager_t::send_data(const std::string& msg) {
         try {
             it->second->write(msg);
         } catch (const std::exception& e) {
-            LOG_ERROR("[SerialManager] Write failed on " + port + ": " + e.what());
+            log_error(log_, "[SerialManager] Write failed on {}: {}", port, e.what());
             failed.push_back(port);
         }
     }
@@ -95,7 +95,7 @@ void serial_manager_t::receive_data() {
                 input_stream_.push_back(input);
             }
         } catch (const std::exception& e) {
-            LOG_ERROR("[SerialManager] Read failed on " + port + ": " + e.what());
+            log_error(log_, "[SerialManager] Read failed on {}: {}", port, e.what());
             failed.push_back(port);
         }
     }
@@ -109,13 +109,13 @@ void serial_manager_t::close_port(const std::string& port) {
     delete it->second;
     ports_.erase(it);
     if (chosen_ports_.contains(port)) { chosen_ports_.erase(port); }
-    LOG_INFO("[SerialManager] Closed: " + port);
+    log_info(log_, "[SerialManager] Closed: {}", port);
 }
 // Close all ports
 void serial_manager_t::close_all() {
     for (auto& [port, ser] : ports_) {
         ser->close();
-        LOG_INFO("[SerialManager] Closed: " + port);
+        log_info(log_, "[SerialManager] Closed: {}", port);
         delete ser;
     }
     ports_.clear();
@@ -129,7 +129,7 @@ void serial_manager_t::change_baud_rate(uint32_t baud) {
         try {
             ser->setBaudrate(baud_rate_);
         } catch (const std::exception& e) {
-            LOG_ERROR("[SerialManager] Baud rate change failed on " + port + ": " + e.what());
+            log_error(log_, "[SerialManager] Baud rate change failed on {}: {}", port, e.what());
         }
     }
 }

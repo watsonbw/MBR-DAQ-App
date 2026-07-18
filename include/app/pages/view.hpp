@@ -26,8 +26,8 @@ namespace mbr::pages {
 
 class view_page : public page_base {
   public:
-    using selected_video_t   = std::optional<std::pair<std::string, std::optional<date_time>>>;
-    using selected_txt_file_ = std::optional<std::string>;
+    using selected_video_t    = std::optional<std::pair<std::string, std::optional<date_time>>>;
+    using selected_txt_file_t = std::optional<std::string>;
 
     enum class data_view_t : uint8_t {
         ALL,
@@ -56,15 +56,15 @@ class view_page : public page_base {
     void draw_open_text();
     void draw_sync_video_buttons();
 
-    static selected_video_t open_video_file(const std::string& previous_file);
-    void                    request_seek(int frame_index);
+    selected_video_t open_video_file(const std::string& previous_file);
+    void             request_seek(int frame_index);
 
-    static selected_txt_file_ open_text_file(const std::string& previous_file);
-    void                      load_data();
-    std::optional<size_t>     sync_data_video(const std::vector<uint64_t>& micros_times);
-    void                      delete_extra(size_t erase_pos);
-    void                      dynamic_plot_start();
-    void                      dynamic_plot_loop();
+    selected_txt_file_t   open_text_file(const std::string& previous_file);
+    void                  load_data();
+    std::optional<size_t> sync_data_video(const std::vector<uint64_t>& micros_times);
+    void                  delete_extra(size_t erase_pos);
+    void                  dynamic_plot_start();
+    void                  dynamic_plot_loop();
 
     void start_decoding_thread();
     void stop_decoding_thread();
@@ -91,12 +91,12 @@ class view_page : public page_base {
     double data_count_{0.0};
     double data_from_end_{0.0};
 
-    std::string        txt_path_;
-    std::atomic<bool>  txt_dialog_running_{false};
-    std::mutex         txt_path_mutex_;
-    selected_txt_file_ selected_txt_;
-    bool               txt_loaded_{false};
-    bool               data_and_time_sync_{false};
+    std::string         txt_path_;
+    std::atomic<bool>   txt_dialog_running_{false};
+    std::mutex          txt_path_mutex_;
+    selected_txt_file_t selected_txt_;
+    bool                txt_loaded_{false};
+    bool                data_and_time_sync_{false};
 
     int         total_frames_{0};
     double      video_fps_{0.0};

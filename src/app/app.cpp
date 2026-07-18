@@ -18,10 +18,10 @@ namespace mbr {
 
 app_t::app_t([[maybe_unused]] int arc, [[maybe_unused]] char* argv[])
     : context_{std::make_shared<app_context>()} /*, m_Manager{m_Context}*/ {
-    Log::Init();
+    context_->log = context_->logger.get_log_fn();
     ix::initNetSystem();
     gui_              = std::make_unique<gui_t>(context_);
-    context_->backend = std::make_unique<telemetry_backend>();
+    context_->backend = std::make_unique<telemetry_backend>(context_->log);
 }
 
 app_t::~app_t() { ix::uninitNetSystem(); }

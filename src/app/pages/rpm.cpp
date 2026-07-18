@@ -12,8 +12,8 @@
 
 namespace mbr::pages {
 
-void rpm_page::on_enter() { LOG_INFO("Entered RPMPage"); }
-void rpm_page::on_exit() { LOG_INFO("Exited RPMPage"); }
+void rpm_page::on_enter() { log_info(context_->log, "Entered RPMPage"); }
+void rpm_page::on_exit() { log_info(context_->log, "Exited RPMPage"); }
 
 void rpm_page::update() {
     if (ImGui::BeginTable(

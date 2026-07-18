@@ -46,14 +46,14 @@ view_page::view_page(const std::shared_ptr<app_context>& ctx)
 view_page::~view_page() {
     *is_alive_ = false;
     cleanup();
-    LOG_INFO("Destroyed ViewPage");
+    log_info(context_->log, "Destroyed ViewPage");
 }
 
-void view_page::on_enter() { LOG_INFO("Entered ViewPage"); }
+void view_page::on_enter() { log_info(context_->log, "Entered ViewPage"); }
 
 void view_page::on_exit() {
     cleanup();
-    LOG_INFO("Exited ViewPage");
+    log_info(context_->log, "Exited ViewPage");
 }
 
 void view_page::update() {
@@ -272,10 +272,11 @@ void view_page::draw_open_video() {
                 }
             } catch (const std::exception& e) {
                 video_dialog_running_ = false;
-                LOG_CRITICAL("Fatal error occurred while opening video dialog: {}", e.what());
+                log_critical(
+                    context_->log, "Fatal error occurred while opening video dialog: {}", e.what());
             } catch (...) {
                 video_dialog_running_ = false;
-                LOG_CRITICAL("Unknown fatal error occurred");
+                log_critical(context_->log, "Unknown fatal error occurred");
             }
         }).detach();
     }
@@ -390,10 +391,12 @@ void view_page::draw_open_text() {
                 }
             } catch (const std::exception& e) {
                 txt_dialog_running_ = false;
-                LOG_CRITICAL("Fatal error occurred while opening text file dialog: {}", e.what());
+                log_critical(context_->log,
+                             "Fatal error occurred while opening text file dialog: {}",
+                             e.what());
             } catch (...) {
                 txt_dialog_running_ = false;
-                LOG_CRITICAL("Unknown fatal error occurred");
+                log_critical(context_->log, "Unknown fatal error occurred");
             }
         }).detach();
     }
@@ -407,15 +410,15 @@ void view_page::draw_sync_video_buttons() {
 
         load_data();
         if (!txt_loaded_ || !video_loaded_) {
-            LOG_ERROR("Could not sync data with video:");
-            LOG_ERROR("  Text Loaded: {}", txt_loaded_);
-            LOG_ERROR("  Video Loaded: {}", video_loaded_);
+            log_error(context_->log, "Could not sync data with video:");
+            log_error(context_->log, "  Text Loaded: {}", txt_loaded_);
+            log_error(context_->log, "  Video Loaded: {}", video_loaded_);
             return;
         }
 
         video_creation_ts_ = local_time::from_string(creation_metadata_text_buf_);
         if (!video_creation_ts_) {
-            LOG_ERROR("Could not parse provided timestamp, or it was not provided.");
+            log_error(context_->log, "Could not parse provided timestamp, or it was not provided.");
             return;
         }
         creation_metadata_text_buf_ = {};
@@ -427,7 +430,7 @@ void view_page::draw_sync_video_buttons() {
         }
 
         if (!sync_time_pos) {
-            LOG_ERROR("Could not get trim position from data/video");
+            log_error(context_->log, "Could not get trim position from data/video");
             return;
         }
 
@@ -450,40 +453,41 @@ view_page::selected_video_t view_page::open_video_file(const std::string& previo
     const char*       path      = tinyfd_openFileDialog(
         "Select a video file", previous_file.c_str(), std::size(filters), filters, nullptr, 0);
     if (path == nullptr) {
-        LOG_WARN("No file selected");
+        log_warn(context_->log, "No file selected");
         return std::nullopt;
     }
 
     const std::string real_path{path};
-    LOG_INFO("Selected file: {}", real_path);
+    log_info(context_->log, "Selected file: {}", real_path);
 
     auto dt = date_time::from_video_metadata(real_path);
     if (dt) {
-        LOG_INFO("Selected video with creation timestamp: {}", dt.value().to_string());
+        log_info(
+            context_->log, "Selected video with creation timestamp: {}", dt.value().to_string());
     } else {
-        LOG_WARN("Could not detect datetime metadata from selected video.");
+        log_warn(context_->log, "Could not detect datetime metadata from selected video.");
     }
 
     return std::pair{path, dt};
 }
 
-view_page::selected_txt_file_ view_page::open_text_file(const std::string& previous_file) {
+view_page::selected_txt_file_t view_page::open_text_file(const std::string& previous_file) {
     const char* const filters[] = {"*.txt"};
     const char*       path      = tinyfd_openFileDialog(
         "Select a text file", previous_file.c_str(), std::size(filters), filters, nullptr, 0);
     if (path == nullptr) {
-        LOG_WARN("No file selected");
+        log_warn(context_->log, "No file selected");
         return std::nullopt;
     }
 
-    LOG_INFO("Selected file: {}", path);
+    log_info(context_->log, "Selected file: {}", path);
     return path;
 }
 
 void view_page::load_data() {
     std::ifstream file{txt_path_};
     if (!file.is_open()) {
-        LOG_ERROR("Failed to open file: {}", txt_path_);
+        log_error(context_->log, "Failed to open file: {}", txt_path_);
         return;
     }
 
@@ -515,7 +519,7 @@ void view_page::start_decoding_thread() {
     decode_thread_ = std::thread([this]() {
         cv::VideoCapture cap{video_path_};
         if (!cap.isOpened()) {
-            LOG_ERROR("Failed to open video");
+            log_error(context_->log, "Failed to open video");
             thread_running_ = false;
             return;
         }
@@ -526,7 +530,7 @@ void view_page::start_decoding_thread() {
         video_length_minutes_      = (static_cast<double>(total_frames_) / video_fps_) / 60.0;
         const auto video_length_lt = local_time::from_minutes(video_length_minutes_);
         if (!video_length_lt) {
-            LOG_ERROR("Video length could not be determined");
+            log_error(context_->log, "Video length could not be determined");
             thread_running_ = false;
             return;
         }
