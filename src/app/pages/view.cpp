@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 
+#include <gsl/util>
 #include <tinyfiledialogs.h>
 
 #include <fmt/format.h>
@@ -19,7 +20,6 @@
 
 #include "app/assets/images/image_buttons.hpp"
 #include "app/common/plot_utils.hpp"
-#include "app/common/scope.hpp"
 #include "app/common/text.hpp"
 #include "app/pages/view.hpp"
 #include "app/style.hpp"
@@ -57,8 +57,9 @@ void ViewPage::OnExit() {
 }
 
 void ViewPage::Update() {
-    if (const ImGuiScope<ImGui::EndTable> split{IMSCOPE_FN(ImGui::BeginTable(
-            "##viewsplt", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable))}) {
+    if (ImGui::BeginTable(
+            "##viewsplt", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
+        const auto cleanup{gsl::finally(ImGui::EndTable)};
         ImGui::TableNextColumn();
         DrawLHS();
         ImGui::TableNextColumn();
@@ -72,7 +73,8 @@ void ViewPage::Cleanup() {
 }
 
 void ViewPage::DrawLHS() {
-    if (const ImGuiScope<ImGui::EndChild> video_player{IMSCOPE_FN(ImGui::BeginChild("##video"))}) {
+    if (ImGui::BeginChild("##video")) {
+        const auto cleanup{gsl::finally(ImGui::EndChild)};
         DrawOpenVideo();
         if (m_VideoLoaded && !m_VideoPath.empty()) {
             ImGui::SameLine();
@@ -150,7 +152,10 @@ void ViewPage::DrawLHSControls() {
     ImGui::Text("%s / %s", formatted_timestamp.c_str(), m_VideoLengthFormatted.c_str());
     ImGui::SameLine();
 
-    if (const ImGuiScope<ImGui::PopItemWidth> slider_width{IMSCOPE_FN(ImGui::PushItemWidth(-1))}) {
+    {
+        ImGui::PushItemWidth(-1);
+        const auto cleanup{gsl::finally(ImGui::PopItemWidth)};
+
         int slider_pos = m_CurrentFrameUI;
         if (ImGui::SliderInt(
                 "##scrub", &slider_pos, 0, m_TotalFrames, "", ImGuiSliderFlags_NoInput)) {
@@ -276,7 +281,8 @@ void ViewPage::DrawOpenVideo() {
 }
 
 void ViewPage::DrawRHS() {
-    if (const ImGuiScope<ImGui::EndChild> data_child{IMSCOPE_FN(ImGui::BeginChild("##data"))}) {
+    if (ImGui::BeginChild("##data")) {
+        const auto cleanup_data{gsl::finally(ImGui::EndChild)};
         HEADER({
             DrawOpenText();
             ImGui::SameLine();
@@ -284,8 +290,8 @@ void ViewPage::DrawRHS() {
             ImGui::Separator();
         });
 
-        if (const ImGuiScope<ImGui::EndCombo, REQUIRE_ALIVE_FOR_DTOR> combo{
-                IMSCOPE_FN(ImGui::BeginCombo("##DataView", DataTypeString(m_DataShow)))}) {
+        if (ImGui::BeginCombo("##DataView", DataTypeString(m_DataShow))) {
+            const auto cleanup_combo{gsl::finally(ImGui::EndCombo)};
             if (ImGui::Selectable("All Data", m_DataShow == DataView::ALL)) {
                 m_DataShow = DataView::ALL;
             }
@@ -304,45 +310,45 @@ void ViewPage::DrawRHS() {
             sync_lt ? fmt::format("Data View from {}", sync_lt.value().String()) : "No Synced Time";
 
         ViewPage::DynamicPlotLoop();
-        if (const ImGuiScope<ImPlot::EndPlot, REQUIRE_ALIVE_FOR_DTOR> plot{
-                IMSCOPE_FN(ImPlot::BeginPlot(plot_title.c_str(), {-1, -1}))}) {
+        if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
+            const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
             plot_utils::plot_if_non_empty<double>("Wheel Speed",
-                                          data.TimeMinutesNormalized,
-                                          data.Series.at("W"),
-                                          m_DataShow == DataView::ALL ||
-                                              m_DataShow == DataView::RPMDATA,
-                                          m_PlotPercent);
+                                                  data.TimeMinutesNormalized,
+                                                  data.Series.at("W"),
+                                                  m_DataShow == DataView::ALL ||
+                                                      m_DataShow == DataView::RPMDATA,
+                                                  m_PlotPercent);
             plot_utils::plot_if_non_empty<double>("Engine Speed",
-                                          data.TimeMinutesNormalized,
-                                          data.Series.at("E"),
-                                          m_DataShow == DataView::ALL ||
-                                              m_DataShow == DataView::RPMDATA,
-                                          m_PlotPercent);
+                                                  data.TimeMinutesNormalized,
+                                                  data.Series.at("E"),
+                                                  m_DataShow == DataView::ALL ||
+                                                      m_DataShow == DataView::RPMDATA,
+                                                  m_PlotPercent);
 
             plot_utils::plot_if_non_empty<double>("Front Right Shock Travel",
-                                          data.TimeMinutesNormalized,
-                                          data.Series.at("FR"),
-                                          m_DataShow == DataView::ALL ||
-                                              m_DataShow == DataView::SHOCKDATA,
-                                          m_PlotPercent);
+                                                  data.TimeMinutesNormalized,
+                                                  data.Series.at("FR"),
+                                                  m_DataShow == DataView::ALL ||
+                                                      m_DataShow == DataView::SHOCKDATA,
+                                                  m_PlotPercent);
             plot_utils::plot_if_non_empty<double>("Front Left Shock Travel",
-                                          data.TimeMinutesNormalized,
-                                          data.Series.at("FL"),
-                                          m_DataShow == DataView::ALL ||
-                                              m_DataShow == DataView::SHOCKDATA,
-                                          m_PlotPercent);
+                                                  data.TimeMinutesNormalized,
+                                                  data.Series.at("FL"),
+                                                  m_DataShow == DataView::ALL ||
+                                                      m_DataShow == DataView::SHOCKDATA,
+                                                  m_PlotPercent);
             plot_utils::plot_if_non_empty<double>("Rear Right Shock Travel",
-                                          data.TimeMinutesNormalized,
-                                          data.Series.at("RR"),
-                                          m_DataShow == DataView::ALL ||
-                                              m_DataShow == DataView::SHOCKDATA,
-                                          m_PlotPercent);
+                                                  data.TimeMinutesNormalized,
+                                                  data.Series.at("RR"),
+                                                  m_DataShow == DataView::ALL ||
+                                                      m_DataShow == DataView::SHOCKDATA,
+                                                  m_PlotPercent);
             plot_utils::plot_if_non_empty<double>("Rear Left Shock Travel",
-                                          data.TimeMinutesNormalized,
-                                          data.Series.at("RL"),
-                                          m_DataShow == DataView::ALL ||
-                                              m_DataShow == DataView::SHOCKDATA,
-                                          m_PlotPercent);
+                                                  data.TimeMinutesNormalized,
+                                                  data.Series.at("RL"),
+                                                  m_DataShow == DataView::ALL ||
+                                                      m_DataShow == DataView::SHOCKDATA,
+                                                  m_PlotPercent);
         }
     }
 }

@@ -33,7 +33,7 @@ extern float menu_item_font_size;
         ImGui::PushFont(font, size); \
         code;                        \
         ImGui::PopFont();            \
-    } while (0)
+    } while (false)
 
 #define BOLD_DEFAULT(B) WITH_FONT(m_Context->Style.DefaultFonts.Bold, default_font_size, B)
 #define HEADER(B) WITH_FONT(m_Context->Style.DefaultFonts.Regular, header_font_size, B)

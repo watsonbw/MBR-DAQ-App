@@ -7,7 +7,6 @@
 #include "core/time.hpp"
 
 #include "app/common/plot_utils.hpp"
-#include "app/common/scope.hpp"
 #include "app/pages/rpm.hpp"
 #include "app/style.hpp"
 
@@ -17,8 +16,9 @@ void RPMPage::OnEnter() { LOG_INFO("Entered RPMPage"); }
 void RPMPage::OnExit() { LOG_INFO("Exited RPMPage"); }
 
 void RPMPage::Update() {
-    if (const ImGuiScope<ImGui::EndTable> split{IMSCOPE_FN(ImGui::BeginTable(
-            "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable))}) {
+    if (ImGui::BeginTable(
+            "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
+        const auto cleanup_split{gsl::finally(ImGui::EndTable)};
         const auto data = m_Context->Backend->PackData();
 
         ImGui::TableNextColumn();
@@ -29,7 +29,8 @@ void RPMPage::Update() {
 }
 
 void RPMPage::DrawLHS(const std::vector<std::string>& raw_lines) {
-    if (const ImGuiScope<ImGui::EndChild> data{IMSCOPE_FN(ImGui::BeginChild("##datalog"))}) {
+    if (ImGui::BeginChild("##datalog")) {
+        const auto cleanup_data{gsl::finally(ImGui::EndChild)};
         BOLD_HEADER(ImGui::Text("Data Log"));
 
         ImGui::Separator();
@@ -47,13 +48,14 @@ void RPMPage::DrawLHS(const std::vector<std::string>& raw_lines) {
 void RPMPage::DrawRHS(gsl::span<const double> time,
                       gsl::span<const double> wheel,
                       gsl::span<const double> engine) {
-    if (const ImGuiScope<ImGui::EndChild> graph{IMSCOPE_FN(ImGui::BeginChild("##graph"))}) {
+    if (ImGui::BeginChild("##graph")) {
+        const auto cleanup_graph{gsl::finally(ImGui::EndChild)};
         const auto sync_lt = m_Context->Backend->Data.GetSyncLT();
         const auto plot_title =
             sync_lt ? fmt::format("RPM Data from {}", sync_lt.value().String()) : "No Synced Time";
 
-        if (const ImGuiScope<ImPlot::EndPlot, REQUIRE_ALIVE_FOR_DTOR> plot{
-                IMSCOPE_FN(ImPlot::BeginPlot(plot_title.c_str(), {-1, -1}))}) {
+        if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
+            const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
             plot_utils::plot_if_non_empty<double>("Wheel Speed", time, wheel);
             plot_utils::plot_if_non_empty<double>("Engine Speed", time, engine);
         }

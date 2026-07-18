@@ -1,11 +1,10 @@
-#include <imgui.h>
-
 #include <fmt/format.h>
+#include <gsl/util>
+#include <imgui.h>
 #include <sokol_app.h>
 
 #include "core/log.hpp"
 
-#include "app/common/scope.hpp"
 #include "app/common/text.hpp"
 #include "app/pages/home.hpp"
 #include "app/style.hpp"
@@ -20,10 +19,10 @@ void HomePage::Update() {
     const float top_height    = full_height * 0.66F;
     const float bottom_height = full_height - top_height;
 
-    if (const ImGuiScope<ImGui::EndChild> top_section{
-            IMSCOPE_FN(ImGui::BeginChild("##topsec", {0, top_height}))}) {
-        if (const ImGuiScope<ImGui::EndTable> split{
-                IMSCOPE_FN(ImGui::BeginTable("##topsplt", 2, ImGuiTableFlags_BordersInnerV))}) {
+    if (ImGui::BeginChild("##topsec", {0, top_height})) {
+        const auto cleanup_top{gsl::finally(ImGui::EndChild)};
+        if (ImGui::BeginTable("##topsplt", 2, ImGuiTableFlags_BordersInnerV)) {
+            const auto cleanup_split{gsl::finally(ImGui::EndTable)};
             ImGui::TableNextColumn();
             DrawTopLHS();
             ImGui::TableNextColumn();
@@ -32,10 +31,10 @@ void HomePage::Update() {
     }
     ImGui::Separator();
 
-    if (const ImGuiScope<ImGui::EndChild> bottom_section{
-            IMSCOPE_FN(ImGui::BeginChild("##botsec", {0, bottom_height}))}) {
-        if (const ImGuiScope<ImGui::EndTable> split{
-                IMSCOPE_FN(ImGui::BeginTable("##botsplt", 2, ImGuiTableFlags_Resizable))}) {
+    if (ImGui::BeginChild("##botsec", {0, bottom_height})) {
+        const auto cleanup_bot{gsl::finally(ImGui::EndChild)};
+        if (ImGui::BeginTable("##botsplt", 2, ImGuiTableFlags_Resizable)) {
+            const auto cleanup_split{gsl::finally(ImGui::EndTable)};
             ImGui::TableSetupColumn("##errors", ImGuiTableColumnFlags_WidthStretch, 0.33F);
             ImGui::TableSetupColumn("##action", ImGuiTableColumnFlags_WidthStretch, 0.66F);
 
@@ -51,9 +50,9 @@ void HomePage::DrawTopLHS() {
     BOLD_HEADER(ImGui::Text("SD Card Control"));
     ImGui::Separator();
 
-    if (const ImGuiScope<ImGui::EndChild> sd_control{IMSCOPE_FN(ImGui::BeginChild(
-            "##sd_control", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
-        LocalTime t;
+    if (ImGui::BeginChild("##sd_control", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
+        const auto cleanup{gsl::finally(ImGui::EndChild)};
+        LocalTime  t;
         HEADER(TextUtils::DrawInputBox(
             "##sd_name", m_SetName, fmt::format("Name ({})", t.String(false)).c_str()));
         ImGui::SameLine();
@@ -152,8 +151,8 @@ void HomePage::DrawBottomLHS() {
     BOLD_HEADER(ImGui::Text("Error Log"));
     ImGui::Separator();
 
-    if (const ImGuiScope<ImGui::EndChild> scroll{IMSCOPE_FN(ImGui::BeginChild(
-            "##errscroll", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
+    if (ImGui::BeginChild("##errscroll", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
+        const auto        cleanup{gsl::finally(ImGui::EndChild)};
         const std::string all_errors = Log::GetStreamedLogs();
         ImGui::TextUnformatted(all_errors.c_str());
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) { ImGui::SetScrollHereY(1.0F); }
@@ -164,8 +163,8 @@ void HomePage::DrawBottomRHS() {
     BOLD_HEADER(ImGui::Text("Command Center"));
     ImGui::Separator();
 
-    if (const ImGuiScope<ImGui::EndChild> command_center{IMSCOPE_FN(ImGui::BeginChild(
-            "##commandcenter", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
+    if (ImGui::BeginChild("##commandcenter", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
+        const auto cleanup{gsl::finally(ImGui::EndChild)};
         DrawIPControls();
         DrawCredentialControls();
     }

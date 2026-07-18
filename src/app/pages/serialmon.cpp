@@ -1,6 +1,6 @@
+#include <gsl/util>
 #include <imgui.h>
 
-#include "app/common/scope.hpp"
 #include "app/pages/serialmon.hpp"
 #include "app/style.hpp"
 #include "core/log.hpp"
@@ -15,10 +15,10 @@ void SerialPage::Update() {
     const float top_height    = full_height * 0.66F;
     const float bottom_height = full_height - top_height;
 
-    if (const ImGuiScope<ImGui::EndChild> top_section{
-            IMSCOPE_FN(ImGui::BeginChild("##topsec", {0, top_height}))}) {
-        if (const ImGuiScope<ImGui::EndTable> split{
-                IMSCOPE_FN(ImGui::BeginTable("##topsplt", 2, ImGuiTableFlags_BordersInnerV))}) {
+    if (ImGui::BeginChild("##topsec", {0, top_height})) {
+        const auto cleanup_top{gsl::finally(ImGui::EndChild)};
+        if (ImGui::BeginTable("##topsplt", 2, ImGuiTableFlags_BordersInnerV)) {
+            const auto cleanup_split{gsl::finally(ImGui::EndTable)};
             ImGui::TableNextColumn();
             DrawTopLHS();
             ImGui::TableNextColumn();
@@ -27,14 +27,15 @@ void SerialPage::Update() {
     }
     ImGui::Separator();
 
-    if (const ImGuiScope<ImGui::EndChild> bottom_section{
-            IMSCOPE_FN(ImGui::BeginChild("##botsec", {0, bottom_height}))}) {
+    if (ImGui::BeginChild("##botsec", {0, bottom_height})) {
+        const auto cleanup{gsl::finally(ImGui::EndChild)};
         DrawBottom();
     }
 }
 
 void SerialPage::DrawTopLHS() {
-    if (const ImGuiScope<ImGui::EndChild> data{IMSCOPE_FN(ImGui::BeginChild("##datalog"))}) {
+    if (ImGui::BeginChild("##datalog")) {
+        const auto cleanup{gsl::finally(ImGui::EndChild)};
         BOLD_HEADER(ImGui::Text("Serial Monitor Settings"));
 
         ImGui::Separator();
@@ -52,11 +53,10 @@ void SerialPage::DrawTopLHS() {
         }
         ImGui::Separator();
 
-        const std::string dropdown  = "Select Ports to Send Data";
-        auto              all_ports = m_Context->Backend->SerialMan.ExportPorts();
+        auto all_ports = m_Context->Backend->SerialMan.ExportPorts();
         ImGui::SetNextItemWidth(250.0F);
-        if (const ImGuiScope<ImGui::EndCombo, REQUIRE_ALIVE_FOR_DTOR> port_select{
-                IMSCOPE_FN(ImGui::BeginCombo("##port_dropdown", dropdown.c_str()))}) {
+        if (ImGui::BeginCombo("##port_dropdown", "Select Ports to Send Data")) {
+            const auto cleanup{gsl::finally(ImGui::EndCombo)};
             for (auto& [port, ser] : all_ports) {
                 const bool is_selected = m_Context->Backend->SerialMan.IsPortSelected(port);
                 if (ImGui::Selectable(
@@ -84,10 +84,10 @@ void SerialPage::DrawTopLHS() {
         ImGui::SameLine();
 
         ImGui::SetNextItemWidth(100.0F);
-        if (const ImGuiScope<ImGui::EndCombo, REQUIRE_ALIVE_FOR_DTOR> baud_combo{
-                IMSCOPE_FN(ImGui::BeginCombo(
-                    "##baud_dropdown",
-                    std::to_string(m_Context->Backend->SerialMan.GetBaudRate()).c_str()))}) {
+        if (ImGui::BeginCombo("##baud_dropdown",
+                              std::to_string(m_Context->Backend->SerialMan.GetBaudRate())
+                                  .c_str())) { // TODO(tcs): This is ugly
+            const auto cleanup_combo{gsl::finally(ImGui::EndCombo)};
             // This can stay inside DrawTopLHS or be a static member
             static const uint32_t BAUD_RATES[] = {
                 300, 1'200, 2'400, 4'800, 9'600, 19'200, 38'400, 57'600, 115'200};
@@ -108,8 +108,8 @@ void SerialPage::DrawTopRHS() {
 
     ImGui::Separator();
 
-    if (const ImGuiScope<ImGui::EndChild> scroll{IMSCOPE_FN(ImGui::BeginChild(
-            "##errscroll", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar))}) {
+    if (ImGui::BeginChild("##errscroll", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
+        const auto        cleanup{gsl::finally(ImGui::EndChild)};
         const std::string all_errors = Log::GetStreamedLogs();
         ImGui::TextUnformatted(all_errors.c_str());
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) { ImGui::SetScrollHereY(1.0F); }
@@ -126,7 +126,8 @@ void SerialPage::DrawBottom() {
         m_SerialBuffer = {};
         ImGui::SetKeyboardFocusHere(-1);
     }
-    if (const ImGuiScope<ImGui::EndChild> data{IMSCOPE_FN(ImGui::BeginChild("##datalog"))}) {
+    if (ImGui::BeginChild("##datalog")) {
+        const auto cleanup{gsl::finally(ImGui::EndChild)};
         ImGui::Separator();
         TextUtils::DrawDataLog(m_Context->Backend->SerialMan.ReturnDataStream());
     }
