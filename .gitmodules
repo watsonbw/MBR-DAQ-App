@@ -37,9 +37,19 @@
 [submodule "vendor/json"]
 	path = vendor/json
 	url = https://github.com/nlohmann/json
+
 [submodule "vendor/fmt"]
 	path = vendor/fmt
 	url = https://github.com/fmtlib/fmt
+
 [submodule "vendor/gsl"]
 	path = vendor/gsl
 	url = https://github.com/microsoft/gsl
+
+[submodule "vendor/magic_enum"]
+	path = vendor/magic_enum
+	url = https://github.com/Neargye/magic_enum
+
+[submodule "vendor/unordered_dense"]
+	path = vendor/unordered_dense
+	url = https://github.com/martinus/unordered_dense
