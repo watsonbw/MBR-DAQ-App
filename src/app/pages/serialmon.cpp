@@ -53,11 +53,11 @@ void serial_page::draw_top_lhs() {
         }
         ImGui::Separator();
 
-        auto all_ports = context_->backend->serial_manager.export_ports();
+        auto all_ports = context_->backend->serial_manager.get_all_ports();
         ImGui::SetNextItemWidth(250.0F);
         if (ImGui::BeginCombo("##port_dropdown", "Select Ports to Send Data")) {
             const auto cleanup{gsl::finally(ImGui::EndCombo)};
-            for (auto& [port, ser] : all_ports) {
+            for (const auto& port : all_ports) {
                 const bool is_selected = context_->backend->serial_manager.is_port_selected(port);
                 if (ImGui::Selectable(
                         port.c_str(), is_selected, ImGuiSelectableFlags_NoAutoClosePopups)) {
@@ -75,7 +75,7 @@ void serial_page::draw_top_lhs() {
         ImGui::SameLine();
         ImGui::TextUnformatted("Chosen Ports: ");
         ImGui::SameLine();
-        for (const auto& port : context_->backend->serial_manager.return_chosen()) {
+        for (const auto& port : context_->backend->serial_manager.get_chosen_ports()) {
             ImGui::TextUnformatted(port.c_str());
             ImGui::SameLine();
         }
