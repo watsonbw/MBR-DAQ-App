@@ -18,8 +18,8 @@ namespace mbr::pages::utils {
 
 void text_drawers::start_logging_button() {
     HEADER({
-        if (ImGui::Button(context_->backend->IsLogging ? "Stop Logging" : "Start Logging")) {
-            context_->backend->IsLogging = !context_->backend->IsLogging;
+        if (ImGui::Button(context_->backend->is_logging ? "Stop Logging" : "Start Logging")) {
+            context_->backend->is_logging = !context_->backend->is_logging;
         }
     });
 }
@@ -27,10 +27,10 @@ void text_drawers::start_logging_button() {
 bool text_drawers::start_serial_button() {
     bool clicked = false;
     HEADER({
-        if (ImGui::Button(context_->backend->SerialMan.IsSerialWrite ? "Stop Serial"
-                                                                      : "Start Serial")) {
-            context_->backend->SerialMan.IsSerialWrite =
-                !context_->backend->SerialMan.IsSerialWrite;
+        if (ImGui::Button(context_->backend->serial_manager.is_serial_write ? "Stop Serial"
+                                                                            : "Start Serial")) {
+            context_->backend->serial_manager.is_serial_write =
+                !context_->backend->serial_manager.is_serial_write;
             clicked = true;
         }
     });
@@ -39,9 +39,10 @@ bool text_drawers::start_serial_button() {
 
 void text_drawers::send_data_button() {
     HEADER({
-        if (ImGui::Button(context_->backend->SerialMan.m_SendData ? "Stop Data Send"
-                                                                   : "Send Data")) {
-            context_->backend->SerialMan.m_SendData = !context_->backend->SerialMan.m_SendData;
+        if (ImGui::Button(context_->backend->serial_manager.should_send_data ? "Stop Data Send"
+                                                                             : "Send Data")) {
+            context_->backend->serial_manager.should_send_data =
+                !context_->backend->serial_manager.should_send_data;
         }
     });
 }
@@ -51,10 +52,9 @@ void text_drawers::data_download_button(const std::vector<std::string>& raw_line
     HEADER({
         if (ImGui::Button("Download Data")) {
             const date_time dt;
-            std::string    filepath;
+            std::string     filepath;
             if (!buf.empty()) {
-                filepath =
-                    fmt::format("{}_{}.txt", dt.to_string(date_time::fmt_t::TEXT_FILE), buf);
+                filepath = fmt::format("{}_{}.txt", dt.to_string(date_time::fmt_t::TEXT_FILE), buf);
             } else {
                 filepath = fmt::format("{}.txt", dt.to_string(date_time::fmt_t::TEXT_FILE));
             }

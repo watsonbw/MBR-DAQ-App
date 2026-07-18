@@ -52,7 +52,7 @@ void HomePage::DrawTopLHS() {
 
     if (ImGui::BeginChild("##sd_control", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
-        local_time  t;
+        local_time t;
         HEADER(pages::utils::draw_input_box(
             "##sd_name", m_SetName, fmt::format("Name ({})", t.to_string(false)).c_str()));
         ImGui::SameLine();
@@ -66,30 +66,30 @@ void HomePage::DrawTopLHS() {
                 if (c == ':' || c == ' ') { c = '-'; }
             }
             const auto command = fmt::format("SD_START /{}.txt", m_SDName);
-            context_->backend->SendCMD(command);
+            context_->backend->send_cmd(command);
             m_SetName.clear();
         }
         ImGui::SameLine();
         ImGui::PushStyleColor(ImGuiCol_Button,
-                              context_->backend->IsWriting ? ImVec4(0, 0.7F, 0, 1)
+                              context_->backend->is_writing ? ImVec4(0, 0.7F, 0, 1)
                                                             : ImVec4(0.7F, 0, 0, 1));
-        if (ImGui::Button(context_->backend->IsWriting ? "Write ON" : "Write OFF")) {
-            if (context_->backend->IsWriting) {
-                context_->backend->SendCMD("SD_WRITE 0");
+        if (ImGui::Button(context_->backend->is_writing ? "Write ON" : "Write OFF")) {
+            if (context_->backend->is_writing) {
+                context_->backend->send_cmd("SD_WRITE 0");
             } else {
-                context_->backend->SendCMD("SD_WRITE 1");
+                context_->backend->send_cmd("SD_WRITE 1");
             }
             // m_SDWrite = !m_SDWrite;
         }
         ImGui::PopStyleColor();
         ImGui::SameLine();
         if (!m_SDName.empty()) {
-            if (ImGui::Button(context_->backend->IsOpen ? "Close SD" : "Open SD")) {
-                if (context_->backend->IsOpen) {
-                    context_->backend->SendCMD("SD_CLOSE");
+            if (ImGui::Button(context_->backend->is_open ? "Close SD" : "Open SD")) {
+                if (context_->backend->is_open) {
+                    context_->backend->send_cmd("SD_CLOSE");
                 } else {
                     const auto command = fmt::format("SD_START /{}.txt", m_SDName);
-                    context_->backend->SendCMD(command);
+                    context_->backend->send_cmd(command);
                 }
             }
         }
@@ -129,7 +129,7 @@ void HomePage::DrawTopRHS() {
     ImGui::Separator();
 
     BOLD_DEFAULT(ImGui::SeparatorText("Metrics"));
-    ImGui::BulletText("Backend Status: %s", context_->backend->IsConnected ? "Online" : "Offline");
+    ImGui::BulletText("Backend Status: %s", context_->backend->is_connected ? "Online" : "Offline");
     ImGui::BulletText("Last IP Update: %s", m_PreviousIp.to_string().c_str());
     ImGui::BulletText("Application FPS: %.2f", ImGui::GetIO().Framerate);
 
@@ -172,7 +172,7 @@ void HomePage::DrawBottomRHS() {
 
 void HomePage::DrawIPControls() {
     if (ImGui::Button("Update IP") && !m_IpBuf.any_empty()) {
-        context_->backend->SetIp(m_IpBuf);
+        context_->backend->set_ip(m_IpBuf);
         m_PreviousIp = std::exchange(m_IpBuf, {});
     }
 

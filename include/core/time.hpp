@@ -9,10 +9,10 @@ namespace mbr {
 struct local_time {
     explicit local_time();
     explicit local_time(uint64_t hour,
-                       uint64_t minute,
-                       uint64_t second,
-                       uint64_t millisecond,
-                       uint64_t microsecond);
+                        uint64_t minute,
+                        uint64_t second,
+                        uint64_t millisecond,
+                        uint64_t microsecond);
     explicit local_time(uint64_t micros);
 
     [[nodiscard]] static local_time zero() noexcept;
@@ -42,13 +42,13 @@ struct date_time {
         TEXT_FILE,
     };
 
-    uint64_t  year;
-    uint64_t  month;
-    uint64_t  day;
+    uint64_t   year;
+    uint64_t   month;
+    uint64_t   day;
     local_time local;
 
     [[nodiscard]] static std::optional<date_time> from_video_metadata(const std::string& path);
-    [[nodiscard]] std::string to_string(fmt_t fmt = fmt_t::DISPLAY) const;
+    [[nodiscard]] std::string                     to_string(fmt_t fmt = fmt_t::DISPLAY) const;
 };
 
 } // namespace mbr

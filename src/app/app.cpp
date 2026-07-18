@@ -21,7 +21,7 @@ app_t::app_t([[maybe_unused]] int arc, [[maybe_unused]] char* argv[])
     Log::Init();
     ix::initNetSystem();
     gui_              = std::make_unique<gui_t>(context_);
-    context_->backend = std::make_unique<TelemetryBackend>();
+    context_->backend = std::make_unique<telemetry_backend>();
 }
 
 app_t::~app_t() { ix::uninitNetSystem(); }

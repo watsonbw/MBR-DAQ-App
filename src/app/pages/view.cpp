@@ -146,8 +146,9 @@ void ViewPage::DrawLHSControls() {
     // Slider
     const auto current_timestamp_min =
         (static_cast<double>(m_CurrentFrameUI) / m_TotalFrames) * m_VideoLengthMin;
-    const auto current_timestamp   = local_time::from_minutes(current_timestamp_min);
-    const auto formatted_timestamp = current_timestamp.value_or(local_time::zero()).to_string(false);
+    const auto current_timestamp = local_time::from_minutes(current_timestamp_min);
+    const auto formatted_timestamp =
+        current_timestamp.value_or(local_time::zero()).to_string(false);
     ImGui::Text("%s / %s", formatted_timestamp.c_str(), m_VideoLengthFormatted.c_str());
     ImGui::SameLine();
 
@@ -302,49 +303,50 @@ void ViewPage::DrawRHS() {
             }
         }
 
-        const auto data = context_->backend->PackData();
+        const auto data = context_->backend->pack_data();
 
-        const auto sync_lt = context_->backend->Data.GetSyncLT();
-        const auto plot_title =
-            sync_lt ? fmt::format("Data View from {}", sync_lt.value().to_string()) : "No Synced Time";
+        const auto sync_lt    = context_->backend->data.get_sync_lt();
+        const auto plot_title = sync_lt
+                                    ? fmt::format("Data View from {}", sync_lt.value().to_string())
+                                    : "No Synced Time";
 
         ViewPage::DynamicPlotLoop();
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
             pages::utils::plot_if_non_empty<double>("Wheel Speed",
-                                                    data.TimeMinutesNormalized,
-                                                    data.Series.at("W"),
+                                                    data.time_minutes_normalized,
+                                                    data.series.at("W"),
                                                     m_DataShow == DataView::ALL ||
                                                         m_DataShow == DataView::RPMDATA,
                                                     m_PlotPercent);
             pages::utils::plot_if_non_empty<double>("Engine Speed",
-                                                    data.TimeMinutesNormalized,
-                                                    data.Series.at("E"),
+                                                    data.time_minutes_normalized,
+                                                    data.series.at("E"),
                                                     m_DataShow == DataView::ALL ||
                                                         m_DataShow == DataView::RPMDATA,
                                                     m_PlotPercent);
 
             pages::utils::plot_if_non_empty<double>("Front Right Shock Travel",
-                                                    data.TimeMinutesNormalized,
-                                                    data.Series.at("FR"),
+                                                    data.time_minutes_normalized,
+                                                    data.series.at("FR"),
                                                     m_DataShow == DataView::ALL ||
                                                         m_DataShow == DataView::SHOCKDATA,
                                                     m_PlotPercent);
             pages::utils::plot_if_non_empty<double>("Front Left Shock Travel",
-                                                    data.TimeMinutesNormalized,
-                                                    data.Series.at("FL"),
+                                                    data.time_minutes_normalized,
+                                                    data.series.at("FL"),
                                                     m_DataShow == DataView::ALL ||
                                                         m_DataShow == DataView::SHOCKDATA,
                                                     m_PlotPercent);
             pages::utils::plot_if_non_empty<double>("Rear Right Shock Travel",
-                                                    data.TimeMinutesNormalized,
-                                                    data.Series.at("RR"),
+                                                    data.time_minutes_normalized,
+                                                    data.series.at("RR"),
                                                     m_DataShow == DataView::ALL ||
                                                         m_DataShow == DataView::SHOCKDATA,
                                                     m_PlotPercent);
             pages::utils::plot_if_non_empty<double>("Rear Left Shock Travel",
-                                                    data.TimeMinutesNormalized,
-                                                    data.Series.at("RL"),
+                                                    data.time_minutes_normalized,
+                                                    data.series.at("RL"),
                                                     m_DataShow == DataView::ALL ||
                                                         m_DataShow == DataView::SHOCKDATA,
                                                     m_PlotPercent);
@@ -382,7 +384,7 @@ void ViewPage::DrawOpenText() {
                     const std::scoped_lock<std::mutex> lock{m_TxtPathMutex};
                     m_SelectedTxt                 = path;
                     m_TxtDialogRunning            = false;
-                    context_->backend->IsLogging = false;
+                    context_->backend->is_logging = false;
                 }
             } catch (const std::exception& e) {
                 m_TxtDialogRunning = false;
@@ -418,8 +420,8 @@ void ViewPage::DrawSyncVideoButtons() {
 
         std::optional<size_t> sync_time_pos;
         {
-            const std::scoped_lock<std::mutex> lock{context_->backend->DataMutex};
-            sync_time_pos = SyncDataVideo(context_->backend->Data.GetTimeNoNormal());
+            const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
+            sync_time_pos = SyncDataVideo(context_->backend->data.get_time_no_normal());
         }
 
         if (!sync_time_pos) {
@@ -481,10 +483,10 @@ void ViewPage::LoadData() {
         return;
     }
 
-    const std::scoped_lock<std::mutex> lock{context_->backend->DataMutex};
-    context_->backend->Data.Clear();
+    const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
+    context_->backend->data.clear();
     std::string ident, value;
-    while (file >> ident >> value) { context_->backend->Data.WriteData(ident, value); }
+    while (file >> ident >> value) { context_->backend->data.write_data(ident, value); }
 }
 
 void ViewPage::RequestSeek(int frame_index) {
@@ -660,15 +662,15 @@ std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<uint64_t>& micro
 }
 
 void ViewPage::DeleteExtra(size_t erase_pos) {
-    const std::scoped_lock<std::mutex> lock{context_->backend->DataMutex};
+    const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
     std::vector<double>* const         data[] = {
-        &context_->backend->Data.m_Time,
-        &context_->backend->Data.Series.at("W"),
-        &context_->backend->Data.Series.at("E"),
-        &context_->backend->Data.Series.at("FR"),
-        &context_->backend->Data.Series.at("FL"),
-        &context_->backend->Data.Series.at("RR"),
-        &context_->backend->Data.Series.at("RL"),
+        &context_->backend->data.time_,
+        &context_->backend->data.series.at("W"),
+        &context_->backend->data.series.at("E"),
+        &context_->backend->data.series.at("FR"),
+        &context_->backend->data.series.at("FL"),
+        &context_->backend->data.series.at("RR"),
+        &context_->backend->data.series.at("RL"),
     };
 
     for (const auto& datum : data) {
@@ -682,10 +684,10 @@ void ViewPage::DeleteExtra(size_t erase_pos) {
 
 void ViewPage::DynamicPlotStart() {
     if (m_DynamicPlotting) {
-        const std::scoped_lock<std::mutex> lock{context_->backend->DataMutex};
-        const auto&                        time_vec = context_->backend->Data.m_Time;
+        const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
+        const auto&                        time_vec = context_->backend->data.time_;
         if (time_vec.empty()) { return; }
-        const auto begin_time_min = context_->backend->Data.m_Time[0];
+        const auto begin_time_min = context_->backend->data.time_[0];
 
         const double target_end_time = begin_time_min + m_VideoLengthMin;
         const auto   end_it          = std::ranges::lower_bound(time_vec, target_end_time);

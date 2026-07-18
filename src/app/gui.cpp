@@ -134,7 +134,7 @@ void gui_t::on_frame() {
     }
 
     if (ImGui::IsKeyPressed(ImGuiKey_F11, false)) { sapp_toggle_fullscreen(); }
-    if (context_->backend->TryConnection.exchange(false)) { context_->backend->Start(); }
+    if (context_->backend->try_connection.exchange(false)) { context_->backend->start(); }
 }
 
 void gui_t::on_event(const sapp_event* event) { // NOLINT
@@ -197,20 +197,20 @@ void gui_t::draw_main_menu_bar() {
         // ImGui::Separator();
 
         const local_time lt;
-        const auto      sync_time = lt.micros_since_midnight();
+        const auto       sync_time = lt.micros_since_midnight();
 
         const auto command = fmt::format("CMD SYNC {}", sync_time);
-        if (ImGui::Button("Sync Time")) { context_->backend->SendCMD(command); }
+        if (ImGui::Button("Sync Time")) { context_->backend->send_cmd(command); }
 
         ImGui::Separator();
-        if (ImGui::Button("Restart Connection")) { context_->backend->TryConnection = true; }
+        if (ImGui::Button("Restart Connection")) { context_->backend->try_connection = true; }
         ImGui::Separator();
-        if (ImGui::Button("Clear Data")) { context_->backend->Data.Clear(); }
+        if (ImGui::Button("Clear Data")) { context_->backend->data.clear(); }
         ImGui::Separator();
 
         // Connection indicator
-        const bool connected = context_->backend->IsConnected;
-        const bool receiving = context_->backend->IsReceiving;
+        const bool connected = context_->backend->is_connected;
+        const bool receiving = context_->backend->is_receiving;
 
         const float  radius = 10.0F;
         const ImVec2 pos    = ImGui::GetCursorScreenPos();
@@ -236,7 +236,7 @@ void gui_t::draw_main_menu_bar() {
         ImGui::Separator();
 
         if (ImGui::Button("Send CMD")) {
-            context_->backend->SendCMD(command_buf_);
+            context_->backend->send_cmd(command_buf_);
             command_buf_ = {};
         }
 

@@ -18,16 +18,16 @@ void ShockPage::Update() {
     if (ImGui::BeginTable(
             "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
         const auto cleanup_split{gsl::finally(ImGui::EndTable)};
-        const auto data = context_->backend->PackData();
+        const auto data = context_->backend->pack_data();
 
         ImGui::TableNextColumn();
-        DrawLHS(data.RawLines);
+        DrawLHS(data.raw_lines);
         ImGui::TableNextColumn();
-        DrawRHS(data.TimeMinutesNormalized,
-                data.Series.at("FR"),
-                data.Series.at("FL"),
-                data.Series.at("RR"),
-                data.Series.at("RL"));
+        DrawRHS(data.time_minutes_normalized,
+                data.series.at("FR"),
+                data.series.at("FL"),
+                data.series.at("RR"),
+                data.series.at("RL"));
     }
 }
 
@@ -55,7 +55,7 @@ void ShockPage::DrawRHS(gsl::span<const double> time,
                         gsl::span<const double> bl) {
     if (ImGui::BeginChild("##graph")) {
         const auto cleanup_graph{gsl::finally(ImGui::EndChild)};
-        const auto sync_lt = context_->backend->Data.GetSyncLT();
+        const auto sync_lt = context_->backend->data.get_sync_lt();
         const auto plot_title =
             sync_lt ? fmt::format("Shock Travel Data from {}", sync_lt.value().to_string())
                     : "No Synced Time";

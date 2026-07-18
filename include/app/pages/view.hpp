@@ -75,15 +75,15 @@ class ViewPage : public Page {
   private:
     std::shared_ptr<bool> m_IsAlive;
 
-    std::string              m_VideoPath;
+    std::string               m_VideoPath;
     std::optional<local_time> m_VideoCreationTimestamp;
-    std::string              m_CreationMetadataTextBuf;
-    std::atomic<bool>        m_VideoDialogRunning{false};
-    std::mutex               m_VideoPathMutex;
-    SelectedVideo            m_SelectedVideo;
-    std::string              m_InputTime;
-    bool                     m_VideoLoaded{false};
-    bool                     m_VideoHovered{false};
+    std::string               m_CreationMetadataTextBuf;
+    std::atomic<bool>         m_VideoDialogRunning{false};
+    std::mutex                m_VideoPathMutex;
+    SelectedVideo             m_SelectedVideo;
+    std::string               m_InputTime;
+    bool                      m_VideoLoaded{false};
+    bool                      m_VideoHovered{false};
 
     bool   m_DynamicPlotting{false};
     size_t m_PlotPercent;

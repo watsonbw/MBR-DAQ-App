@@ -20,7 +20,7 @@ namespace mbr {
 
 struct app_context;
 
-enum class ResponseType {
+enum class response_type_t {
     SYNC,
     SDSTART,
     SDWRITE,
@@ -28,51 +28,51 @@ enum class ResponseType {
     UNKNOWN,
 };
 
-class TelemetryBackend {
+class telemetry_backend {
   public:
-    explicit TelemetryBackend();
-    ~TelemetryBackend();
+    explicit telemetry_backend();
+    ~telemetry_backend();
 
-    void Start();
-    void Kill();
-    void SendCMD(const std::string& text);
+    void start();
+    void kill();
+    void send_cmd(const std::string& text);
 
     // Returns a safely accessible grouping of relevant data.
     //
     // This automatically manages the Data's mutex!
-    [[nodiscard]] TelemetryData::PackedData PackData();
-    void                                    SetIp(const ipv4_t& ipv4);
+    [[nodiscard]] telemetry_data::packed_data pack_data();
+    void                                      set_ip(const ipv4_t& ipv4);
 
   public:
-    std::mutex        DataMutex;
-    TelemetryData     Data;
-    SerialManager     SerialMan;
-    std::atomic<bool> TryConnection{false};
-    std::atomic<bool> IsConnected{false};
-    std::atomic<bool> IsLogging{false};
-    std::atomic<bool> IsReceiving{false};
-    std::atomic<bool> IsWriting{false};
-    std::atomic<bool> IsOpen{false};
+    std::mutex        data_mutex;
+    telemetry_data    data;
+    serial_manager_t  serial_manager;
+    std::atomic<bool> try_connection{false};
+    std::atomic<bool> is_connected{false};
+    std::atomic<bool> is_logging{false};
+    std::atomic<bool> is_receiving{false};
+    std::atomic<bool> is_writing{false};
+    std::atomic<bool> is_open{false};
 
   private:
-    void WorkerLoop();
-    void OnMessage(const ix::WebSocketMessagePtr& msg);
+    void worker_loop();
+    void on_message(const ix::WebSocketMessagePtr& msg);
 
     std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
-                 ValidatePacket(std::string_view str) const;
-    void         HandleResponse(std::string_view line);
-    void         RegisterHandlers();
-    ResponseType ResStringToEnum(std::string_view command) const;
+                    validate_packet(std::string_view str) const;
+    void            handle_response(std::string_view line);
+    void            register_handlers();
+    response_type_t res_string_to_enum(std::string_view command) const;
 
   private:
-    std::thread                           m_Worker;
-    ix::WebSocket                         m_WebSocket;
-    std::string                           m_Buffer;
-    ipv4_t                                  m_IpAddr;
-    std::chrono::steady_clock::time_point m_LastDataTime{};
-    std::atomic<bool>                     m_ShouldKill{false};
+    std::thread                           worker_;
+    ix::WebSocket                         web_sockets_;
+    std::string                           buffer_;
+    ipv4_t                                ip_addr_;
+    std::chrono::steady_clock::time_point last_data_time_{};
+    std::atomic<bool>                     should_kill_{false};
 
-    std::unordered_map<ResponseType, std::function<void(std::string_view)>> m_ResponseHandlers;
+    std::unordered_map<response_type_t, std::function<void(std::string_view)>> response_handlers;
 };
 
 } // namespace mbr

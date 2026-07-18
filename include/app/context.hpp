@@ -28,7 +28,7 @@ enum class page_type_t : uint8_t {
     }
 }
 
-class TelemetryBackend;
+class telemetry_backend;
 
 struct app_context {
     app_style         style;
@@ -36,9 +36,9 @@ struct app_context {
     std::atomic<bool> should_exit{false};
     bool              is_cmd_input_focused{false};
 
-    std::unique_ptr<TelemetryBackend> backend;
-    std::string                       username;
-    std::string                       password;
+    std::unique_ptr<telemetry_backend> backend;
+    std::string                        username;
+    std::string                        password;
 };
 
 } // namespace mbr
