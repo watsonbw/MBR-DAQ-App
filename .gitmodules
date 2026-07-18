@@ -53,3 +53,7 @@
 [submodule "vendor/unordered_dense"]
 	path = vendor/unordered_dense
 	url = https://github.com/martinus/unordered_dense
+
+[submodule "vendor/stdx"]
+	path = vendor/stdx
+	url = https://github.com/trevorswan11/stdx
