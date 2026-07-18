@@ -4,19 +4,19 @@
 
 namespace mbr {
 
-struct AppContext;
-class GUI;
+struct app_context;
+class gui_t;
 
-class App {
+class app_t {
   public:
-    explicit App(int arc, char* argv[]);
-    ~App();
+    explicit app_t(int arc, char* argv[]);
+    ~app_t();
 
-    void Run();
+    void run();
 
   private:
-    std::unique_ptr<GUI>        m_GUI;
-    std::shared_ptr<AppContext> m_Context;
+    std::unique_ptr<gui_t>       gui_;
+    std::shared_ptr<app_context> context_;
 };
 
 } // namespace mbr

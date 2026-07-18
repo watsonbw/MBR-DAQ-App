@@ -4,29 +4,29 @@ struct ImFont;
 
 namespace mbr {
 
-struct AppFonts {
-    ImFont* Regular;
-    ImFont* Bold;
-    ImFont* Italic;
-    ImFont* BoldItalic;
+struct app_fonts {
+    ImFont* regular;
+    ImFont* bold;
+    ImFont* italic;
+    ImFont* bold_italic;
 };
 
-AppFonts LoadFonts();
+app_fonts load_fonts();
 
-struct AppStyle {
-    void SetDarkThemeColors();
-    void SetLightThemeColors();
+struct app_style {
+    void set_dark_theme();
+    void set_light_theme();
 
-    AppFonts DefaultFonts;
-    bool     DarkMode{true};
+    app_fonts default_fonts;
+    bool      dark_mode{true};
 };
 
-extern float default_font_size;
-extern float header_font_size;
-extern float main_menu_bar_font_size;
-extern float main_menu_item_font_size;
-extern float menu_bar_font_size;
-extern float menu_item_font_size;
+constexpr float DEFAULT_FONT_SIZE        = 22.0F;
+constexpr float HEADER_FONT_SIZE         = 26.0F;
+constexpr float MAIN_MENU_BAR_FONT_SIZE  = 30.0F;
+constexpr float MAIN_MENU_ITEM_FONT_SIZE = 28.0F;
+constexpr float MENU_BAR_FONT_SIZE       = 26.0F;
+constexpr float MENU_ITEM_FONT_SIZE      = 24.0F;
 
 #define WITH_FONT(font, size, code)  \
     do {                             \
@@ -35,12 +35,12 @@ extern float menu_item_font_size;
         ImGui::PopFont();            \
     } while (false)
 
-#define BOLD_DEFAULT(B) WITH_FONT(m_Context->Style.DefaultFonts.Bold, default_font_size, B)
-#define HEADER(B) WITH_FONT(m_Context->Style.DefaultFonts.Regular, header_font_size, B)
-#define BOLD_HEADER(B) WITH_FONT(m_Context->Style.DefaultFonts.Bold, header_font_size, B)
+#define BOLD_DEFAULT(B) WITH_FONT(context_->style.default_fonts.bold, DEFAULT_FONT_SIZE, B)
+#define HEADER(B) WITH_FONT(context_->style.default_fonts.regular, HEADER_FONT_SIZE, B)
+#define BOLD_HEADER(B) WITH_FONT(context_->style.default_fonts.bold, HEADER_FONT_SIZE, B)
 #define MAIN_MENU_BAR(B) \
-    WITH_FONT(m_Context->Style.DefaultFonts.Regular, main_menu_bar_font_size, B)
+    WITH_FONT(context_->style.default_fonts.regular, MAIN_MENU_BAR_FONT_SIZE, B)
 #define MAIN_MENU_BAR_ITEM(B) \
-    WITH_FONT(m_Context->Style.DefaultFonts.Regular, main_menu_item_font_size, B)
+    WITH_FONT(context_->style.default_fonts.regular, MAIN_MENU_ITEM_FONT_SIZE, B)
 
 } // namespace mbr

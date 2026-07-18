@@ -9,11 +9,11 @@
 
 namespace mbr {
 
-struct AppContext;
+struct app_context;
 
 class RPMPage : public Page {
   public:
-    explicit RPMPage(const std::shared_ptr<AppContext>& ctx) : Page{ctx}, m_TextUtils{ctx} {}
+    explicit RPMPage(const std::shared_ptr<app_context>& ctx) : Page{ctx}, m_TextUtils{ctx} {}
     ~RPMPage() override = default;
 
     void OnEnter() override;

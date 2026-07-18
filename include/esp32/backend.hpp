@@ -18,7 +18,7 @@
 
 namespace mbr {
 
-struct AppContext;
+struct app_context;
 
 enum class ResponseType {
     SYNC,

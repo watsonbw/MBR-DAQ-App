@@ -38,7 +38,7 @@ class ViewPage : public Page {
     static const char* DataTypeString(DataView type);
 
   public:
-    explicit ViewPage(const std::shared_ptr<AppContext>& ctx);
+    explicit ViewPage(const std::shared_ptr<app_context>& ctx);
     ~ViewPage() override;
 
     void OnEnter() override;

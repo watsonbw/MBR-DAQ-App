@@ -9,7 +9,7 @@
 
 namespace mbr {
 
-struct AppContext;
+struct app_context;
 
 namespace pages::utils {
 
@@ -28,7 +28,7 @@ static void plot_if_non_empty(const char*        label,
 
 class text_drawers {
   public:
-    explicit text_drawers(const std::shared_ptr<AppContext>& ctx) : m_Context{ctx} {}
+    explicit text_drawers(const std::shared_ptr<app_context>& ctx) : context_{ctx} {}
 
     void start_logging_button();
     bool start_serial_button();
@@ -38,7 +38,7 @@ class text_drawers {
     void data_download_button(const std::vector<std::string>& raw_lines, std::string& buf);
 
   private:
-    std::shared_ptr<AppContext> m_Context;
+    std::shared_ptr<app_context> context_;
 };
 
 bool draw_input_box(const char*                label,

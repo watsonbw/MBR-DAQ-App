@@ -18,8 +18,8 @@ namespace mbr::pages::utils {
 
 void text_drawers::start_logging_button() {
     HEADER({
-        if (ImGui::Button(m_Context->Backend->IsLogging ? "Stop Logging" : "Start Logging")) {
-            m_Context->Backend->IsLogging = !m_Context->Backend->IsLogging;
+        if (ImGui::Button(context_->backend->IsLogging ? "Stop Logging" : "Start Logging")) {
+            context_->backend->IsLogging = !context_->backend->IsLogging;
         }
     });
 }
@@ -27,10 +27,10 @@ void text_drawers::start_logging_button() {
 bool text_drawers::start_serial_button() {
     bool clicked = false;
     HEADER({
-        if (ImGui::Button(m_Context->Backend->SerialMan.IsSerialWrite ? "Stop Serial"
+        if (ImGui::Button(context_->backend->SerialMan.IsSerialWrite ? "Stop Serial"
                                                                       : "Start Serial")) {
-            m_Context->Backend->SerialMan.IsSerialWrite =
-                !m_Context->Backend->SerialMan.IsSerialWrite;
+            context_->backend->SerialMan.IsSerialWrite =
+                !context_->backend->SerialMan.IsSerialWrite;
             clicked = true;
         }
     });
@@ -39,9 +39,9 @@ bool text_drawers::start_serial_button() {
 
 void text_drawers::send_data_button() {
     HEADER({
-        if (ImGui::Button(m_Context->Backend->SerialMan.m_SendData ? "Stop Data Send"
+        if (ImGui::Button(context_->backend->SerialMan.m_SendData ? "Stop Data Send"
                                                                    : "Send Data")) {
-            m_Context->Backend->SerialMan.m_SendData = !m_Context->Backend->SerialMan.m_SendData;
+            context_->backend->SerialMan.m_SendData = !context_->backend->SerialMan.m_SendData;
         }
     });
 }

@@ -11,7 +11,7 @@ namespace mbr {
 
 class ShockPage : public Page {
   public:
-    explicit ShockPage(const std::shared_ptr<AppContext>& ctx) : Page{ctx}, m_TextUtils{ctx} {}
+    explicit ShockPage(const std::shared_ptr<app_context>& ctx) : Page{ctx}, m_TextUtils{ctx} {}
     ~ShockPage() override = default;
 
     void OnEnter() override;

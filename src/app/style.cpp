@@ -21,7 +21,7 @@ namespace {
     constinit std::optional<std::array<ImVec4, ImGuiCol_COUNT>> color_cache = std::nullopt;
 } // namespace
 
-AppFonts LoadFonts() {
+app_fonts load_fonts() {
     ImGuiIO&     io = ImGui::GetIO();
     ImFontConfig cfg;
     cfg.FontDataOwnedByAtlas = false;
@@ -29,25 +29,25 @@ AppFonts LoadFonts() {
     auto* regular =
         io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_REGULAR_TTF.data(),
                                        static_cast<int>(assets::OPEN_SANS_REGULAR_TTF.size()),
-                                       default_font_size,
+                                       DEFAULT_FONT_SIZE,
                                        &cfg);
 
     auto* bold = io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_BOLD_TTF.data(),
                                                 static_cast<int>(assets::OPEN_SANS_BOLD_TTF.size()),
-                                                default_font_size,
+                                                DEFAULT_FONT_SIZE,
                                                 &cfg);
     auto* italic =
         io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_ITALIC_TTF.data(),
                                        static_cast<int>(assets::OPEN_SANS_ITALIC_TTF.size()),
-                                       default_font_size,
+                                       DEFAULT_FONT_SIZE,
                                        &cfg);
     auto* bold_italic =
         io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_BOLD_ITALIC_TTF.data(),
                                        static_cast<int>(assets::OPEN_SANS_BOLD_ITALIC_TTF.size()),
-                                       default_font_size,
+                                       DEFAULT_FONT_SIZE,
                                        &cfg);
 
-    return {.Regular = regular, .Bold = bold, .Italic = italic, .BoldItalic = bold_italic};
+    return {.regular = regular, .bold = bold, .italic = italic, .bold_italic = bold_italic};
 }
 
 static void PopulateImGuiColorCache(ImVec4 colors[ImGuiCol_COUNT]) {
@@ -60,7 +60,7 @@ static void RefreshImGuiColorCache(ImVec4 colors[ImGuiCol_COUNT]) {
     for (auto i = 0; i < ImGuiCol_COUNT; i++) { colors[i] = color_cache.value()[i]; }
 }
 
-void AppStyle::SetDarkThemeColors() {
+void app_style::set_dark_theme() {
     LOG_INFO("Setting dark mode");
 #ifdef _WIN32
     HWND hwnd          = reinterpret_cast<HWND>(const_cast<void*>(sapp_win32_get_hwnd()));
@@ -105,10 +105,10 @@ void AppStyle::SetDarkThemeColors() {
     colors[ImGuiCol_TitleBgActive]    = {0.15F, 0.1505F, 0.151F, 1.0F};
     colors[ImGuiCol_TitleBgCollapsed] = {0.15F, 0.1505F, 0.151F, 1.0F};
 
-    DarkMode = true;
+    dark_mode = true;
 }
 
-void AppStyle::SetLightThemeColors() {
+void app_style::set_light_theme() {
     LOG_INFO("Setting light mode");
 #ifdef _WIN32
     HWND hwnd          = reinterpret_cast<HWND>(const_cast<void*>(sapp_win32_get_hwnd()));
@@ -165,14 +165,7 @@ void AppStyle::SetLightThemeColors() {
     colors[ImGuiCol_Separator] = {0.70F, 0.70F, 0.70F, 1.0F};
     colors[ImGuiCol_Border]    = {0.70F, 0.70F, 0.70F, 0.5F};
 
-    DarkMode = false;
+    dark_mode = false;
 }
-
-float default_font_size        = 22.0F;
-float header_font_size         = 26.0F;
-float main_menu_bar_font_size  = 30.0F;
-float main_menu_item_font_size = 28.0F;
-float menu_bar_font_size       = 26.0F;
-float menu_item_font_size      = 24.0F;
 
 } // namespace mbr

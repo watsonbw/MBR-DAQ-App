@@ -16,18 +16,18 @@
 
 namespace mbr {
 
-App::App([[maybe_unused]] int arc, [[maybe_unused]] char* argv[])
-    : m_Context{std::make_shared<AppContext>()} /*, m_Manager{m_Context}*/ {
+app_t::app_t([[maybe_unused]] int arc, [[maybe_unused]] char* argv[])
+    : context_{std::make_shared<app_context>()} /*, m_Manager{m_Context}*/ {
     Log::Init();
     ix::initNetSystem();
-    m_GUI              = std::make_unique<GUI>(m_Context);
-    m_Context->Backend = std::make_unique<TelemetryBackend>();
+    gui_              = std::make_unique<gui_t>(context_);
+    context_->backend = std::make_unique<TelemetryBackend>();
 }
 
-App::~App() { ix::uninitNetSystem(); }
+app_t::~app_t() { ix::uninitNetSystem(); }
 
-void App::Run() {
-    auto app_desc = m_GUI->GetSokolDesc();
+void app_t::run() {
+    auto app_desc = gui_->get_sokol_desc();
     sapp_run(&app_desc);
 }
 

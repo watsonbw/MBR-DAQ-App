@@ -25,26 +25,54 @@ using namespace std::chrono;
 
 namespace mbr {
 
-GUI* GUI::s_Instance = nullptr;
+#define SOKOL_CB(F)       \
+    assert(gui_instance); \
+    gui_instance->F
 
-#define SOKOL_CB(F)     \
-    assert(s_Instance); \
-    s_Instance->F
+namespace {
 
-void GUI::SokolInitCB() { SOKOL_CB(OnInit()); }
-void GUI::SokolCleanupCB() { SOKOL_CB(OnCleanup()); }
-void GUI::SokolFrameCB() { SOKOL_CB(OnFrame()); }
-void GUI::SokolEventCB(const sapp_event* e) { SOKOL_CB(OnEvent(e)); }
+constinit gui_t* gui_instance{nullptr};
 
-sapp_desc GUI::GetSokolDesc() {
-    assert(s_Instance == nullptr);
-    s_Instance = this;
+void sokol_init_cb() { SOKOL_CB(on_init()); }
+void sokol_cleanup_cb() { SOKOL_CB(on_cleanup()); }
+void sokol_frame_cb() { SOKOL_CB(on_frame()); }
+void sokol_event_cb(const sapp_event* e) { SOKOL_CB(on_event(e)); }
+
+void sokol_start_frame() {
+    simgui_frame_desc_t frame_desc = {};
+    frame_desc.width               = sapp_width();
+    frame_desc.height              = sapp_height();
+    frame_desc.delta_time          = sapp_frame_duration();
+    frame_desc.dpi_scale           = sapp_dpi_scale();
+    simgui_new_frame(&frame_desc);
+}
+
+void sokol_end_frame() {
+    sg_pass_action pass_action        = {};
+    pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
+    pass_action.colors[0].clear_value = {.r = 0.1F, .g = 0.1F, .b = 0.1F, .a = 1.0F};
+
+    sg_pass pass   = {};
+    pass.action    = pass_action;
+    pass.swapchain = sglue_swapchain();
+
+    sg_begin_pass(&pass);
+    simgui_render();
+    sg_end_pass();
+    sg_commit();
+}
+
+} // namespace
+
+sapp_desc gui_t::get_sokol_desc() {
+    assert(gui_instance == nullptr);
+    gui_instance = this;
 
     sapp_desc desc          = {};
-    desc.init_cb            = GUI::SokolInitCB;
-    desc.frame_cb           = GUI::SokolFrameCB;
-    desc.cleanup_cb         = GUI::SokolCleanupCB;
-    desc.event_cb           = GUI::SokolEventCB;
+    desc.init_cb            = sokol_init_cb;
+    desc.frame_cb           = sokol_frame_cb;
+    desc.cleanup_cb         = sokol_cleanup_cb;
+    desc.event_cb           = sokol_event_cb;
     desc.width              = 1'920;
     desc.height             = 1'080;
     desc.window_title       = "Michigan Baja Racing - Data Suite";
@@ -59,7 +87,7 @@ sapp_desc GUI::GetSokolDesc() {
     return desc;
 }
 
-void GUI::OnInit() {
+void gui_t::on_init() {
     sg_desc sg_description     = {};
     sg_description.environment = sglue_environment();
     sg_description.logger.func = slog_func;
@@ -70,21 +98,21 @@ void GUI::OnInit() {
     simgui_setup(&si_desc);
 
     auto& io                      = ImGui::GetIO();
-    m_Context->Style.DefaultFonts = LoadFonts();
-    io.FontDefault                = m_Context->Style.DefaultFonts.Regular;
+    context_->style.default_fonts = load_fonts();
+    io.FontDefault                = context_->style.default_fonts.regular;
 
     ImPlot::CreateContext();
-    m_Context->Style.SetDarkThemeColors();
+    context_->style.set_dark_theme();
 
-    ChangePage(PageType::HOME);
+    change_page(page_type_t::HOME);
 }
 
-void GUI::OnFrame() {
-    SokolStartFrame();
-    const auto cleanup_frame{gsl::finally(SokolEndFrame)};
-    MAIN_MENU_BAR(DrawMainMenuBar());
+void gui_t::on_frame() {
+    sokol_start_frame();
+    const auto cleanup_frame{gsl::finally(sokol_end_frame)};
+    MAIN_MENU_BAR(draw_main_menu_bar());
 
-    if (m_CurrentPage) {
+    if (current_page_) {
         const auto* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -101,85 +129,61 @@ void GUI::OnFrame() {
 
         if (ImGui::Begin("##currpage", nullptr, window_flags)) {
             const auto cleanup_page{gsl::finally(ImGui::End)};
-            m_CurrentPage->Update();
+            current_page_->Update();
         }
     }
 
     if (ImGui::IsKeyPressed(ImGuiKey_F11, false)) { sapp_toggle_fullscreen(); }
-    if (m_Context->Backend->TryConnection.exchange(false)) { m_Context->Backend->Start(); }
+    if (context_->backend->TryConnection.exchange(false)) { context_->backend->Start(); }
 }
 
-void GUI::OnEvent(const sapp_event* event) { // NOLINT
+void gui_t::on_event(const sapp_event* event) { // NOLINT
     if (event->type == SAPP_EVENTTYPE_QUIT_REQUESTED) { sapp_quit(); }
     simgui_handle_event(event);
 }
 
-void GUI::OnCleanup() {
-    m_Context->ShouldExit = true;
-    if (m_CurrentPage) { m_CurrentPage->OnExit(); }
-    m_CurrentPage.reset();
+void gui_t::on_cleanup() {
+    context_->should_exit = true;
+    if (current_page_) { current_page_->OnExit(); }
+    current_page_.reset();
 
     simgui_shutdown();
     sg_shutdown();
     ImPlot::DestroyContext();
 }
 
-void GUI::SokolStartFrame() {
-    simgui_frame_desc_t frame_desc = {};
-    frame_desc.width               = sapp_width();
-    frame_desc.height              = sapp_height();
-    frame_desc.delta_time          = sapp_frame_duration();
-    frame_desc.dpi_scale           = sapp_dpi_scale();
-    simgui_new_frame(&frame_desc);
-}
-
-void GUI::SokolEndFrame() {
-    sg_pass_action pass_action        = {};
-    pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
-    pass_action.colors[0].clear_value = {.r = 0.1F, .g = 0.1F, .b = 0.1F, .a = 1.0F};
-
-    sg_pass pass   = {};
-    pass.action    = pass_action;
-    pass.swapchain = sglue_swapchain();
-
-    sg_begin_pass(&pass);
-    simgui_render();
-    sg_end_pass();
-    sg_commit();
-}
-
-void GUI::ChangePage(PageType type) {
-    if (m_CurrentPage) { m_CurrentPage->OnExit(); }
+void gui_t::change_page(page_type_t type) {
+    if (current_page_) { current_page_->OnExit(); }
 
     switch (type) {
-    case PageType::HOME:   m_CurrentPage = std::make_unique<HomePage>(m_Context); break;
-    case PageType::RPM:    m_CurrentPage = std::make_unique<RPMPage>(m_Context); break;
-    case PageType::SHOCK:  m_CurrentPage = std::make_unique<ShockPage>(m_Context); break;
-    case PageType::VIEW:   m_CurrentPage = std::make_unique<ViewPage>(m_Context); break;
-    case PageType::SERIAL: m_CurrentPage = std::make_unique<SerialPage>(m_Context); break;
+    case page_type_t::HOME:   current_page_ = std::make_unique<HomePage>(context_); break;
+    case page_type_t::RPM:    current_page_ = std::make_unique<RPMPage>(context_); break;
+    case page_type_t::SHOCK:  current_page_ = std::make_unique<ShockPage>(context_); break;
+    case page_type_t::VIEW:   current_page_ = std::make_unique<ViewPage>(context_); break;
+    case page_type_t::SERIAL: current_page_ = std::make_unique<SerialPage>(context_); break;
     }
 
-    if (m_CurrentPage) { m_CurrentPage->OnEnter(); }
-    m_Context->CurrentPageType = type;
+    if (current_page_) { current_page_->OnEnter(); }
+    context_->current_page_type = type;
 }
 
-void GUI::DrawMainMenuBar() {
+void gui_t::draw_main_menu_bar() {
     // DO NOT MOVE THIS BEGIN CALL IT WILL BREAK
     if (ImGui::BeginMainMenuBar()) {
         const auto cleanup_mm{gsl::finally(ImGui::EndMainMenuBar)};
         if (ImGui::BeginMenu("Menu")) {
             const auto cleanup_m{gsl::finally(ImGui::EndMenu)};
             MAIN_MENU_BAR_ITEM({
-                if (ImGui::MenuItem("Home")) { ChangePage(PageType::HOME); }
-                if (ImGui::MenuItem("RPM")) { ChangePage(PageType::RPM); }
-                if (ImGui::MenuItem("Shock")) { ChangePage(PageType::SHOCK); }
-                if (ImGui::MenuItem("View")) { ChangePage(PageType::VIEW); }
-                if (ImGui::MenuItem("Serial Monitor")) { ChangePage(PageType::SERIAL); }
+                if (ImGui::MenuItem("Home")) { change_page(page_type_t::HOME); }
+                if (ImGui::MenuItem("RPM")) { change_page(page_type_t::RPM); }
+                if (ImGui::MenuItem("Shock")) { change_page(page_type_t::SHOCK); }
+                if (ImGui::MenuItem("View")) { change_page(page_type_t::VIEW); }
+                if (ImGui::MenuItem("Serial Monitor")) { change_page(page_type_t::SERIAL); }
                 if (ImGui::MenuItem("Toggle Dark Mode")) {
-                    if (m_Context->Style.DarkMode) {
-                        m_Context->Style.SetLightThemeColors();
+                    if (context_->style.dark_mode) {
+                        context_->style.set_light_theme();
                     } else {
-                        m_Context->Style.SetDarkThemeColors();
+                        context_->style.set_dark_theme();
                     }
                 }
                 if (ImGui::MenuItem("Exit")) { sapp_request_quit(); }
@@ -187,26 +191,26 @@ void GUI::DrawMainMenuBar() {
         }
 
         ImGui::Separator();
-        ImGui::TextUnformatted(PageTypeString(m_Context->CurrentPageType));
+        ImGui::TextUnformatted(page_type_str(context_->current_page_type));
         ImGui::Separator();
-        // ImGui::TextUnformatted(PageTypeString(m_Context->CurrentPageType));
+        // ImGui::TextUnformatted(page_type_str(m_Context->CurrentPageType));
         // ImGui::Separator();
 
         const LocalTime lt;
         const auto      sync_time = lt.MicrosSinceMidnight();
 
         const auto command = fmt::format("CMD SYNC {}", sync_time);
-        if (ImGui::Button("Sync Time")) { m_Context->Backend->SendCMD(command); }
+        if (ImGui::Button("Sync Time")) { context_->backend->SendCMD(command); }
 
         ImGui::Separator();
-        if (ImGui::Button("Restart Connection")) { m_Context->Backend->TryConnection = true; }
+        if (ImGui::Button("Restart Connection")) { context_->backend->TryConnection = true; }
         ImGui::Separator();
-        if (ImGui::Button("Clear Data")) { m_Context->Backend->Data.Clear(); }
+        if (ImGui::Button("Clear Data")) { context_->backend->Data.Clear(); }
         ImGui::Separator();
 
         // Connection indicator
-        const bool connected = m_Context->Backend->IsConnected;
-        const bool receiving = m_Context->Backend->IsReceiving;
+        const bool connected = context_->backend->IsConnected;
+        const bool receiving = context_->backend->IsReceiving;
 
         const float  radius = 10.0F;
         const ImVec2 pos    = ImGui::GetCursorScreenPos();
@@ -227,13 +231,13 @@ void GUI::DrawMainMenuBar() {
         ImGui::TextUnformatted(connected ? "Connected" : "Not Connected");
 
         ImGui::Separator();
-        pages::utils::draw_input_box("##command", m_CommandBuf);
-        m_Context->CommandInputFocused = ImGui::IsItemFocused();
+        pages::utils::draw_input_box("##command", command_buf_);
+        context_->is_cmd_input_focused = ImGui::IsItemFocused();
         ImGui::Separator();
 
         if (ImGui::Button("Send CMD")) {
-            m_Context->Backend->SendCMD(m_CommandBuf);
-            m_CommandBuf = {};
+            context_->backend->SendCMD(command_buf_);
+            command_buf_ = {};
         }
 
         ImGui::Separator();
