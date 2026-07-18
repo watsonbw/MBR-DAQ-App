@@ -6,6 +6,7 @@
 #include <sokol_app.h>
 #include <sokol_gfx.h>
 #include <sokol_imgui.h>
+#include <stb_image.h>
 
 namespace mbr::assets {
 
@@ -28,19 +29,23 @@ class button_texture {
     ImTextureID im_tex_id_{0};
 };
 
-struct icon_texture {
-    icon_texture(gsl::span<const unsigned char> data);
-    ~icon_texture() = default;
+template <bool Managed = false> struct icon_texture {
+    icon_texture(gsl::span<const unsigned char> data)
+        : pixels{stbi_load_from_memory(
+              data.data(), static_cast<int>(data.size()), &width, &height, &comp, 4)} {
+        size = static_cast<size_t>(width * height) * comp;
+    }
+    ~icon_texture() { release(); };
 
     icon_texture(const icon_texture&)                = delete;
     icon_texture& operator=(const icon_texture&)     = delete;
     icon_texture(icon_texture&&) noexcept            = default;
     icon_texture& operator=(icon_texture&&) noexcept = default;
 
-    // Free the allocated stb image.
-    //
-    // Never call this if you passed the texture to sokol as an app icon.
-    void release();
+    // This is a noop if the texture is managed
+    void release() {
+        if constexpr (!Managed) { stbi_image_free(pixels); }
+    }
 
     int                           width;
     int                           height;

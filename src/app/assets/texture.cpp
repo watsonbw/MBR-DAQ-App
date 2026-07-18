@@ -46,18 +46,4 @@ button_texture::~button_texture() {
     }
 }
 
-icon_texture::icon_texture(gsl::span<const unsigned char> data)
-    : pixels{stbi_load_from_memory(
-          data.data(), static_cast<int>(data.size()), &width, &height, &comp, 4)} {
-    size = static_cast<size_t>(width * height) * comp;
-}
-
-void icon_texture::release() {
-    stbi_image_free(pixels);
-    width  = 0;
-    height = 0;
-    comp   = 0;
-    size   = 0;
-}
-
 } // namespace mbr::assets

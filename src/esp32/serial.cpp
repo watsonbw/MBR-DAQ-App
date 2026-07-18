@@ -28,6 +28,7 @@ void serial_manager_t::start() {
 }
 // Opens a port
 bool serial_manager_t::open_port(const std::string& port, const std::string& description) {
+    const std::scoped_lock lock{mutex_};
     try {
         serial::Timeout timeout;
         timeout.inter_byte_timeout       = 1;
