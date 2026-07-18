@@ -1,6 +1,5 @@
 #pragma once
 
-#include <gsl/pointers>
 #include <gsl/span>
 #include <imgui.h>
 #include <sokol_app.h>
@@ -44,14 +43,17 @@ template <bool Managed = false> struct icon_texture {
 
     // This is a noop if the texture is managed
     void release() {
-        if constexpr (!Managed) { stbi_image_free(pixels); }
+        if constexpr (!Managed) {
+            stbi_image_free(pixels);
+            pixels = nullptr;
+        }
     }
 
-    int                           width;
-    int                           height;
-    int                           comp;
-    gsl::not_null<unsigned char*> pixels;
-    size_t                        size;
+    int            width;
+    int            height;
+    int            comp;
+    unsigned char* pixels;
+    size_t         size;
 };
 
 } // namespace mbr::assets

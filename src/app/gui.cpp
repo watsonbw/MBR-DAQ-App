@@ -82,7 +82,7 @@ sapp_desc gui_t::get_sokol_desc() {
     assets::icon_texture<true> app_icon{assets::BAJA_LOGO_PNG};
     desc.icon.images[0].width  = app_icon.width;
     desc.icon.images[0].height = app_icon.height;
-    desc.icon.images[0].pixels = {.ptr = app_icon.pixels.get(), .size = app_icon.size};
+    desc.icon.images[0].pixels = {.ptr = app_icon.pixels, .size = app_icon.size};
 
     return desc;
 }
