@@ -5,8 +5,8 @@
 
 #include "core/log.hpp"
 
-#include "app/common/plot_utils.hpp"
 #include "app/pages/shock.hpp"
+#include "app/pages/utils.hpp"
 #include "app/style.hpp"
 
 namespace mbr {
@@ -37,14 +37,14 @@ void ShockPage::DrawLHS(const std::vector<std::string>& raw_lines) {
         BOLD_HEADER(ImGui::Text("Data Log"));
 
         ImGui::Separator();
-        m_TextUtils.DrawStartLoggingButton();
+        m_TextUtils.start_logging_button();
         ImGui::SameLine();
-        m_TextUtils.DrawDataDownloadButton(raw_lines, m_DownloadFDText);
+        m_TextUtils.data_download_button(raw_lines, m_DownloadFDText);
         ImGui::SameLine();
 
-        HEADER(TextUtils::DrawInputBox("##extra_shock", m_DownloadFDText, "File descriptor"));
+        HEADER(pages::utils::draw_input_box("##extra_shock", m_DownloadFDText, "File descriptor"));
         ImGui::Separator();
-        TextUtils::DrawDataLog(raw_lines);
+        pages::utils::draw_data_log(raw_lines);
     }
 }
 
@@ -62,10 +62,10 @@ void ShockPage::DrawRHS(gsl::span<const double> time,
 
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
-            plot_utils::plot_if_non_empty<double>("Front Right Shock Travel", time, fr);
-            plot_utils::plot_if_non_empty<double>("Front Left Shock Travel", time, fl);
-            plot_utils::plot_if_non_empty<double>("Rear Right Shock Travel", time, br);
-            plot_utils::plot_if_non_empty<double>("Rear Left Shock Travel", time, bl);
+            pages::utils::plot_if_non_empty<double>("Front Right Shock Travel", time, fr);
+            pages::utils::plot_if_non_empty<double>("Front Left Shock Travel", time, fl);
+            pages::utils::plot_if_non_empty<double>("Rear Right Shock Travel", time, br);
+            pages::utils::plot_if_non_empty<double>("Rear Left Shock Travel", time, bl);
         }
     }
 }

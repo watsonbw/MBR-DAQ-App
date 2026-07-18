@@ -3,8 +3,8 @@
 #include <memory>
 #include <string>
 
-#include "app/common/text.hpp"
 #include "app/pages/page.hpp"
+#include "app/pages/utils.hpp"
 
 namespace mbr {
 
@@ -36,8 +36,8 @@ class SerialPage : public Page {
     void DrawBottom();
 
   private:
-    TextUtils   m_TextUtils;
-    std::string m_SerialBuffer;
+    pages::utils::text_drawers m_TextUtils;
+    std::string                m_SerialBuffer;
 };
 
 } // namespace mbr

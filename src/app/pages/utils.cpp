@@ -8,16 +8,15 @@
 
 #include <fmt/format.h>
 
+#include "app/context.hpp"
+#include "app/pages/utils.hpp"
+#include "app/style.hpp"
 #include "core/log.hpp"
 #include "core/time.hpp"
 
-#include "app/common/text.hpp"
-#include "app/context.hpp"
-#include "app/style.hpp"
+namespace mbr::pages::utils {
 
-namespace mbr {
-
-void TextUtils::DrawStartLoggingButton() {
+void text_drawers::start_logging_button() {
     HEADER({
         if (ImGui::Button(m_Context->Backend->IsLogging ? "Stop Logging" : "Start Logging")) {
             m_Context->Backend->IsLogging = !m_Context->Backend->IsLogging;
@@ -25,7 +24,7 @@ void TextUtils::DrawStartLoggingButton() {
     });
 }
 
-bool TextUtils::DrawStartSerialButton() {
+bool text_drawers::start_serial_button() {
     bool clicked = false;
     HEADER({
         if (ImGui::Button(m_Context->Backend->SerialMan.IsSerialWrite ? "Stop Serial"
@@ -38,7 +37,7 @@ bool TextUtils::DrawStartSerialButton() {
     return clicked;
 }
 
-void TextUtils::DrawSendDataButton() {
+void text_drawers::send_data_button() {
     HEADER({
         if (ImGui::Button(m_Context->Backend->SerialMan.m_SendData ? "Stop Data Send"
                                                                    : "Send Data")) {
@@ -47,8 +46,8 @@ void TextUtils::DrawSendDataButton() {
     });
 }
 
-void TextUtils::DrawDataDownloadButton(const std::vector<std::string>& raw_lines,
-                                       std::string&                    buf) {
+void text_drawers::data_download_button(const std::vector<std::string>& raw_lines,
+                                        std::string&                    buf) {
     HEADER({
         if (ImGui::Button("Download Data")) {
             const DateTime dt;
@@ -75,19 +74,19 @@ void TextUtils::DrawDataDownloadButton(const std::vector<std::string>& raw_lines
     });
 }
 
-bool TextUtils::DrawInputBox(const char*                label,
-                             std::string&               buf,
-                             std::optional<const char*> hint,
-                             float                      width_scale,
-                             ImGuiInputTextFlags        flags) {
+bool draw_input_box(const char*                label,
+                    std::string&               buf,
+                    std::optional<const char*> hint,
+                    float                      width_scale,
+                    ImGuiInputTextFlags        flags) {
     ImGui::SetNextItemWidth(width_scale);
-    if (hint) { return ImGui::InputTextWithHint(label, hint.value(), &buf, flags); }
+    if (hint) { return ImGui::InputTextWithHint(label, *hint, &buf, flags); }
     return ImGui::InputText(label, &buf, flags);
 }
 
-void TextUtils::DrawDataLog(const std::vector<std::string>& raw_lines) {
+void draw_data_log(gsl::span<const std::string> raw_lines) {
     for (const auto& msg : raw_lines) { ImGui::TextUnformatted(msg.c_str()); }
     if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) { ImGui::SetScrollHereY(1.0F); }
 }
 
-} // namespace mbr
+} // namespace mbr::pages::utils

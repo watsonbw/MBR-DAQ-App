@@ -5,8 +5,8 @@
 
 #include "core/log.hpp"
 
-#include "app/common/text.hpp"
 #include "app/pages/home.hpp"
+#include "app/pages/utils.hpp"
 #include "app/style.hpp"
 
 namespace mbr {
@@ -53,7 +53,7 @@ void HomePage::DrawTopLHS() {
     if (ImGui::BeginChild("##sd_control", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
         LocalTime  t;
-        HEADER(TextUtils::DrawInputBox(
+        HEADER(pages::utils::draw_input_box(
             "##sd_name", m_SetName, fmt::format("Name ({})", t.String(false)).c_str()));
         ImGui::SameLine();
         if (ImGui::Button("Create File")) {
@@ -177,27 +177,27 @@ void HomePage::DrawIPControls() {
     }
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##ip_FIRST", m_IpBuf.First, m_PreviousIp.First.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_FIRST", m_IpBuf.First, m_PreviousIp.First.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##ip_SECOND", m_IpBuf.Second, m_PreviousIp.Second.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_SECOND", m_IpBuf.Second, m_PreviousIp.Second.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##ip_THIRD", m_IpBuf.Third, m_PreviousIp.Third.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_THIRD", m_IpBuf.Third, m_PreviousIp.Third.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##ip_FOURTH", m_IpBuf.Fourth, m_PreviousIp.Fourth.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_FOURTH", m_IpBuf.Fourth, m_PreviousIp.Fourth.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(":");
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##ip_PORT", m_IpBuf.Port, m_PreviousIp.Port.c_str(), 50.0F);
+    pages::utils::draw_input_box("##ip_PORT", m_IpBuf.Port, m_PreviousIp.Port.c_str(), 50.0F);
 }
 
 void HomePage::DrawCredentialControls() {
@@ -208,9 +208,9 @@ void HomePage::DrawCredentialControls() {
     }
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##username", m_UsernameBuf, "Username", 150.0F);
+    pages::utils::draw_input_box("##username", m_UsernameBuf, "Username", 150.0F);
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##password", m_PasswordBuf, "Password", 150.0F);
+    pages::utils::draw_input_box("##password", m_PasswordBuf, "Password", 150.0F);
 }
 
 } // namespace mbr

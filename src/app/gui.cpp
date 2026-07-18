@@ -12,7 +12,6 @@
 
 #include "app/assets/images/app_icon.hpp"
 #include "app/assets/texture.hpp"
-#include "app/common/text.hpp"
 #include "app/gui.hpp"
 #include "app/pages/home.hpp"
 #include "app/pages/rpm.hpp"
@@ -228,7 +227,7 @@ void GUI::DrawMainMenuBar() {
         ImGui::TextUnformatted(connected ? "Connected" : "Not Connected");
 
         ImGui::Separator();
-        TextUtils::DrawInputBox("##command", m_CommandBuf);
+        pages::utils::draw_input_box("##command", m_CommandBuf);
         m_Context->CommandInputFocused = ImGui::IsItemFocused();
         ImGui::Separator();
 
