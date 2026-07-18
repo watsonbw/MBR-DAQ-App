@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <gsl/span>
+
 #include "app/common/text.hpp"
 #include "app/pages/page.hpp"
 
@@ -17,11 +19,11 @@ class ShockPage : public Page {
     void Update() override;
 
     void DrawLHS(const std::vector<std::string>& raw_lines);
-    void DrawRHS(const std::vector<double>& time,
-                 const std::vector<double>& fr,
-                 const std::vector<double>& fl,
-                 const std::vector<double>& br,
-                 const std::vector<double>& bl);
+    void DrawRHS(gsl::span<const double> time,
+                 gsl::span<const double> fr,
+                 gsl::span<const double> fl,
+                 gsl::span<const double> br,
+                 gsl::span<const double> bl);
 
   private:
     TextUtils   m_TextUtils;

@@ -18,7 +18,7 @@
 #include "core/log.hpp"
 
 #include "app/assets/images/image_buttons.hpp"
-#include "app/common/plot.hpp"
+#include "app/common/plot_utils.hpp"
 #include "app/common/scope.hpp"
 #include "app/common/text.hpp"
 #include "app/pages/view.hpp"
@@ -306,43 +306,43 @@ void ViewPage::DrawRHS() {
         ViewPage::DynamicPlotLoop();
         if (const ImGuiScope<ImPlot::EndPlot, REQUIRE_ALIVE_FOR_DTOR> plot{
                 IMSCOPE_FN(ImPlot::BeginPlot(plot_title.c_str(), {-1, -1}))}) {
-            PlotUtils::PlotIfNonEmpty("Wheel Speed",
-                                      data.TimeMinutesNormalized,
-                                      data.Series.at("W"),
-                                      m_DataShow == DataView::ALL ||
-                                          m_DataShow == DataView::RPMDATA,
-                                      m_PlotPercent);
-            PlotUtils::PlotIfNonEmpty("Engine Speed",
-                                      data.TimeMinutesNormalized,
-                                      data.Series.at("E"),
-                                      m_DataShow == DataView::ALL ||
-                                          m_DataShow == DataView::RPMDATA,
-                                      m_PlotPercent);
+            plot_utils::plot_if_non_empty<double>("Wheel Speed",
+                                          data.TimeMinutesNormalized,
+                                          data.Series.at("W"),
+                                          m_DataShow == DataView::ALL ||
+                                              m_DataShow == DataView::RPMDATA,
+                                          m_PlotPercent);
+            plot_utils::plot_if_non_empty<double>("Engine Speed",
+                                          data.TimeMinutesNormalized,
+                                          data.Series.at("E"),
+                                          m_DataShow == DataView::ALL ||
+                                              m_DataShow == DataView::RPMDATA,
+                                          m_PlotPercent);
 
-            PlotUtils::PlotIfNonEmpty("Front Right Shock Travel",
-                                      data.TimeMinutesNormalized,
-                                      data.Series.at("FR"),
-                                      m_DataShow == DataView::ALL ||
-                                          m_DataShow == DataView::SHOCKDATA,
-                                      m_PlotPercent);
-            PlotUtils::PlotIfNonEmpty("Front Left Shock Travel",
-                                      data.TimeMinutesNormalized,
-                                      data.Series.at("FL"),
-                                      m_DataShow == DataView::ALL ||
-                                          m_DataShow == DataView::SHOCKDATA,
-                                      m_PlotPercent);
-            PlotUtils::PlotIfNonEmpty("Rear Right Shock Travel",
-                                      data.TimeMinutesNormalized,
-                                      data.Series.at("RR"),
-                                      m_DataShow == DataView::ALL ||
-                                          m_DataShow == DataView::SHOCKDATA,
-                                      m_PlotPercent);
-            PlotUtils::PlotIfNonEmpty("Rear Left Shock Travel",
-                                      data.TimeMinutesNormalized,
-                                      data.Series.at("RL"),
-                                      m_DataShow == DataView::ALL ||
-                                          m_DataShow == DataView::SHOCKDATA,
-                                      m_PlotPercent);
+            plot_utils::plot_if_non_empty<double>("Front Right Shock Travel",
+                                          data.TimeMinutesNormalized,
+                                          data.Series.at("FR"),
+                                          m_DataShow == DataView::ALL ||
+                                              m_DataShow == DataView::SHOCKDATA,
+                                          m_PlotPercent);
+            plot_utils::plot_if_non_empty<double>("Front Left Shock Travel",
+                                          data.TimeMinutesNormalized,
+                                          data.Series.at("FL"),
+                                          m_DataShow == DataView::ALL ||
+                                              m_DataShow == DataView::SHOCKDATA,
+                                          m_PlotPercent);
+            plot_utils::plot_if_non_empty<double>("Rear Right Shock Travel",
+                                          data.TimeMinutesNormalized,
+                                          data.Series.at("RR"),
+                                          m_DataShow == DataView::ALL ||
+                                              m_DataShow == DataView::SHOCKDATA,
+                                          m_PlotPercent);
+            plot_utils::plot_if_non_empty<double>("Rear Left Shock Travel",
+                                          data.TimeMinutesNormalized,
+                                          data.Series.at("RL"),
+                                          m_DataShow == DataView::ALL ||
+                                              m_DataShow == DataView::SHOCKDATA,
+                                          m_PlotPercent);
         }
     }
 }

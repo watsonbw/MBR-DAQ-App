@@ -1,11 +1,12 @@
 #include <fmt/format.h>
+#include <gsl/span>
 #include <imgui.h>
 #include <implot.h>
 
 #include "core/log.hpp"
 #include "core/time.hpp"
 
-#include "app/common/plot.hpp"
+#include "app/common/plot_utils.hpp"
 #include "app/common/scope.hpp"
 #include "app/pages/rpm.hpp"
 #include "app/style.hpp"
@@ -43,9 +44,9 @@ void RPMPage::DrawLHS(const std::vector<std::string>& raw_lines) {
     }
 }
 
-void RPMPage::DrawRHS(const std::vector<double>& time,
-                      const std::vector<double>& wheel,
-                      const std::vector<double>& engine) {
+void RPMPage::DrawRHS(gsl::span<const double> time,
+                      gsl::span<const double> wheel,
+                      gsl::span<const double> engine) {
     if (const ImGuiScope<ImGui::EndChild> graph{IMSCOPE_FN(ImGui::BeginChild("##graph"))}) {
         const auto sync_lt = m_Context->Backend->Data.GetSyncLT();
         const auto plot_title =
@@ -53,8 +54,8 @@ void RPMPage::DrawRHS(const std::vector<double>& time,
 
         if (const ImGuiScope<ImPlot::EndPlot, REQUIRE_ALIVE_FOR_DTOR> plot{
                 IMSCOPE_FN(ImPlot::BeginPlot(plot_title.c_str(), {-1, -1}))}) {
-            PlotUtils::PlotIfNonEmpty("Wheel Speed", time, wheel);
-            PlotUtils::PlotIfNonEmpty("Engine Speed", time, engine);
+            plot_utils::plot_if_non_empty<double>("Wheel Speed", time, wheel);
+            plot_utils::plot_if_non_empty<double>("Engine Speed", time, engine);
         }
     }
 }
