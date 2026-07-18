@@ -1,10 +1,11 @@
 #include <fmt/format.h>
+#include <gsl/span>
 #include <imgui.h>
 #include <implot.h>
 
 #include "core/log.hpp"
 
-#include "app/common/plot.hpp"
+#include "app/common/plot_utils.hpp"
 #include "app/common/scope.hpp"
 #include "app/pages/shock.hpp"
 #include "app/style.hpp"
@@ -46,11 +47,11 @@ void ShockPage::DrawLHS(const std::vector<std::string>& raw_lines) {
     }
 }
 
-void ShockPage::DrawRHS(const std::vector<double>& time,
-                        const std::vector<double>& fr,
-                        const std::vector<double>& fl,
-                        const std::vector<double>& br,
-                        const std::vector<double>& bl) {
+void ShockPage::DrawRHS(gsl::span<const double> time,
+                        gsl::span<const double> fr,
+                        gsl::span<const double> fl,
+                        gsl::span<const double> br,
+                        gsl::span<const double> bl) {
     if (const ImGuiScope<ImGui::EndChild> graph{IMSCOPE_FN(ImGui::BeginChild("##graph"))}) {
         const auto sync_lt = m_Context->Backend->Data.GetSyncLT();
         const auto plot_title =
@@ -59,10 +60,10 @@ void ShockPage::DrawRHS(const std::vector<double>& time,
 
         if (const ImGuiScope<ImPlot::EndPlot, REQUIRE_ALIVE_FOR_DTOR> plot{
                 IMSCOPE_FN(ImPlot::BeginPlot(plot_title.c_str(), {-1, -1}))}) {
-            PlotUtils::PlotIfNonEmpty("Front Right Shock Travel", time, fr);
-            PlotUtils::PlotIfNonEmpty("Front Left Shock Travel", time, fl);
-            PlotUtils::PlotIfNonEmpty("Rear Right Shock Travel", time, br);
-            PlotUtils::PlotIfNonEmpty("Rear Left Shock Travel", time, bl);
+            plot_utils::plot_if_non_empty<double>("Front Right Shock Travel", time, fr);
+            plot_utils::plot_if_non_empty<double>("Front Left Shock Travel", time, fl);
+            plot_utils::plot_if_non_empty<double>("Rear Right Shock Travel", time, br);
+            plot_utils::plot_if_non_empty<double>("Rear Left Shock Travel", time, bl);
         }
     }
 }

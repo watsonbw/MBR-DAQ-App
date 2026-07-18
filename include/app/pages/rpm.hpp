@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <gsl/span>
+
 #include "app/common/text.hpp"
 #include "app/pages/page.hpp"
 
@@ -20,9 +22,9 @@ class RPMPage : public Page {
 
   private:
     void DrawLHS(const std::vector<std::string>& raw_lines);
-    void DrawRHS(const std::vector<double>& time,
-                 const std::vector<double>& wheel,
-                 const std::vector<double>& engine);
+    void DrawRHS(gsl::span<const double> time,
+                 gsl::span<const double> wheel,
+                 gsl::span<const double> engine);
 
   private:
     TextUtils   m_TextUtils;
