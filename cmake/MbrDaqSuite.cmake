@@ -19,6 +19,7 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         fmt::fmt
         magic_enum::magic_enum
         unordered_dense::unordered_dense
+        stdx
     )
 
     target_include_directories(mbrdaq_core_${TARGET_NAME} PUBLIC include)

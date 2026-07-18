@@ -14,6 +14,24 @@ macro(add_vendor_subdirectory dir)
     cmake_policy(POP)
 endmacro()
 
+include(FetchContent)
+
+macro(add_vendor_fetch_content name dir)
+    cmake_policy(PUSH)
+    cmake_policy(SET CMP0077 NEW)
+    set(CMAKE_C_FLAGS_BACKUP "${CMAKE_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS_BACKUP "${CMAKE_CXX_FLAGS}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_IGNORE}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_IGNORE}")
+
+    FetchContent_Declare(${name} SOURCE_DIR ${CMAKE_SOURCE_DIR}/${dir})
+    FetchContent_MakeAvailable(${name})
+
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_BACKUP}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BACKUP}")
+    cmake_policy(POP)
+endmacro()
+
 # nlohmann/json
 set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
 set(JSON_Install OFF CACHE BOOL "" FORCE)
@@ -21,10 +39,10 @@ set(JSON_MultipleHeaders OFF CACHE BOOL "" FORCE)
 add_vendor_subdirectory(vendor/json)
 
 # Microsoft GSL
-add_vendor_subdirectory(vendor/gsl)
+add_vendor_fetch_content(gsl vendor/gsl)
 
 # {fmt}
-add_vendor_subdirectory(vendor/fmt)
+add_vendor_fetch_content(fmt vendor/fmt)
 
 # Sokol
 add_library(sokol_setup STATIC src/vendor/sokol_impl.cpp)
@@ -195,8 +213,20 @@ elseif(WIN32)
 endif()
 
 # Magic Enum
-add_vendor_subdirectory(vendor/magic_enum)
+add_vendor_fetch_content(magic_enum vendor/magic_enum)
 
 # unordered_dense
-add_vendor_subdirectory(vendor/unordered_dense)
+add_vendor_fetch_content(unordered_dense vendor/unordered_dense)
 
+# stdx
+set(STDX_FETCH_FMT ON CACHE BOOL "" FORCE)
+set(STDX_FETCH_MAGIC_ENUM ON CACHE BOOL "" FORCE)
+set(STDX_FETCH_UNORDERED_DENSE ON CACHE BOOL "" FORCE)
+set(STDX_FETCH_GSL ON CACHE BOOL "" FORCE)
+set(STDX_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(STDX_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+
+option(ENABLE_STDX_PROFILE "Enable profiling/tracing in stdx" OFF)
+set(STDX_PROFILE ${ENABLE_STDX_PROFILE} CACHE BOOL "" FORCE)
+
+add_vendor_subdirectory(vendor/stdx)
