@@ -19,8 +19,7 @@
 #include "core/log.hpp"
 
 #include "app/assets/images/image_buttons.hpp"
-#include "app/common/plot_utils.hpp"
-#include "app/common/text.hpp"
+#include "app/pages/utils.hpp"
 #include "app/pages/view.hpp"
 #include "app/style.hpp"
 
@@ -312,43 +311,43 @@ void ViewPage::DrawRHS() {
         ViewPage::DynamicPlotLoop();
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
-            plot_utils::plot_if_non_empty<double>("Wheel Speed",
-                                                  data.TimeMinutesNormalized,
-                                                  data.Series.at("W"),
-                                                  m_DataShow == DataView::ALL ||
-                                                      m_DataShow == DataView::RPMDATA,
-                                                  m_PlotPercent);
-            plot_utils::plot_if_non_empty<double>("Engine Speed",
-                                                  data.TimeMinutesNormalized,
-                                                  data.Series.at("E"),
-                                                  m_DataShow == DataView::ALL ||
-                                                      m_DataShow == DataView::RPMDATA,
-                                                  m_PlotPercent);
+            pages::utils::plot_if_non_empty<double>("Wheel Speed",
+                                                    data.TimeMinutesNormalized,
+                                                    data.Series.at("W"),
+                                                    m_DataShow == DataView::ALL ||
+                                                        m_DataShow == DataView::RPMDATA,
+                                                    m_PlotPercent);
+            pages::utils::plot_if_non_empty<double>("Engine Speed",
+                                                    data.TimeMinutesNormalized,
+                                                    data.Series.at("E"),
+                                                    m_DataShow == DataView::ALL ||
+                                                        m_DataShow == DataView::RPMDATA,
+                                                    m_PlotPercent);
 
-            plot_utils::plot_if_non_empty<double>("Front Right Shock Travel",
-                                                  data.TimeMinutesNormalized,
-                                                  data.Series.at("FR"),
-                                                  m_DataShow == DataView::ALL ||
-                                                      m_DataShow == DataView::SHOCKDATA,
-                                                  m_PlotPercent);
-            plot_utils::plot_if_non_empty<double>("Front Left Shock Travel",
-                                                  data.TimeMinutesNormalized,
-                                                  data.Series.at("FL"),
-                                                  m_DataShow == DataView::ALL ||
-                                                      m_DataShow == DataView::SHOCKDATA,
-                                                  m_PlotPercent);
-            plot_utils::plot_if_non_empty<double>("Rear Right Shock Travel",
-                                                  data.TimeMinutesNormalized,
-                                                  data.Series.at("RR"),
-                                                  m_DataShow == DataView::ALL ||
-                                                      m_DataShow == DataView::SHOCKDATA,
-                                                  m_PlotPercent);
-            plot_utils::plot_if_non_empty<double>("Rear Left Shock Travel",
-                                                  data.TimeMinutesNormalized,
-                                                  data.Series.at("RL"),
-                                                  m_DataShow == DataView::ALL ||
-                                                      m_DataShow == DataView::SHOCKDATA,
-                                                  m_PlotPercent);
+            pages::utils::plot_if_non_empty<double>("Front Right Shock Travel",
+                                                    data.TimeMinutesNormalized,
+                                                    data.Series.at("FR"),
+                                                    m_DataShow == DataView::ALL ||
+                                                        m_DataShow == DataView::SHOCKDATA,
+                                                    m_PlotPercent);
+            pages::utils::plot_if_non_empty<double>("Front Left Shock Travel",
+                                                    data.TimeMinutesNormalized,
+                                                    data.Series.at("FL"),
+                                                    m_DataShow == DataView::ALL ||
+                                                        m_DataShow == DataView::SHOCKDATA,
+                                                    m_PlotPercent);
+            pages::utils::plot_if_non_empty<double>("Rear Right Shock Travel",
+                                                    data.TimeMinutesNormalized,
+                                                    data.Series.at("RR"),
+                                                    m_DataShow == DataView::ALL ||
+                                                        m_DataShow == DataView::SHOCKDATA,
+                                                    m_PlotPercent);
+            pages::utils::plot_if_non_empty<double>("Rear Left Shock Travel",
+                                                    data.TimeMinutesNormalized,
+                                                    data.Series.at("RL"),
+                                                    m_DataShow == DataView::ALL ||
+                                                        m_DataShow == DataView::SHOCKDATA,
+                                                    m_PlotPercent);
         }
     }
 }
@@ -434,7 +433,7 @@ void ViewPage::DrawSyncVideoButtons() {
     }
 
     ImGui::SameLine();
-    TextUtils::DrawInputBox("##extra_view", m_CreationMetadataTextBuf, "HH:MM:SS", 120.0F);
+    pages::utils::draw_input_box("##extra_view", m_CreationMetadataTextBuf, "HH:MM:SS", 120.0F);
     m_TimestampInputFocused = ImGui::IsItemFocused();
     ImGui::SameLine();
     if (ImGui::Checkbox("Dynamic Plotting", &m_DynamicPlotting)) { ViewPage::DynamicPlotStart(); }

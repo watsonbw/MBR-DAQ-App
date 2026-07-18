@@ -6,8 +6,8 @@
 #include "core/log.hpp"
 #include "core/time.hpp"
 
-#include "app/common/plot_utils.hpp"
 #include "app/pages/rpm.hpp"
+#include "app/pages/utils.hpp"
 #include "app/style.hpp"
 
 namespace mbr {
@@ -34,14 +34,14 @@ void RPMPage::DrawLHS(const std::vector<std::string>& raw_lines) {
         BOLD_HEADER(ImGui::Text("Data Log"));
 
         ImGui::Separator();
-        m_TextUtils.DrawStartLoggingButton();
+        m_TextUtils.start_logging_button();
         ImGui::SameLine();
-        m_TextUtils.DrawDataDownloadButton(raw_lines, m_DownloadFDText);
+        m_TextUtils.data_download_button(raw_lines, m_DownloadFDText);
         ImGui::SameLine();
 
-        HEADER(TextUtils::DrawInputBox("##extra_rpm", m_DownloadFDText, "File descriptor"));
+        HEADER(pages::utils::draw_input_box("##extra_rpm", m_DownloadFDText, "File descriptor"));
         ImGui::Separator();
-        TextUtils::DrawDataLog(raw_lines);
+        pages::utils::draw_data_log(raw_lines);
     }
 }
 
@@ -56,8 +56,8 @@ void RPMPage::DrawRHS(gsl::span<const double> time,
 
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
-            plot_utils::plot_if_non_empty<double>("Wheel Speed", time, wheel);
-            plot_utils::plot_if_non_empty<double>("Engine Speed", time, engine);
+            pages::utils::plot_if_non_empty<double>("Wheel Speed", time, wheel);
+            pages::utils::plot_if_non_empty<double>("Engine Speed", time, engine);
         }
     }
 }

@@ -39,7 +39,7 @@ void SerialPage::DrawTopLHS() {
         BOLD_HEADER(ImGui::Text("Serial Monitor Settings"));
 
         ImGui::Separator();
-        if (m_TextUtils.DrawStartSerialButton()) {
+        if (m_TextUtils.start_serial_button()) {
             if (!m_Context->Backend->SerialMan.IsRunning()) {
                 m_Context->Backend->SerialMan.Start();
             } else {
@@ -47,7 +47,7 @@ void SerialPage::DrawTopLHS() {
             }
         }
         ImGui::SameLine();
-        m_TextUtils.DrawSendDataButton();
+        m_TextUtils.send_data_button();
         if (m_Context->Backend->SerialMan.m_SendData) {
             m_Context->Backend->SerialMan.SendData(m_Context->Backend->Data.GetCurrentLine());
         }
@@ -117,11 +117,11 @@ void SerialPage::DrawTopRHS() {
 }
 
 void SerialPage::DrawBottom() {
-    if (TextUtils::DrawInputBox("##command",
-                                m_SerialBuffer,
-                                "Send Serial Data Here",
-                                1900.0F,
-                                ImGuiInputTextFlags_EnterReturnsTrue)) {
+    if (pages::utils::draw_input_box("##command",
+                                     m_SerialBuffer,
+                                     "Send Serial Data Here",
+                                     1900.0F,
+                                     ImGuiInputTextFlags_EnterReturnsTrue)) {
         m_Context->Backend->SerialMan.SendData(m_SerialBuffer + "\n");
         m_SerialBuffer = {};
         ImGui::SetKeyboardFocusHere(-1);
@@ -129,7 +129,7 @@ void SerialPage::DrawBottom() {
     if (ImGui::BeginChild("##datalog")) {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
         ImGui::Separator();
-        TextUtils::DrawDataLog(m_Context->Backend->SerialMan.ReturnDataStream());
+        pages::utils::draw_data_log(m_Context->Backend->SerialMan.ReturnDataStream());
     }
 }
 

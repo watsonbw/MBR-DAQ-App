@@ -4,8 +4,8 @@
 
 #include <gsl/span>
 
-#include "app/common/text.hpp"
 #include "app/pages/page.hpp"
+#include "app/pages/utils.hpp"
 
 namespace mbr {
 
@@ -27,8 +27,8 @@ class RPMPage : public Page {
                  gsl::span<const double> engine);
 
   private:
-    TextUtils   m_TextUtils;
-    std::string m_DownloadFDText;
+    pages::utils::text_drawers m_TextUtils;
+    std::string                m_DownloadFDText;
 };
 
 } // namespace mbr
