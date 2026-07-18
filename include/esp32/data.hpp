@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "core/log.hpp"
 #include "core/time.hpp"
 #include <nlohmann/json.hpp>
 
@@ -36,10 +37,7 @@ class telemetry_data {
     };
 
   public:
-    explicit telemetry_data() {
-        init_json();
-        init_data();
-    }
+    explicit telemetry_data(log_fn_t log = nullptr);
     ~telemetry_data() = default;
 
     std::vector<data_info>                               data_values;
@@ -63,6 +61,7 @@ class telemetry_data {
     void init_data();
 
   private:
+    log_fn_t                  log_;
     std::string               current_line_;
     std::vector<uint64_t>     time_no_normal_micros_;
     std::vector<double>       time_;

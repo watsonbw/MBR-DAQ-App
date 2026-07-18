@@ -2,6 +2,8 @@
 
 struct ImFont;
 
+#include "core/log.hpp"
+
 namespace mbr {
 
 struct app_fonts {
@@ -14,8 +16,8 @@ struct app_fonts {
 app_fonts load_fonts();
 
 struct app_style {
-    void set_dark_theme();
-    void set_light_theme();
+    void set_dark_theme(const log_fn_t& log = nullptr);
+    void set_light_theme(const log_fn_t& log = nullptr);
 
     app_fonts default_fonts;
     bool      dark_mode{true};

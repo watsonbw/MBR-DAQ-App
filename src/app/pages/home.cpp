@@ -11,8 +11,8 @@
 
 namespace mbr::pages {
 
-void home_page::on_enter() { LOG_INFO("Entered HomePage"); }
-void home_page::on_exit() { LOG_INFO("Exited HomePage"); }
+void home_page::on_enter() { log_info(context_->log, "Entered HomePage"); }
+void home_page::on_exit() { log_info(context_->log, "Exited HomePage"); }
 
 void home_page::update() {
     const float full_height   = ImGui::GetContentRegionAvail().y;
@@ -153,7 +153,7 @@ void home_page::draw_bottom_lhs() {
 
     if (ImGui::BeginChild("##errscroll", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
         const auto        cleanup{gsl::finally(ImGui::EndChild)};
-        const std::string all_errors = Log::GetStreamedLogs();
+        const std::string all_errors = context_->logger.get_streamed_logs();
         ImGui::TextUnformatted(all_errors.c_str());
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) { ImGui::SetScrollHereY(1.0F); }
     }

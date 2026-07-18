@@ -60,11 +60,12 @@ void text_drawers::data_download_button(const std::vector<std::string>& raw_line
             }
 
             if (raw_lines.empty()) {
-                LOG_WARN("Cannot download data as the data buffer is empty!");
+                log_warn(context_->log, "Cannot download data as the data buffer is empty!");
             } else {
                 std::ofstream out{filepath};
                 if (!out.is_open()) {
-                    LOG_ERROR("Failed to open output file: ", std::strerror(errno));
+                    log_error(
+                        context_->log, "Failed to open output file: {}", std::strerror(errno));
                 } else {
                     for (const auto& line : raw_lines) { out << line << "\n"; }
                     buf = {};

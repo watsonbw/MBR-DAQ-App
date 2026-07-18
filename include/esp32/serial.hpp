@@ -8,12 +8,14 @@
 
 #include <serial/serial.h>
 
+#include "core/log.hpp"
+
 namespace mbr {
 
 class serial_manager_t {
   public:
-    explicit serial_manager_t(int baud_rate = 115'200, int timeout_ms = 0)
-        : baud_rate_(baud_rate), timeout_ms_(timeout_ms) {}
+    explicit serial_manager_t(int baud_rate = 115'200, int timeout_ms = 0, log_fn_t log = nullptr)
+        : log_{std::move(log)}, baud_rate_(baud_rate), timeout_ms_(timeout_ms) {}
     ~serial_manager_t() {
         keep_running = false;
         if (worker_.joinable()) { worker_.join(); }
@@ -43,6 +45,7 @@ class serial_manager_t {
     uint32_t get_baud_rate() { return baud_rate_; }
 
   private:
+    log_fn_t                               log_;
     int                                    baud_rate_;
     int                                    timeout_ms_;
     std::map<std::string, serial::Serial*> ports_;

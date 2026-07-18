@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "app/style.hpp"
+#include "core/log.hpp"
 #include "esp32/backend.hpp"
 
 namespace mbr {
@@ -31,6 +32,7 @@ enum class page_type_t : uint8_t {
 class telemetry_backend;
 
 struct app_context {
+    log_t             logger;
     app_style         style;
     page_type_t       current_page_type;
     std::atomic<bool> should_exit{false};
@@ -39,6 +41,7 @@ struct app_context {
     std::unique_ptr<telemetry_backend> backend;
     std::string                        username;
     std::string                        password;
+    log_fn_t                           log;
 };
 
 } // namespace mbr
