@@ -15,56 +15,58 @@ struct app_context;
 
 using json = nlohmann::json;
 
-class TelemetryData {
+class telemetry_data {
   public:
-    struct PackedData {
-        std::vector<uint64_t>                                TimeMicrosRaw;
-        std::vector<double>                                  TimeMinutesNormalized;
-        std::unordered_map<std::string, std::vector<double>> Series;
-        std::vector<std::string>                             RawLines;
+    struct packed_data {
+        std::vector<uint64_t>                                time_micros_raw;
+        std::vector<double>                                  time_minutes_normalized;
+        std::unordered_map<std::string, std::vector<double>> series;
+        std::vector<std::string>                             raw_lines;
     };
 
-    struct DataInfo {
-        std::string Key;
-        std::string Name;
-        bool        Required = false;
-        bool        Plot     = false;
-        std::string Unit;
-        std::string Group;
+    struct data_info {
+        std::string key;
+        std::string name;
+        bool        required = false;
+        bool        plot     = false;
+        std::string unit;
+        std::string group;
     };
 
   public:
-    explicit TelemetryData() {
-        InitJSON();
-        InitData();
+    explicit telemetry_data() {
+        init_json();
+        init_data();
     }
-    ~TelemetryData() = default;
+    ~telemetry_data() = default;
 
-    std::vector<DataInfo>                                DataValues;
-    std::unordered_map<std::string, std::vector<double>> Series;
-    [[nodiscard]] const std::vector<double>&             GetTime() const { return m_Time; }
-    [[nodiscard]] const std::vector<uint64_t>&           GetTimeNoNormal() const {
-        return m_TimeNoNormalMicros;
+    std::vector<data_info>                               data_values;
+    std::unordered_map<std::string, std::vector<double>> series;
+    [[nodiscard]] const std::vector<double>&             get_time() const { return time_; }
+    [[nodiscard]] const std::vector<uint64_t>&           get_time_no_normal() const {
+        return time_no_normal_micros_;
     }
 
-    [[nodiscard]] const std::vector<std::string>& GetRawLines() const { return m_RawLines; };
-    [[nodiscard]] const std::optional<local_time>& GetSyncLT() const { return m_SyncLT; }
-    [[nodiscard]] const std::string&              GetCurrentLine() { return m_CurrentLine; }
+    [[nodiscard]] const std::vector<std::string>&  get_raw_lines() const { return raw_lines_; };
+    [[nodiscard]] const std::optional<local_time>& get_sync_lt() const { return sync_lt_; }
+    [[nodiscard]] const std::string&               get_current_line() { return current_line_; }
 
-    void WriteData(const std::string& identifier, const std::string& value);
-    void WriteRawLine(const std::string& message);
-    void SaveCurrentLine(const std::string& line);
-    void Clear();
+    void write_data(const std::string& identifier, const std::string& value);
+    void write_raw_line(const std::string& message);
+    void save_current_line(const std::string& line);
+    void clear();
 
   private:
-    void                     InitJSON();
-    void                     InitData();
-    std::string              m_CurrentLine;
-    std::vector<uint64_t>    m_TimeNoNormalMicros;
-    std::vector<double>      m_Time;
-    std::vector<std::string> m_RawLines;
-    double                   m_SyncStart;
-    std::optional<local_time> m_SyncLT;
+    void init_json();
+    void init_data();
+
+  private:
+    std::string               current_line_;
+    std::vector<uint64_t>     time_no_normal_micros_;
+    std::vector<double>       time_;
+    std::vector<std::string>  raw_lines_;
+    double                    sync_start_;
+    std::optional<local_time> sync_lt_;
 
     friend class ViewPage;
 };

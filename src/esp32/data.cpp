@@ -7,23 +7,23 @@
 
 namespace mbr {
 
-void TelemetryData::InitJSON() {
+void telemetry_data::init_json() {
     std::ifstream f(MBR_JSON);
     if (!f.is_open()) {
         LOG_ERROR("JSON FILE NOT OPENED");
         return;
     }
-    DataInfo temp;
-    json     jason = json::parse(f);
+    data_info temp;
+    json      jason = json::parse(f);
     try {
         for (const auto& data : jason.at("fields")) {
-            temp.Key      = data.at("key").get<std::string>();
-            temp.Name     = data.at("name").get<std::string>();
-            temp.Required = data.at("required").get<bool>();
-            temp.Plot     = data.at("plot").get<bool>();
-            temp.Unit     = data.value("unit", "");
-            temp.Group    = data.value("group", "");
-            DataValues.push_back(temp);
+            temp.key      = data.at("key").get<std::string>();
+            temp.name     = data.at("name").get<std::string>();
+            temp.required = data.at("required").get<bool>();
+            temp.plot     = data.at("plot").get<bool>();
+            temp.unit     = data.value("unit", "");
+            temp.group    = data.value("group", "");
+            data_values.push_back(temp);
         }
     } catch (const json::exception& e) {
         LOG_ERROR("Invalid JSON config: {}", e.what());
@@ -31,30 +31,30 @@ void TelemetryData::InitJSON() {
     }
 }
 
-void TelemetryData::InitData() {
-    for (const auto& data : DataValues) { Series.try_emplace(data.Key, std::vector<double>{}); }
+void telemetry_data::init_data() {
+    for (const auto& data : data_values) { series.try_emplace(data.key, std::vector<double>{}); }
 }
 
-void TelemetryData::WriteData(const std::string& identifier, const std::string& value) {
+void telemetry_data::write_data(const std::string& identifier, const std::string& value) {
     try {
         double val = std::stod(value);
-        Series[identifier].push_back(val);
+        series[identifier].push_back(val);
     } catch (const std::exception& e) { LOG_ERROR("Couldn't write to existng data vector"); }
 }
 
-void TelemetryData::Clear() {
-    for (auto& [key, values] : Series) { values.clear(); }
-    m_Time.clear();
-    m_TimeNoNormalMicros.clear();
-    m_RawLines.clear();
-    m_CurrentLine.clear();
-    m_SyncLT.reset();
+void telemetry_data::clear() {
+    for (auto& [key, values] : series) { values.clear(); }
+    time_.clear();
+    time_no_normal_micros_.clear();
+    raw_lines_.clear();
+    current_line_.clear();
+    sync_lt_.reset();
 }
 
-void TelemetryData::SaveCurrentLine(const std::string& line) { m_CurrentLine = line; }
+void telemetry_data::save_current_line(const std::string& line) { current_line_ = line; }
 
-void TelemetryData::WriteRawLine(const std::string& full_message) {
-    m_RawLines.push_back(full_message);
+void telemetry_data::write_raw_line(const std::string& full_message) {
+    raw_lines_.push_back(full_message);
 }
 
 } // namespace mbr

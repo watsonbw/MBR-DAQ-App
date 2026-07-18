@@ -16,41 +16,41 @@ using namespace std::chrono_literals;
 
 namespace mbr {
 
-TelemetryBackend::TelemetryBackend() : SerialMan(115'200, 500) {
-    m_Buffer.reserve(4'096);
-    RegisterHandlers();
+telemetry_backend::telemetry_backend() : serial_manager(115'200, 500) {
+    buffer_.reserve(4'096);
+    register_handlers();
 }
 
-TelemetryBackend::~TelemetryBackend() { Kill(); }
+telemetry_backend::~telemetry_backend() { kill(); }
 
-void TelemetryBackend::Start() {
+void telemetry_backend::start() {
     LOG_INFO("Started Connection Attempt");
-    Kill();
-    m_ShouldKill = false;
+    kill();
+    should_kill_ = false;
 
-    assert(m_IpAddr.is_valid());
-    const auto real_addr = fmt::format("ws://{}/ws", m_IpAddr.to_string());
+    assert(ip_addr_.is_valid());
+    const auto real_addr = fmt::format("ws://{}/ws", ip_addr_.to_string());
     LOG_INFO("Attempting to connect with address: {}", real_addr);
-    m_WebSocket.setUrl(real_addr);
+    web_sockets_.setUrl(real_addr);
 
-    m_WebSocket.setMaxWaitBetweenReconnectionRetries(5'000);
-    m_WebSocket.setMinWaitBetweenReconnectionRetries(1'000);
-    m_WebSocket.enableAutomaticReconnection();
+    web_sockets_.setMaxWaitBetweenReconnectionRetries(5'000);
+    web_sockets_.setMinWaitBetweenReconnectionRetries(1'000);
+    web_sockets_.enableAutomaticReconnection();
     // m_WebSocket.setPingInterval(30);
-    m_WebSocket.setHandshakeTimeout(10);
+    web_sockets_.setHandshakeTimeout(10);
 
-    m_WebSocket.setOnMessageCallback([this](const ix::WebSocketMessagePtr& msg) {
+    web_sockets_.setOnMessageCallback([this](const ix::WebSocketMessagePtr& msg) {
         if (msg->type == ix::WebSocketMessageType::Open) {
-            IsConnected = true;
-            IsReceiving = false;
-            SendCMD("STATUS");
+            is_connected = true;
+            is_receiving = false;
+            send_cmd("STATUS");
             LOG_INFO("Connected to ESP32");
         }
 
         if (msg->type == ix::WebSocketMessageType::Close ||
             msg->type == ix::WebSocketMessageType::Error) {
-            IsConnected = false;
-            IsReceiving = false;
+            is_connected = false;
+            is_receiving = false;
         }
         if (msg->type == ix::WebSocketMessageType::Close) { LOG_WARN("WebSocket closed"); }
 
@@ -60,30 +60,30 @@ void TelemetryBackend::Start() {
         }
 
         if (msg->type == ix::WebSocketMessageType::Message) {
-            IsReceiving = true;
-            this->OnMessage(msg);
-            m_LastDataTime = std::chrono::steady_clock::now();
+            is_receiving = true;
+            this->on_message(msg);
+            last_data_time_ = std::chrono::steady_clock::now();
         }
     });
 
-    m_WebSocket.start();
-    m_Worker = std::thread(&TelemetryBackend::WorkerLoop, this);
+    web_sockets_.start();
+    worker_ = std::thread(&telemetry_backend::worker_loop, this);
 }
 
-void TelemetryBackend::Kill() {
-    m_WebSocket.stop();
-    if (m_Worker.joinable()) {
-        m_ShouldKill = true;
-        m_Worker.join();
+void telemetry_backend::kill() {
+    web_sockets_.stop();
+    if (worker_.joinable()) {
+        should_kill_ = true;
+        worker_.join();
     }
 }
 
-void TelemetryBackend::SendCMD(const std::string& text) {
-    if (m_WebSocket.getReadyState() == ix::ReadyState::Open) {
-        const ix::WebSocketSendInfo info = m_WebSocket.send(text);
+void telemetry_backend::send_cmd(const std::string& text) {
+    if (web_sockets_.getReadyState() == ix::ReadyState::Open) {
+        const ix::WebSocketSendInfo info = web_sockets_.send(text);
         if (!info.success) {
             LOG_WARN("Send failed:");
-            IsConnected = false;
+            is_connected = false;
             return;
         }
 
@@ -94,44 +94,44 @@ void TelemetryBackend::SendCMD(const std::string& text) {
     LOG_WARN("Failed to send message as WebSocket was not open");
 }
 
-void TelemetryBackend::WorkerLoop() {
-    while (!m_ShouldKill) {
+void telemetry_backend::worker_loop() {
+    while (!should_kill_) {
         std::this_thread::sleep_for(10ms);
-        if (m_WebSocket.getReadyState() != ix::ReadyState::Open) { IsConnected = false; }
-        if (std::chrono::steady_clock::now() - m_LastDataTime > 500ms) { IsReceiving = false; }
+        if (web_sockets_.getReadyState() != ix::ReadyState::Open) { is_connected = false; }
+        if (std::chrono::steady_clock::now() - last_data_time_ > 500ms) { is_receiving = false; }
     }
 }
 
-void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
+void telemetry_backend::on_message(const ix::WebSocketMessagePtr& msg) {
     if (msg->type == ix::WebSocketMessageType::Message) {
-        m_Buffer.append(msg->str);
+        buffer_.append(msg->str);
         size_t newline_pos;
-        while ((newline_pos = m_Buffer.find('\n')) != std::string::npos) {
-            const auto line = m_Buffer.substr(0, newline_pos);
-            m_Buffer.erase(0, newline_pos + 1);
+        while ((newline_pos = buffer_.find('\n')) != std::string::npos) {
+            const auto line = buffer_.substr(0, newline_pos);
+            buffer_.erase(0, newline_pos + 1);
 
             // check for commands/responses first
             if (line.starts_with("RES")) {
-                HandleResponse(line);
+                handle_response(line);
                 continue;
             }
 
-            const auto parsed = ValidatePacket(line);
+            const auto parsed = validate_packet(line);
             if (!parsed) { continue; }
 
             // Now we can safely unpack the packet
-            const std::scoped_lock<std::mutex> lock{DataMutex};
+            const std::scoped_lock<std::mutex> lock{data_mutex};
 
             // write data
-            if (!IsLogging) { continue; }
+            if (!is_logging) { continue; }
 
             for (const auto& [ident, value] : parsed.value()) {
-                Data.WriteData(std::string{ident}, std::string{value});
+                data.write_data(std::string{ident}, std::string{value});
             }
-            Data.WriteRawLine(line);
+            data.write_raw_line(line);
             for (const auto& [ident, value] : parsed.value()) {
                 if (ident == "W") {
-                    Data.SaveCurrentLine(line);
+                    data.save_current_line(line);
                     break;
                 }
             }
@@ -143,9 +143,9 @@ void TelemetryBackend::OnMessage(const ix::WebSocketMessagePtr& msg) {
 // The goal is to primarly handle the data packing itself and doesn't have any command
 // or response handling. See "HandleResponse" for response logic
 std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
-TelemetryBackend::ValidatePacket(std::string_view str) const {
+telemetry_backend::validate_packet(std::string_view str) const {
     std::vector<std::pair<std::string_view, std::string_view>> parsed;
-    parsed.reserve(Data.DataValues.size());
+    parsed.reserve(data.data_values.size());
 
     size_t pos = 0;
     // runs through the whole sent packet. this ensures that the packet must be valid but doesn't
@@ -171,8 +171,8 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
         while (pos < str.size() && str[pos] == ' ') { pos += 1; }
 
         // check key value pairs
-        for (const auto& field : Data.DataValues) {
-            if (field.Key == key) { is_key = true; }
+        for (const auto& field : data.data_values) {
+            if (field.key == key) { is_key = true; }
         }
         if (!is_key) { return std::nullopt; }
         if (key == "T") {
@@ -194,31 +194,31 @@ TelemetryBackend::ValidatePacket(std::string_view str) const {
     return parsed;
 }
 
-TelemetryData::PackedData TelemetryBackend::PackData() {
-    const std::scoped_lock<std::mutex> lock{DataMutex};
-    return {.TimeMicrosRaw         = Data.GetTimeNoNormal(),
-            .TimeMinutesNormalized = Data.GetTime(),
-            .Series                = Data.Series,
-            .RawLines              = Data.GetRawLines()};
+telemetry_data::packed_data telemetry_backend::pack_data() {
+    const std::scoped_lock<std::mutex> lock{data_mutex};
+    return {.time_micros_raw         = data.get_time_no_normal(),
+            .time_minutes_normalized = data.get_time(),
+            .series                  = data.series,
+            .raw_lines               = data.get_raw_lines()};
 }
 
-void TelemetryBackend::SetIp(const ipv4_t& ipv4) {
+void telemetry_backend::set_ip(const ipv4_t& ipv4) {
     if (!ipv4.is_valid()) {
         LOG_ERROR("Requested Ip was invalid: {}", ipv4.to_string());
         return;
     }
 
-    m_IpAddr = ipv4;
-    Kill();
-    m_ShouldKill = false;
-    Start();
-    TryConnection = false;
+    ip_addr_ = ipv4;
+    kill();
+    should_kill_ = false;
+    start();
+    try_connection = false;
 }
 // This function is the bridge between any RES sent from our car to our app
 // After checking for RES in OnMessage, this function is called to parse and act on the response
 // The response is parsed by checking the string with the response type ENUM and calling the
 // corresponding handler For reference, general responses look like this: RES CMD_TYPE CMD_PAYLOAD
-void TelemetryBackend::HandleResponse(std::string_view line) {
+void telemetry_backend::handle_response(std::string_view line) {
     constexpr size_t res_length = 4;
     if (line.size() <= res_length) {
         LOG_ERROR("Invalid response length: {}", line.size());
@@ -231,14 +231,14 @@ void TelemetryBackend::HandleResponse(std::string_view line) {
         return;
     }
 
-    auto         command = rest.substr(0, space);
-    ResponseType type    = ResStringToEnum(command);
-    if (type == ResponseType::UNKNOWN) {
+    auto            command = rest.substr(0, space);
+    response_type_t type    = res_string_to_enum(command);
+    if (type == response_type_t::UNKNOWN) {
         LOG_ERROR("Unknown response: {}", command);
         return;
     }
-    auto it = m_ResponseHandlers.find(type);
-    if (it != m_ResponseHandlers.end()) {
+    auto it = response_handlers.find(type);
+    if (it != response_handlers.end()) {
         it->second(rest.substr(space + 1));
     } else {
         LOG_ERROR("No handler for response: {}", command);
@@ -250,36 +250,36 @@ void TelemetryBackend::HandleResponse(std::string_view line) {
 // ENUMs are created in backend.hpp so when you add a new response, add it there first
 // This also requires additions to ResStringtoEnum as these are ENUM mapped lambdas,
 // not just a simple string mapped lambda
-void TelemetryBackend::RegisterHandlers() {
-    m_ResponseHandlers[ResponseType::SYNC] = [](std::string_view line) {
+void telemetry_backend::register_handlers() {
+    response_handlers[response_type_t::SYNC] = [](std::string_view line) {
         uint64_t micros = 0;
         std::from_chars(line.data(), line.data() + line.size(), micros);
         local_time t{micros};
         LOG_INFO("Time successfully synced at: {}", t.to_string(false));
     };
 
-    m_ResponseHandlers[ResponseType::SDSTART] = [this](std::string_view line) {
+    response_handlers[response_type_t::SDSTART] = [this](std::string_view line) {
         if (line == "deadbeef") {
             LOG_ERROR("SD Card Failed Initialization");
         } else {
             LOG_INFO("SD Card Initialized At {}", line);
-            IsOpen = true;
+            is_open = true;
         }
     };
 
-    m_ResponseHandlers[ResponseType::SDWRITE] = [this](std::string_view line) {
+    response_handlers[response_type_t::SDWRITE] = [this](std::string_view line) {
         if (line == "1") {
             LOG_INFO("SD Card Has Begun Writing");
-            IsWriting = true;
+            is_writing = true;
         } else if (line == "0") {
             LOG_INFO("SD Card Has Stopped Writing");
-            IsWriting = false;
+            is_writing = false;
         }
     };
 
-    m_ResponseHandlers[ResponseType::SDCLOSE] = [this](std::string_view line) {
+    response_handlers[response_type_t::SDCLOSE] = [this](std::string_view line) {
         if (line == "1") {
-            IsOpen = false;
+            is_open = false;
             LOG_INFO("SD Card Has Closed Succesfully");
         } else if (line == "0") {
             LOG_INFO("SD Card Failed Close");
@@ -289,15 +289,15 @@ void TelemetryBackend::RegisterHandlers() {
 // As mentioned before, you will need to update this string to enum function
 // EVERY TIME you add a new command. This works in series with RegisterHandlers
 // and HandleResponse
-ResponseType TelemetryBackend::ResStringToEnum(std::string_view command) const {
-    static const std::unordered_map<std::string_view, ResponseType> lookup{
-        {"SYNC", ResponseType::SYNC},
-        {"SD_START", ResponseType::SDSTART},
-        {"SD_WRITE", ResponseType::SDWRITE},
-        {"SD_CLOSE", ResponseType::SDCLOSE},
+response_type_t telemetry_backend::res_string_to_enum(std::string_view command) const {
+    static const std::unordered_map<std::string_view, response_type_t> lookup{
+        {"SYNC", response_type_t::SYNC},
+        {"SD_START", response_type_t::SDSTART},
+        {"SD_WRITE", response_type_t::SDWRITE},
+        {"SD_CLOSE", response_type_t::SDCLOSE},
     };
     auto it = lookup.find(command);
-    return it != lookup.end() ? it->second : ResponseType::UNKNOWN;
+    return it != lookup.end() ? it->second : response_type_t::UNKNOWN;
 }
 
 /*

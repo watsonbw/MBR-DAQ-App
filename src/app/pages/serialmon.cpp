@@ -40,32 +40,32 @@ void SerialPage::DrawTopLHS() {
 
         ImGui::Separator();
         if (m_TextUtils.start_serial_button()) {
-            if (!context_->backend->SerialMan.IsRunning()) {
-                context_->backend->SerialMan.Start();
+            if (!context_->backend->serial_manager.is_running()) {
+                context_->backend->serial_manager.start();
             } else {
-                context_->backend->SerialMan.Stop();
+                context_->backend->serial_manager.stop();
             }
         }
         ImGui::SameLine();
         m_TextUtils.send_data_button();
-        if (context_->backend->SerialMan.m_SendData) {
-            context_->backend->SerialMan.SendData(context_->backend->Data.GetCurrentLine());
+        if (context_->backend->serial_manager.should_send_data) {
+            context_->backend->serial_manager.send_data(context_->backend->data.get_current_line());
         }
         ImGui::Separator();
 
-        auto all_ports = context_->backend->SerialMan.ExportPorts();
+        auto all_ports = context_->backend->serial_manager.export_ports();
         ImGui::SetNextItemWidth(250.0F);
         if (ImGui::BeginCombo("##port_dropdown", "Select Ports to Send Data")) {
             const auto cleanup{gsl::finally(ImGui::EndCombo)};
             for (auto& [port, ser] : all_ports) {
-                const bool is_selected = context_->backend->SerialMan.IsPortSelected(port);
+                const bool is_selected = context_->backend->serial_manager.is_port_selected(port);
                 if (ImGui::Selectable(
                         port.c_str(), is_selected, ImGuiSelectableFlags_NoAutoClosePopups)) {
                     if (!is_selected) {
-                        context_->backend->SerialMan.AddPort(port);
+                        context_->backend->serial_manager.add_port(port);
                         LOG_INFO("Added port " + port);
                     } else {
-                        context_->backend->SerialMan.RemovePort(port);
+                        context_->backend->serial_manager.remove_port(port);
                         LOG_INFO("Removed port " + port);
                     }
                 }
@@ -75,7 +75,7 @@ void SerialPage::DrawTopLHS() {
         ImGui::SameLine();
         ImGui::TextUnformatted("Chosen Ports: ");
         ImGui::SameLine();
-        for (const auto& port : context_->backend->SerialMan.ReturnChosen()) {
+        for (const auto& port : context_->backend->serial_manager.return_chosen()) {
             ImGui::TextUnformatted(port.c_str());
             ImGui::SameLine();
         }
@@ -85,7 +85,7 @@ void SerialPage::DrawTopLHS() {
 
         ImGui::SetNextItemWidth(100.0F);
         if (ImGui::BeginCombo("##baud_dropdown",
-                              std::to_string(context_->backend->SerialMan.GetBaudRate())
+                              std::to_string(context_->backend->serial_manager.get_baud_rate())
                                   .c_str())) { // TODO(tcs): This is ugly
             const auto cleanup_combo{gsl::finally(ImGui::EndCombo)};
             // This can stay inside DrawTopLHS or be a static member
@@ -93,9 +93,10 @@ void SerialPage::DrawTopLHS() {
                 300, 1'200, 2'400, 4'800, 9'600, 19'200, 38'400, 57'600, 115'200};
 
             for (const uint32_t rate : BAUD_RATES) {
-                const bool is_selected = (context_->backend->SerialMan.GetBaudRate() == rate);
+                const bool is_selected =
+                    (context_->backend->serial_manager.get_baud_rate() == rate);
                 if (ImGui::Selectable(std::to_string(rate).c_str(), is_selected)) {
-                    context_->backend->SerialMan.ChangeBaudRate(rate);
+                    context_->backend->serial_manager.change_baud_rate(rate);
                 }
                 if (is_selected) { ImGui::SetItemDefaultFocus(); }
             }
@@ -122,14 +123,14 @@ void SerialPage::DrawBottom() {
                                      "Send Serial Data Here",
                                      1900.0F,
                                      ImGuiInputTextFlags_EnterReturnsTrue)) {
-        context_->backend->SerialMan.SendData(m_SerialBuffer + "\n");
+        context_->backend->serial_manager.send_data(m_SerialBuffer + "\n");
         m_SerialBuffer = {};
         ImGui::SetKeyboardFocusHere(-1);
     }
     if (ImGui::BeginChild("##datalog")) {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
         ImGui::Separator();
-        pages::utils::draw_data_log(context_->backend->SerialMan.ReturnDataStream());
+        pages::utils::draw_data_log(context_->backend->serial_manager.return_data_stream());
     }
 }
 
