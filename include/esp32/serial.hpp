@@ -27,17 +27,9 @@ class serial_manager_t {
     std::atomic<bool> should_send_data{false};
     std::atomic<bool> is_serial_write{false};
 
-    [[nodiscard]] std::vector<std::string> get_all_ports() const;
-    [[nodiscard]] std::unordered_set<std::string>
-    get_chosen_ports() const { // TODO(blake): Is a copy really what we want here?
-        const std::scoped_lock lock{mutex_};
-        return chosen_ports_;
-    }
-    [[nodiscard]] std::vector<std::string>
-    return_data_stream() const { // TODO(blake): Is a copy really what we want here?
-        const std::scoped_lock lock{mutex_};
-        return input_stream_;
-    }
+    [[nodiscard]] std::vector<std::string>        get_all_ports() const;
+    [[nodiscard]] std::unordered_set<std::string> get_chosen_ports() const;
+    [[nodiscard]] std::vector<std::string>        return_data_stream() const;
 
     void     send_data(const std::string& msg);
     void     receive_data();
