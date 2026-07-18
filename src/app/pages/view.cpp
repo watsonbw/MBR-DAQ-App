@@ -38,7 +38,7 @@ const char* ViewPage::DataTypeString(DataView type) {
     }
 }
 
-ViewPage::ViewPage(const std::shared_ptr<AppContext>& ctx)
+ViewPage::ViewPage(const std::shared_ptr<app_context>& ctx)
     : Page{ctx}, m_IsAlive{std::make_shared<bool>(true)}, m_PlayButton{assets::PLAY_BUTTON_PNG},
       m_PauseButton{assets::PAUSE_BUTTON_PNG}, m_StepButton{assets::STEP_BUTTON_PNG} {}
 
@@ -170,7 +170,7 @@ void ViewPage::DrawLHSControls() {
 
     // Play/Pause
     const auto is_playing = m_IsPlaying.load();
-    const auto tint_color = m_Context->Style.DarkMode ? ImVec4{1, 1, 1, 1} : ImVec4{-1, -1, -1, 1};
+    const auto tint_color = context_->style.dark_mode ? ImVec4{1, 1, 1, 1} : ImVec4{-1, -1, -1, 1};
     ImGui::SameLine();
     if (ImGui::ImageButton("##stepback",
                            m_StepButton.get_id(),
@@ -206,7 +206,7 @@ void ViewPage::DrawLHSControls() {
     }
 
     // Keyboard shortcuts
-    if (m_VideoHovered && !m_TimestampInputFocused && !m_Context->CommandInputFocused) {
+    if (m_VideoHovered && !m_TimestampInputFocused && !context_->is_cmd_input_focused) {
         if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
             m_IsPlaying.exchange(!is_playing);
             m_TimeAccumulator = 0.0;
@@ -302,9 +302,9 @@ void ViewPage::DrawRHS() {
             }
         }
 
-        const auto data = m_Context->Backend->PackData();
+        const auto data = context_->backend->PackData();
 
-        const auto sync_lt = m_Context->Backend->Data.GetSyncLT();
+        const auto sync_lt = context_->backend->Data.GetSyncLT();
         const auto plot_title =
             sync_lt ? fmt::format("Data View from {}", sync_lt.value().String()) : "No Synced Time";
 
@@ -382,7 +382,7 @@ void ViewPage::DrawOpenText() {
                     const std::scoped_lock<std::mutex> lock{m_TxtPathMutex};
                     m_SelectedTxt                 = path;
                     m_TxtDialogRunning            = false;
-                    m_Context->Backend->IsLogging = false;
+                    context_->backend->IsLogging = false;
                 }
             } catch (const std::exception& e) {
                 m_TxtDialogRunning = false;
@@ -418,8 +418,8 @@ void ViewPage::DrawSyncVideoButtons() {
 
         std::optional<size_t> sync_time_pos;
         {
-            const std::scoped_lock<std::mutex> lock{m_Context->Backend->DataMutex};
-            sync_time_pos = SyncDataVideo(m_Context->Backend->Data.GetTimeNoNormal());
+            const std::scoped_lock<std::mutex> lock{context_->backend->DataMutex};
+            sync_time_pos = SyncDataVideo(context_->backend->Data.GetTimeNoNormal());
         }
 
         if (!sync_time_pos) {
@@ -481,10 +481,10 @@ void ViewPage::LoadData() {
         return;
     }
 
-    const std::scoped_lock<std::mutex> lock{m_Context->Backend->DataMutex};
-    m_Context->Backend->Data.Clear();
+    const std::scoped_lock<std::mutex> lock{context_->backend->DataMutex};
+    context_->backend->Data.Clear();
     std::string ident, value;
-    while (file >> ident >> value) { m_Context->Backend->Data.WriteData(ident, value); }
+    while (file >> ident >> value) { context_->backend->Data.WriteData(ident, value); }
 }
 
 void ViewPage::RequestSeek(int frame_index) {
@@ -660,15 +660,15 @@ std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<uint64_t>& micro
 }
 
 void ViewPage::DeleteExtra(size_t erase_pos) {
-    const std::scoped_lock<std::mutex> lock{m_Context->Backend->DataMutex};
+    const std::scoped_lock<std::mutex> lock{context_->backend->DataMutex};
     std::vector<double>* const         data[] = {
-        &m_Context->Backend->Data.m_Time,
-        &m_Context->Backend->Data.Series.at("W"),
-        &m_Context->Backend->Data.Series.at("E"),
-        &m_Context->Backend->Data.Series.at("FR"),
-        &m_Context->Backend->Data.Series.at("FL"),
-        &m_Context->Backend->Data.Series.at("RR"),
-        &m_Context->Backend->Data.Series.at("RL"),
+        &context_->backend->Data.m_Time,
+        &context_->backend->Data.Series.at("W"),
+        &context_->backend->Data.Series.at("E"),
+        &context_->backend->Data.Series.at("FR"),
+        &context_->backend->Data.Series.at("FL"),
+        &context_->backend->Data.Series.at("RR"),
+        &context_->backend->Data.Series.at("RL"),
     };
 
     for (const auto& datum : data) {
@@ -682,10 +682,10 @@ void ViewPage::DeleteExtra(size_t erase_pos) {
 
 void ViewPage::DynamicPlotStart() {
     if (m_DynamicPlotting) {
-        const std::scoped_lock<std::mutex> lock{m_Context->Backend->DataMutex};
-        const auto&                        time_vec = m_Context->Backend->Data.m_Time;
+        const std::scoped_lock<std::mutex> lock{context_->backend->DataMutex};
+        const auto&                        time_vec = context_->backend->Data.m_Time;
         if (time_vec.empty()) { return; }
-        const auto begin_time_min = m_Context->Backend->Data.m_Time[0];
+        const auto begin_time_min = context_->backend->Data.m_Time[0];
 
         const double target_end_time = begin_time_min + m_VideoLengthMin;
         const auto   end_it          = std::ranges::lower_bound(time_vec, target_end_time);

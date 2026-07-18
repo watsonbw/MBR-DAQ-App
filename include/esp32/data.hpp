@@ -11,7 +11,7 @@
 
 namespace mbr {
 
-struct AppContext;
+struct app_context;
 
 using json = nlohmann::json;
 

@@ -22,7 +22,7 @@ enum class BaudRate : uint32_t {
 
 class SerialPage : public Page {
   public:
-    explicit SerialPage(const std::shared_ptr<AppContext>& ctx) : Page{ctx}, m_TextUtils{ctx} {}
+    explicit SerialPage(const std::shared_ptr<app_context>& ctx) : Page{ctx}, m_TextUtils{ctx} {}
     ~SerialPage() override = default;
 
     void OnEnter() override;

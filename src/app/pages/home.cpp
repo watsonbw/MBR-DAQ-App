@@ -66,30 +66,30 @@ void HomePage::DrawTopLHS() {
                 if (c == ':' || c == ' ') { c = '-'; }
             }
             const auto command = fmt::format("SD_START /{}.txt", m_SDName);
-            m_Context->Backend->SendCMD(command);
+            context_->backend->SendCMD(command);
             m_SetName.clear();
         }
         ImGui::SameLine();
         ImGui::PushStyleColor(ImGuiCol_Button,
-                              m_Context->Backend->IsWriting ? ImVec4(0, 0.7F, 0, 1)
+                              context_->backend->IsWriting ? ImVec4(0, 0.7F, 0, 1)
                                                             : ImVec4(0.7F, 0, 0, 1));
-        if (ImGui::Button(m_Context->Backend->IsWriting ? "Write ON" : "Write OFF")) {
-            if (m_Context->Backend->IsWriting) {
-                m_Context->Backend->SendCMD("SD_WRITE 0");
+        if (ImGui::Button(context_->backend->IsWriting ? "Write ON" : "Write OFF")) {
+            if (context_->backend->IsWriting) {
+                context_->backend->SendCMD("SD_WRITE 0");
             } else {
-                m_Context->Backend->SendCMD("SD_WRITE 1");
+                context_->backend->SendCMD("SD_WRITE 1");
             }
             // m_SDWrite = !m_SDWrite;
         }
         ImGui::PopStyleColor();
         ImGui::SameLine();
         if (!m_SDName.empty()) {
-            if (ImGui::Button(m_Context->Backend->IsOpen ? "Close SD" : "Open SD")) {
-                if (m_Context->Backend->IsOpen) {
-                    m_Context->Backend->SendCMD("SD_CLOSE");
+            if (ImGui::Button(context_->backend->IsOpen ? "Close SD" : "Open SD")) {
+                if (context_->backend->IsOpen) {
+                    context_->backend->SendCMD("SD_CLOSE");
                 } else {
                     const auto command = fmt::format("SD_START /{}.txt", m_SDName);
-                    m_Context->Backend->SendCMD(command);
+                    context_->backend->SendCMD(command);
                 }
             }
         }
@@ -129,17 +129,17 @@ void HomePage::DrawTopRHS() {
     ImGui::Separator();
 
     BOLD_DEFAULT(ImGui::SeparatorText("Metrics"));
-    ImGui::BulletText("Backend Status: %s", m_Context->Backend->IsConnected ? "Online" : "Offline");
+    ImGui::BulletText("Backend Status: %s", context_->backend->IsConnected ? "Online" : "Offline");
     ImGui::BulletText("Last IP Update: %s", m_PreviousIp.String().c_str());
     ImGui::BulletText("Application FPS: %.2f", ImGui::GetIO().Framerate);
 
     BOLD_DEFAULT(ImGui::SeparatorText("UI Settings"));
-    bool dark_mode = m_Context->Style.DarkMode;
+    bool dark_mode = context_->style.dark_mode;
     if (ImGui::Checkbox("Dark Mode", &dark_mode)) {
         if (dark_mode) {
-            m_Context->Style.SetDarkThemeColors();
+            context_->style.set_dark_theme();
         } else {
-            m_Context->Style.SetLightThemeColors();
+            context_->style.set_light_theme();
         }
     }
 
@@ -172,7 +172,7 @@ void HomePage::DrawBottomRHS() {
 
 void HomePage::DrawIPControls() {
     if (ImGui::Button("Update IP") && !m_IpBuf.AnyEmpty()) {
-        m_Context->Backend->SetIp(m_IpBuf);
+        context_->backend->SetIp(m_IpBuf);
         m_PreviousIp = std::exchange(m_IpBuf, {});
     }
 

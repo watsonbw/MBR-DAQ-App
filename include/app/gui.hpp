@@ -2,48 +2,33 @@
 
 #include <memory>
 
-#include "assets/texture.hpp"
-
 #include "app/context.hpp"
 #include "app/pages/page.hpp"
+#include "assets/texture.hpp"
 
 struct sapp_event;
 struct sapp_desc;
 
 namespace mbr {
 
-class GUI {
+class gui_t {
   public:
-    static void SokolInitCB();
-    static void SokolCleanupCB();
-    static void SokolFrameCB();
-    static void SokolEventCB(const sapp_event* e);
+    explicit gui_t(const std::shared_ptr<app_context>& ctx) : context_{ctx} {};
 
-  public:
-    explicit GUI(const std::shared_ptr<AppContext>& ctx) : m_Context{ctx} {};
-    ~GUI() = default;
-
-    sapp_desc GetSokolDesc();
-
-    void OnInit();
-    void OnFrame();
-    void OnEvent(const sapp_event* event);
-    void OnCleanup();
-
-    static void SokolStartFrame();
-    static void SokolEndFrame();
+    sapp_desc get_sokol_desc();
+    void      on_init();
+    void      on_frame();
+    void      on_event(const sapp_event* event);
+    void      on_cleanup();
 
   private:
-    void ChangePage(PageType type);
-
-    void DrawMainMenuBar();
+    void change_page(page_type_t type);
+    void draw_main_menu_bar();
 
   private:
-    static GUI* s_Instance; // NOLINT
-
-    std::unique_ptr<Page>       m_CurrentPage;
-    std::shared_ptr<AppContext> m_Context;
-    std::string                 m_CommandBuf;
+    std::unique_ptr<Page>        current_page_;
+    std::shared_ptr<app_context> context_;
+    std::string                  command_buf_;
 };
 
 } // namespace mbr

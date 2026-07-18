@@ -11,7 +11,7 @@ namespace mbr {
 
 class HomePage : public Page {
   public:
-    explicit HomePage(const std::shared_ptr<AppContext>& ctx)
+    explicit HomePage(const std::shared_ptr<app_context>& ctx)
         : Page{ctx}, m_PreviousIp{DEFAULT_IP} {}
     ~HomePage() override = default;
 
