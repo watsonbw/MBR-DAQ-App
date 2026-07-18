@@ -78,6 +78,18 @@ std::vector<std::string> serial_manager_t::get_all_ports() const {
     return out;
 }
 
+// TODO(blake): Is a copy really what we want here?
+std::unordered_set<std::string> serial_manager_t::get_chosen_ports() const {
+    const std::scoped_lock lock{mutex_};
+    return chosen_ports_;
+}
+
+// TODO(blake): Is a copy really what we want here?
+std::vector<std::string> serial_manager_t::return_data_stream() const {
+    const std::scoped_lock lock{mutex_};
+    return input_stream_;
+}
+
 // Send Data to all selected Serial ports
 void serial_manager_t::send_data(const std::string& msg) {
     const std::scoped_lock   lock{mutex_};
