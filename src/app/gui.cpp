@@ -25,18 +25,31 @@ using namespace std::chrono;
 
 namespace mbr {
 
-#define SOKOL_CB(F)       \
-    assert(gui_instance); \
-    gui_instance->F
-
 namespace {
 
-constinit gui_t* gui_instance{nullptr};
+void sokol_init_cb(void* data) {
+    auto* gui = static_cast<gui_t*>(data);
+    assert(gui);
+    gui->on_init();
+}
 
-void sokol_init_cb() { SOKOL_CB(on_init()); }
-void sokol_cleanup_cb() { SOKOL_CB(on_cleanup()); }
-void sokol_frame_cb() { SOKOL_CB(on_frame()); }
-void sokol_event_cb(const sapp_event* e) { SOKOL_CB(on_event(e)); }
+void sokol_cleanup_cb(void* data) {
+    auto* gui = static_cast<gui_t*>(data);
+    assert(gui);
+    gui->on_cleanup();
+}
+
+void sokol_frame_cb(void* data) {
+    auto* gui = static_cast<gui_t*>(data);
+    assert(gui);
+    gui->on_frame();
+}
+
+void sokol_event_cb(const sapp_event* e, void* data) {
+    auto* gui = static_cast<gui_t*>(data);
+    assert(gui);
+    gui->on_event(e);
+}
 
 void sokol_start_frame() {
     simgui_frame_desc_t frame_desc = {};
@@ -65,18 +78,16 @@ void sokol_end_frame() {
 } // namespace
 
 sapp_desc gui_t::get_sokol_desc() {
-    assert(gui_instance == nullptr);
-    gui_instance = this;
-
-    sapp_desc desc          = {};
-    desc.init_cb            = sokol_init_cb;
-    desc.frame_cb           = sokol_frame_cb;
-    desc.cleanup_cb         = sokol_cleanup_cb;
-    desc.event_cb           = sokol_event_cb;
-    desc.width              = 1'920;
-    desc.height             = 1'080;
-    desc.window_title       = "Michigan Baja Racing - Data Suite";
-    desc.icon.sokol_default = false;
+    sapp_desc desc           = {};
+    desc.init_userdata_cb    = sokol_init_cb;
+    desc.frame_userdata_cb   = sokol_frame_cb;
+    desc.cleanup_userdata_cb = sokol_cleanup_cb;
+    desc.event_userdata_cb   = sokol_event_cb;
+    desc.width               = 1'920;
+    desc.height              = 1'080;
+    desc.window_title        = "Michigan Baja Racing - Data Suite";
+    desc.icon.sokol_default  = false;
+    desc.user_data           = this;
 
     // The app description takes ownership of the icon here
     assets::icon_texture<true> app_icon{assets::BAJA_LOGO_PNG};
