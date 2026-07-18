@@ -57,7 +57,7 @@ void ShockPage::DrawRHS(gsl::span<const double> time,
         const auto cleanup_graph{gsl::finally(ImGui::EndChild)};
         const auto sync_lt = context_->backend->Data.GetSyncLT();
         const auto plot_title =
-            sync_lt ? fmt::format("Shock Travel Data from {}", sync_lt.value().String())
+            sync_lt ? fmt::format("Shock Travel Data from {}", sync_lt.value().to_string())
                     : "No Synced Time";
 
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {

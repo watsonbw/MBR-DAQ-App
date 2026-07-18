@@ -146,8 +146,8 @@ void ViewPage::DrawLHSControls() {
     // Slider
     const auto current_timestamp_min =
         (static_cast<double>(m_CurrentFrameUI) / m_TotalFrames) * m_VideoLengthMin;
-    const auto current_timestamp   = LocalTime::FromMinutes(current_timestamp_min);
-    const auto formatted_timestamp = current_timestamp.value_or(LocalTime::Zero()).String(false);
+    const auto current_timestamp   = local_time::from_minutes(current_timestamp_min);
+    const auto formatted_timestamp = current_timestamp.value_or(local_time::zero()).to_string(false);
     ImGui::Text("%s / %s", formatted_timestamp.c_str(), m_VideoLengthFormatted.c_str());
     ImGui::SameLine();
 
@@ -306,7 +306,7 @@ void ViewPage::DrawRHS() {
 
         const auto sync_lt = context_->backend->Data.GetSyncLT();
         const auto plot_title =
-            sync_lt ? fmt::format("Data View from {}", sync_lt.value().String()) : "No Synced Time";
+            sync_lt ? fmt::format("Data View from {}", sync_lt.value().to_string()) : "No Synced Time";
 
         ViewPage::DynamicPlotLoop();
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
@@ -409,7 +409,7 @@ void ViewPage::DrawSyncVideoButtons() {
             return;
         }
 
-        m_VideoCreationTimestamp = LocalTime::FromString(m_CreationMetadataTextBuf);
+        m_VideoCreationTimestamp = local_time::from_string(m_CreationMetadataTextBuf);
         if (!m_VideoCreationTimestamp) {
             LOG_ERROR("Could not parse provided timestamp, or it was not provided.");
             return;
@@ -451,9 +451,9 @@ ViewPage::SelectedVideo ViewPage::OpenVideoFile(const std::string& previous_file
     const std::string real_path{path};
     LOG_INFO("Selected file: {}", real_path);
 
-    auto dt = DateTime::FromVideoMetadata(real_path);
+    auto dt = date_time::from_video_metadata(real_path);
     if (dt) {
-        LOG_INFO("Selected video with creation timestamp: {}", dt.value().String());
+        LOG_INFO("Selected video with creation timestamp: {}", dt.value().to_string());
     } else {
         LOG_WARN("Could not detect datetime metadata from selected video.");
     }
@@ -518,13 +518,13 @@ void ViewPage::StartDecodingThread() {
         m_FrameDuration            = 1.0 / m_VideoFPS;
         m_TotalFrames              = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
         m_VideoLengthMin           = (static_cast<double>(m_TotalFrames) / m_VideoFPS) / 60.0;
-        const auto video_length_lt = LocalTime::FromMinutes(m_VideoLengthMin);
+        const auto video_length_lt = local_time::from_minutes(m_VideoLengthMin);
         if (!video_length_lt) {
             LOG_ERROR("Video length could not be determined");
             m_ThreadRunning = false;
             return;
         }
-        m_VideoLengthFormatted = video_length_lt.value().String(false);
+        m_VideoLengthFormatted = video_length_lt.value().to_string(false);
 
         cv::Mat raw_frame, rgba_frame;
         while (m_ThreadRunning) {
@@ -652,7 +652,7 @@ std::optional<size_t> ViewPage::SyncDataVideo(const std::vector<uint64_t>& micro
 
     m_DataAndTimeSync                 = true;
     const auto     creation_timestamp = m_VideoCreationTimestamp.value();
-    const uint64_t micros_to_sync     = creation_timestamp.MicrosSinceMidnight();
+    const uint64_t micros_to_sync     = creation_timestamp.micros_since_midnight();
     const auto     it                 = std::ranges::lower_bound(micros_times, micros_to_sync);
     if (it != micros_times.end()) { return std::distance(micros_times.begin(), it); }
 

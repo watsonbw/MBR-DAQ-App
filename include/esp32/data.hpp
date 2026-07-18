@@ -48,7 +48,7 @@ class TelemetryData {
     }
 
     [[nodiscard]] const std::vector<std::string>& GetRawLines() const { return m_RawLines; };
-    [[nodiscard]] const std::optional<LocalTime>& GetSyncLT() const { return m_SyncLT; }
+    [[nodiscard]] const std::optional<local_time>& GetSyncLT() const { return m_SyncLT; }
     [[nodiscard]] const std::string&              GetCurrentLine() { return m_CurrentLine; }
 
     void WriteData(const std::string& identifier, const std::string& value);
@@ -64,7 +64,7 @@ class TelemetryData {
     std::vector<double>      m_Time;
     std::vector<std::string> m_RawLines;
     double                   m_SyncStart;
-    std::optional<LocalTime> m_SyncLT;
+    std::optional<local_time> m_SyncLT;
 
     friend class ViewPage;
 };

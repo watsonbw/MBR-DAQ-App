@@ -52,13 +52,13 @@ void HomePage::DrawTopLHS() {
 
     if (ImGui::BeginChild("##sd_control", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
-        LocalTime  t;
+        local_time  t;
         HEADER(pages::utils::draw_input_box(
-            "##sd_name", m_SetName, fmt::format("Name ({})", t.String(false)).c_str()));
+            "##sd_name", m_SetName, fmt::format("Name ({})", t.to_string(false)).c_str()));
         ImGui::SameLine();
         if (ImGui::Button("Create File")) {
             if (m_SetName.empty()) {
-                m_SDName = t.String(false);
+                m_SDName = t.to_string(false);
             } else {
                 m_SDName = m_SetName;
             }
@@ -130,7 +130,7 @@ void HomePage::DrawTopRHS() {
 
     BOLD_DEFAULT(ImGui::SeparatorText("Metrics"));
     ImGui::BulletText("Backend Status: %s", context_->backend->IsConnected ? "Online" : "Offline");
-    ImGui::BulletText("Last IP Update: %s", m_PreviousIp.String().c_str());
+    ImGui::BulletText("Last IP Update: %s", m_PreviousIp.to_string().c_str());
     ImGui::BulletText("Application FPS: %.2f", ImGui::GetIO().Framerate);
 
     BOLD_DEFAULT(ImGui::SeparatorText("UI Settings"));
@@ -171,33 +171,33 @@ void HomePage::DrawBottomRHS() {
 }
 
 void HomePage::DrawIPControls() {
-    if (ImGui::Button("Update IP") && !m_IpBuf.AnyEmpty()) {
+    if (ImGui::Button("Update IP") && !m_IpBuf.any_empty()) {
         context_->backend->SetIp(m_IpBuf);
         m_PreviousIp = std::exchange(m_IpBuf, {});
     }
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_FIRST", m_IpBuf.First, m_PreviousIp.First.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_FIRST", m_IpBuf.first, m_PreviousIp.first.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_SECOND", m_IpBuf.Second, m_PreviousIp.Second.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_SECOND", m_IpBuf.second, m_PreviousIp.second.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_THIRD", m_IpBuf.Third, m_PreviousIp.Third.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_THIRD", m_IpBuf.third, m_PreviousIp.third.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_FOURTH", m_IpBuf.Fourth, m_PreviousIp.Fourth.c_str(), 75.0F);
+    pages::utils::draw_input_box("##ip_FOURTH", m_IpBuf.fourth, m_PreviousIp.fourth.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(":");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_PORT", m_IpBuf.Port, m_PreviousIp.Port.c_str(), 50.0F);
+    pages::utils::draw_input_box("##ip_PORT", m_IpBuf.port, m_PreviousIp.port.c_str(), 50.0F);
 }
 
 void HomePage::DrawCredentialControls() {

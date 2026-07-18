@@ -5,19 +5,16 @@
 namespace mbr {
 
 // https://en.wikipedia.org/wiki/IPv4
-struct IpV4 {
-    std::string First;
-    std::string Second;
-    std::string Third;
-    std::string Fourth;
-    std::string Port;
+struct ipv4_t {
+    std::string first{"192"};
+    std::string second{"168"};
+    std::string third{"4"};
+    std::string fourth{"1"};
+    std::string port{"80"};
 
-    [[nodiscard]] bool        Valid() const;
-    [[nodiscard]] bool        AnyEmpty() const;
-    [[nodiscard]] std::string String() const;
+    [[nodiscard]] bool        is_valid() const;
+    [[nodiscard]] bool        any_empty() const;
+    [[nodiscard]] std::string to_string() const;
 };
-
-static const IpV4 DEFAULT_IP = {
-    .First = "192", .Second = "168", .Third = "4", .Fourth = "1", .Port = "80"};
 
 } // namespace mbr

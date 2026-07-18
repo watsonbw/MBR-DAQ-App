@@ -11,8 +11,7 @@ namespace mbr {
 
 class HomePage : public Page {
   public:
-    explicit HomePage(const std::shared_ptr<app_context>& ctx)
-        : Page{ctx}, m_PreviousIp{DEFAULT_IP} {}
+    explicit HomePage(const std::shared_ptr<app_context>& ctx) : Page{ctx} {}
     ~HomePage() override = default;
 
     void OnEnter() override;
@@ -29,8 +28,8 @@ class HomePage : public Page {
     void DrawCredentialControls();
 
   private:
-    IpV4        m_PreviousIp;
-    IpV4        m_IpBuf;
+    ipv4_t      m_PreviousIp;
+    ipv4_t      m_IpBuf;
     std::string m_UsernameBuf;
     std::string m_PasswordBuf;
     std::string m_SDName;
