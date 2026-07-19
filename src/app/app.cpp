@@ -1,5 +1,6 @@
 #include "app/app.hpp"
 
+#include <filesystem>
 #include <memory>
 
 #include <ixwebsocket/IXNetSystem.h>
@@ -17,11 +18,13 @@
 
 namespace mbr {
 
+namespace { const std::filesystem::path DEFAULT_JSON_PATH{"MBR_data.json"}; } // namespace
+
 app_t::app_t(i32, char**) : context_{std::make_shared<app_context>()} /*, m_Manager{m_Context}*/ {
     context_->log = context_->logger.get_log_fn();
     ix::initNetSystem();
     gui_              = std::make_unique<gui_t>(context_);
-    context_->backend = std::make_unique<telemetry_backend>(context_->log);
+    context_->backend = std::make_unique<telemetry_backend>(DEFAULT_JSON_PATH, context_->log);
 }
 
 app_t::~app_t() { ix::uninitNetSystem(); }

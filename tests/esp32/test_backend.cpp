@@ -1,32 +1,15 @@
-#include <filesystem>
-#include <fstream>
-
 #include <catch_amalgamated.hpp>
 
 #include "core/log.hpp"
 #include "esp32/backend.hpp"
+#include "helpers/backend_json_fixture.hpp"
 
 namespace mbr::tests {
 
-struct backend_json_fixture {
-    backend_json_fixture() {
-        std::ofstream f{"MBR_data.json"};
-        f << R"({
-          "fields": [
-            { "key": "T",  "name": "Timestamp",   "required": true,  "plot": false },
-            { "key": "E",  "name": "Engine RPM",  "required": false, "plot": true, "unit": "RPM",  "group": "rpm" },
-            { "key": "W",  "name": "Wheel RPM",   "required": false, "plot": true, "unit": "RPM",  "group": "rpm" }
-          ]
-        })";
-    }
-
-    ~backend_json_fixture() { std::filesystem::remove("MBR_data.json"); }
-};
-
 TEST_CASE("telemetry_backend packet validation") {
-    backend_json_fixture fixture;
-    log_t                logger;
-    telemetry_backend    backend{logger.get_log_fn()};
+    helpers::backend_json_fixture fixture;
+    log_t                         logger;
+    telemetry_backend             backend{fixture.temp.path, logger.get_log_fn()};
 
     SECTION("validate_packet with valid packets") {
         auto result = backend.validate_packet("T 123456 E 3000 W 1500");
