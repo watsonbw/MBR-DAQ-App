@@ -1,5 +1,6 @@
 #include "esp32/backend.hpp"
 
+#include <algorithm>
 #include <array>
 #include <charconv>
 #include <chrono>
@@ -22,6 +23,7 @@
 #include <stdx/fixed/hash_table.hh>
 #include <stdx/hash.hh>
 #include <stdx/option.hh>
+#include <stdx/string.hh>
 #include <stdx/types.hh>
 
 #include "app/context.hpp"
@@ -159,56 +161,56 @@ void telemetry_backend::on_message(const ix::WebSocketMessagePtr& msg) {
     }
 }
 
-// This function serves to handle the incoming message recovered from OnMEssage.
-// The goal is to primarly handle the data packing itself and doesn't have any command
+// This function serves to handle the incoming message recovered from OnMessage.
+// The goal is to primarily handle the data packing itself and doesn't have any command
 // or response handling. See "HandleResponse" for response logic
 stdx::option<std::vector<std::pair<std::string_view, std::string_view>>>
 telemetry_backend::validate_packet(std::string_view str) const {
     std::vector<std::pair<std::string_view, std::string_view>> parsed;
     parsed.reserve(data.data_values.size());
 
-    usize pos = 0;
     // runs through the whole sent packet. this ensures that the packet must be valid but doesn't
     // need every m_packetfield.
-    while (pos < str.size()) {
-        bool        is_key      = false;
-        const usize ident_start = pos;
+    std::string_view current = str;
+    while (!current.empty()) {
+        current = stdx::string::trim_left(current);
+        if (current.empty()) { break; }
 
-        // run until space to find key
-        while (pos < str.size() && str[pos] != ' ') { pos++; }
-        std::string_view key = str.substr(ident_start, pos - ident_start);
+        // Find space between key and value
+        const usize key_end = current.find(' ');
+        if (key_end == std::string_view::npos) { return stdx::none; }
+        const auto key = stdx::string::substr(current, 0, key_end);
 
-        // run until start of value
-        while (pos < str.size() && str[pos] == ' ') { pos++; }
-        const usize value_start = pos;
+        // Get value portion after the key
+        auto value_part = stdx::string::trim_left(stdx::string::substr(current, key_end + 1));
+        if (value_part.empty()) { return stdx::none; }
 
-        // run until space again to find value
-        while (pos < str.size() && str[pos] != ' ') { pos++; }
-        if (value_start == pos) { return stdx::none; }
-        std::string_view value = str.substr(value_start, pos - value_start);
+        // Find the end of the value (either next space or EOL)
+        const usize value_end = value_part.find(' ');
+        const auto  value     = stdx::string::substr(value_part, 0, value_end);
 
-        // skip extra spaces
-        while (pos < str.size() && str[pos] == ' ') { pos += 1; }
+        // Advance current past the parsed key-value pair
+        current = value_end == std::string_view::npos
+                      ? std::string_view{}
+                      : stdx::string::substr(value_part, value_end + 1);
 
-        // check key value pairs
-        for (const auto& field : data.data_values) {
-            if (field.key == key) { is_key = true; }
-        }
-        if (!is_key) { return stdx::none; }
+        // Validate the key is actually allowed
+        const auto valid_key =
+            std::ranges::any_of(data.data_values, [&](const auto& dv) { return dv.key == key; });
+        if (!valid_key) { return stdx::none; }
+
+        // Validate timestamp field "T" is numeric
         if (key == "T") {
-            u64  t   = 0;
-            auto res = std::from_chars(value.data(), value.data() + value.size(), t);
-            if (res.ec != std::errc{} || t == 0) { return stdx::none; }
+            u64  timestamp;
+            auto res = std::from_chars(value.begin(), value.end(), timestamp);
+            if (res.ec != std::errc{} || res.ptr != value.end()) { return stdx::none; }
         }
         parsed.emplace_back(key, value);
     }
-    bool has_t = false;
-    for (const auto& pair : parsed) {
-        if (pair.first == "T") {
-            has_t = true;
-            break;
-        }
-    }
+
+    // Verify timestamp was parsed
+    const bool has_t =
+        std::ranges::any_of(parsed, [](const auto& pair) { return pair.first == "T"; });
     if (!has_t) { return stdx::none; }
 
     return parsed;
