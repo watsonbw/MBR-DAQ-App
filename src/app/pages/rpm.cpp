@@ -8,6 +8,7 @@
 #include <gsl/util>
 #include <imgui.h>
 #include <implot.h>
+#include <stdx/profiler.hh>
 #include <stdx/types.hh>
 
 #include "app/pages/utils.hpp"
@@ -21,6 +22,7 @@ void rpm_page::on_enter() { log_info(context_->log, "Entered RPMPage"); }
 void rpm_page::on_exit() { log_info(context_->log, "Exited RPMPage"); }
 
 void rpm_page::update() {
+    PROFILE_FUNCTION();
     if (ImGui::BeginTable(
             "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
         const auto cleanup_split{gsl::finally(ImGui::EndTable)};

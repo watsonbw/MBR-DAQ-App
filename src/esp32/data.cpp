@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "core/log.hpp"
+#include <stdx/profiler.hh>
 
 namespace mbr {
 
@@ -44,6 +45,7 @@ void telemetry_data::init_data() {
 }
 
 void telemetry_data::write_data(const std::string& identifier, const std::string& value) {
+    PROFILE_FUNCTION();
     try {
         f64 val = std::stod(value);
         series[identifier].emplace_back(val);

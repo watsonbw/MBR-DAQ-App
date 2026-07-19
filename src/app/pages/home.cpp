@@ -7,6 +7,7 @@
 #include <gsl/util>
 #include <imgui.h>
 #include <sokol_app.h>
+#include <stdx/profiler.hh>
 #include <stdx/types.hh>
 
 #include "app/pages/utils.hpp"
@@ -20,6 +21,7 @@ void home_page::on_enter() { log_info(context_->log, "Entered HomePage"); }
 void home_page::on_exit() { log_info(context_->log, "Exited HomePage"); }
 
 void home_page::update() {
+    PROFILE_FUNCTION();
     const f32 full_height   = ImGui::GetContentRegionAvail().y;
     const f32 top_height    = full_height * 0.66F;
     const f32 bottom_height = full_height - top_height;
