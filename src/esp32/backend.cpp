@@ -1,16 +1,20 @@
+#include <array>
 #include <cassert>
 #include <charconv>
 #include <string>
+#include <string_view>
 #include <type_traits>
+#include <utility>
 
 #include <fmt/format.h>
 #include <ixwebsocket/IXNetSystem.h>
+#include <stdx/assert.hh>
+#include <stdx/fixed/hash_table.hh>
 
 #include "app/context.hpp"
-
-#include "esp32/backend.hpp"
-
 #include "core/log.hpp"
+#include "esp32/backend.hpp"
+#include "stdx/hash.hh"
 
 using namespace std::chrono_literals;
 
@@ -29,7 +33,7 @@ void telemetry_backend::start() {
     kill();
     should_kill_ = false;
 
-    assert(ip_addr_.is_valid());
+    ASSERT(ip_addr_.is_valid(), "Telemetry backend initialized with invalid ip address");
     const auto real_addr = fmt::format("ws://{}/ws", ip_addr_.to_string());
     log_info(log_, "Attempting to connect with address: {}", real_addr);
     web_sockets_.setUrl(real_addr);
@@ -215,6 +219,25 @@ void telemetry_backend::set_ip(const ipv4_t& ipv4) {
     start();
     try_connection = false;
 }
+
+namespace {
+
+// You will need to update this string to enum function
+// EVERY TIME you add a new command. This works in series with RegisterHandlers
+// and HandleResponse
+constexpr auto response_lut = [] {
+    constexpr std::array mappings{std::pair{"SYNC", response_type_t::SYNC},
+                                  std::pair{"SD_START", response_type_t::SDSTART},
+                                  std::pair{"SD_WRITE", response_type_t::SDWRITE},
+                                  std::pair{"SD_CLOSE", response_type_t::SDCLOSE}};
+
+    stdx::fixed::hash_map<std::string_view, response_type_t, mappings.size(), stdx::crc::hash> map;
+    for (const auto& op : mappings) { map.emplace(op.first, op.second); }
+    return map;
+}();
+
+} // namespace
+
 // This function is the bridge between any RES sent from our car to our app
 // After checking for RES in OnMessage, this function is called to parse and act on the response
 // The response is parsed by checking the string with the response type ENUM and calling the
@@ -232,15 +255,15 @@ void telemetry_backend::handle_response(std::string_view line) {
         return;
     }
 
-    auto            command = rest.substr(0, space);
-    response_type_t type    = res_string_to_enum(command);
-    if (type == response_type_t::UNKNOWN) {
+    auto       command = rest.substr(0, space);
+    const auto type    = response_lut.get_opt(command);
+    if (!type) {
         log_error(log_, "Unknown response: {}", command);
         return;
     }
-    auto it = response_handlers.find(type);
-    if (it != response_handlers.end()) {
-        it->second(rest.substr(space + 1));
+
+    if (auto handler = response_handlers.get_opt(*type)) {
+        (*handler)(rest.substr(space + 1));
     } else {
         log_error(log_, "No handler for response: {}", command);
     }
@@ -286,19 +309,6 @@ void telemetry_backend::register_handlers() {
             log_info(log_, "SD Card Failed Close");
         }
     };
-}
-// As mentioned before, you will need to update this string to enum function
-// EVERY TIME you add a new command. This works in series with RegisterHandlers
-// and HandleResponse
-response_type_t telemetry_backend::res_string_to_enum(std::string_view command) const {
-    static const std::unordered_map<std::string_view, response_type_t> lookup{
-        {"SYNC", response_type_t::SYNC},
-        {"SD_START", response_type_t::SDSTART},
-        {"SD_WRITE", response_type_t::SDWRITE},
-        {"SD_CLOSE", response_type_t::SDCLOSE},
-    };
-    auto it = lookup.find(command);
-    return it != lookup.end() ? it->second : response_type_t::UNKNOWN;
 }
 
 /*

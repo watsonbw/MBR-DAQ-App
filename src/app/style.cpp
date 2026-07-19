@@ -6,19 +6,31 @@
 #    include <dwmapi.h>
 #endif
 
-#include <sokol_app.h>
-
 #include <imgui.h>
-
-#include "core/log.hpp"
+#include <sokol_app.h>
+#include <stdx/assert.hh>
 
 #include "app/assets/fonts/open_sans.hpp"
 #include "app/style.hpp"
+#include "core/log.hpp"
 
 namespace mbr {
 
 namespace {
-    constinit std::optional<std::array<ImVec4, ImGuiCol_COUNT>> color_cache = std::nullopt;
+
+constinit std::optional<std::array<ImVec4, ImGuiCol_COUNT>> color_cache = std::nullopt;
+
+void initialize_imgui_color_cache(ImVec4 colors[ImGuiCol_COUNT]) {
+    auto& cache = color_cache.emplace();
+    for (auto i = 0; i < ImGuiCol_COUNT; i++) { cache[i] = colors[i]; }
+}
+
+void refresh_imgui_color_cache(ImVec4 colors[ImGuiCol_COUNT]) {
+    ASSERT(color_cache, "Color cache has not yet been initialized");
+    auto& cache = *color_cache;
+    for (auto i = 0; i < ImGuiCol_COUNT; i++) { colors[i] = cache[i]; }
+}
+
 } // namespace
 
 app_fonts load_fonts() {
@@ -50,16 +62,6 @@ app_fonts load_fonts() {
     return {.regular = regular, .bold = bold, .italic = italic, .bold_italic = bold_italic};
 }
 
-static void PopulateImGuiColorCache(ImVec4 colors[ImGuiCol_COUNT]) {
-    color_cache = std::array<ImVec4, ImGuiCol_COUNT>{};
-    for (auto i = 0; i < ImGuiCol_COUNT; i++) { color_cache.value()[i] = colors[i]; }
-}
-
-static void RefreshImGuiColorCache(ImVec4 colors[ImGuiCol_COUNT]) {
-    assert(color_cache);
-    for (auto i = 0; i < ImGuiCol_COUNT; i++) { colors[i] = color_cache.value()[i]; }
-}
-
 void app_style::set_dark_theme(const log_fn_t& log) {
     log_info(log, "Setting dark mode");
 #ifdef _WIN32
@@ -70,11 +72,8 @@ void app_style::set_dark_theme(const log_fn_t& log) {
 
     // This is from my Game Engine
     auto& colors = ImGui::GetStyle().Colors;
-    if (!color_cache) {
-        PopulateImGuiColorCache(colors);
-        assert(color_cache);
-    }
-    RefreshImGuiColorCache(colors);
+    if (!color_cache) { initialize_imgui_color_cache(colors); }
+    refresh_imgui_color_cache(colors);
 
     colors[ImGuiCol_WindowBg] = {0.1F, 0.105F, 0.11F, 1.0F};
 
@@ -118,11 +117,8 @@ void app_style::set_light_theme(const log_fn_t& log) {
 
     // This isn't from my Game Engine
     auto& colors = ImGui::GetStyle().Colors;
-    if (!color_cache) {
-        PopulateImGuiColorCache(colors);
-        assert(color_cache);
-    }
-    RefreshImGuiColorCache(colors);
+    if (!color_cache) { initialize_imgui_color_cache(colors); }
+    refresh_imgui_color_cache(colors);
 
     colors[ImGuiCol_WindowBg] = {0.94F, 0.94F, 0.94F, 1.0F};
     colors[ImGuiCol_ChildBg]  = {0.00F, 0.00F, 0.00F, 0.00F};

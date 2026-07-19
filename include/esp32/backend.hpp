@@ -6,10 +6,10 @@
 #include <string>
 #include <string_view>
 #include <thread>
-#include <unordered_map>
 #include <vector>
 
 #include <ixwebsocket/IXWebSocket.h>
+#include <stdx/fixed/enum_map.hh>
 
 #include "core/ip.hpp"
 #include "core/log.hpp"
@@ -26,7 +26,6 @@ enum class response_type_t {
     SDSTART,
     SDWRITE,
     SDCLOSE,
-    UNKNOWN,
 };
 
 class telemetry_backend {
@@ -63,10 +62,9 @@ class telemetry_backend {
     void on_message(const ix::WebSocketMessagePtr& msg);
 
     std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
-                    validate_packet(std::string_view str) const;
-    void            handle_response(std::string_view line);
-    void            register_handlers();
-    response_type_t res_string_to_enum(std::string_view command) const;
+         validate_packet(std::string_view str) const;
+    void handle_response(std::string_view line);
+    void register_handlers();
 
   private:
     std::thread                           worker_;
@@ -76,7 +74,7 @@ class telemetry_backend {
     std::chrono::steady_clock::time_point last_data_time_{};
     std::atomic<bool>                     should_kill_{false};
 
-    std::unordered_map<response_type_t, std::function<void(std::string_view)>> response_handlers;
+    stdx::fixed::enum_map<response_type_t, std::function<void(std::string_view)>> response_handlers;
 };
 
 } // namespace mbr

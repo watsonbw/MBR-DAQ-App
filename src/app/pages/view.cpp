@@ -4,10 +4,8 @@
 #include <filesystem>
 #include <fstream>
 
-#include <gsl/util>
-#include <tinyfiledialogs.h>
-
 #include <fmt/format.h>
+#include <gsl/util>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <implot.h>
@@ -15,13 +13,14 @@
 #include <sokol_gfx.h>
 #include <sokol_glue.h>
 #include <sokol_imgui.h>
-
-#include "core/log.hpp"
+#include <stdx/assert.hh>
+#include <tinyfiledialogs.h>
 
 #include "app/assets/images/image_buttons.hpp"
 #include "app/pages/utils.hpp"
 #include "app/pages/view.hpp"
 #include "app/style.hpp"
+#include "core/log.hpp"
 
 using namespace std::chrono_literals;
 
@@ -625,7 +624,7 @@ void view_page::update_texture(bool is_timer_tick) {
             desc.usage.stream_update = true;
             desc.num_mipmaps         = 1;
             video_texture_           = sg_make_image(&desc);
-            assert(video_texture_.id != SG_INVALID_ID);
+            ASSERT(video_texture_.id != SG_INVALID_ID, "Video texture failed to initialize");
 
             sg_view_desc view_desc  = {};
             view_desc.texture.image = video_texture_;

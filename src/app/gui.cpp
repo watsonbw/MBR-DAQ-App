@@ -1,6 +1,7 @@
 #include <cassert>
 
 #include <fmt/format.h>
+#include <gsl/pointers>
 #include <gsl/util>
 #include <imgui.h>
 #include <implot.h>
@@ -28,26 +29,22 @@ namespace mbr {
 namespace {
 
 void sokol_init_cb(void* data) {
-    auto* gui = static_cast<gui_t*>(data);
-    assert(gui);
+    gsl::not_null gui = static_cast<gui_t*>(data);
     gui->on_init();
 }
 
 void sokol_cleanup_cb(void* data) {
-    auto* gui = static_cast<gui_t*>(data);
-    assert(gui);
+    gsl::not_null gui = static_cast<gui_t*>(data);
     gui->on_cleanup();
 }
 
 void sokol_frame_cb(void* data) {
-    auto* gui = static_cast<gui_t*>(data);
-    assert(gui);
+    gsl::not_null gui = static_cast<gui_t*>(data);
     gui->on_frame();
 }
 
 void sokol_event_cb(const sapp_event* e, void* data) {
-    auto* gui = static_cast<gui_t*>(data);
-    assert(gui);
+    gsl::not_null gui = static_cast<gui_t*>(data);
     gui->on_event(e);
 }
 
