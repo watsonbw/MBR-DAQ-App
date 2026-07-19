@@ -1,7 +1,6 @@
 #include "esp32/backend.hpp"
 
 #include <array>
-#include <cassert>
 #include <charconv>
 #include <chrono>
 #include <mutex>
@@ -30,13 +29,14 @@
 #include "core/log.hpp"
 #include "core/time.hpp"
 #include "esp32/data.hpp"
+#include "esp32/serial.hpp"
 
 using namespace std::chrono_literals;
 
 namespace mbr {
 
 telemetry_backend::telemetry_backend(log_fn_t log)
-    : log_{std::move(log)}, data{log_}, serial_manager(115'200, 500, log_) {
+    : log_{std::move(log)}, data{log_}, serial_manager{baud_rate_t::ONEONEFIFTYTWO, 500, log_} {
     buffer_.reserve(4'096);
     register_handlers();
 }

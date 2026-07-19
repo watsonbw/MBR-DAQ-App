@@ -4,11 +4,13 @@
 
 #include <gsl/util>
 #include <imgui.h>
+#include <stdx/enum.hh>
 #include <stdx/types.hh>
 
 #include "app/pages/utils.hpp"
 #include "app/style.hpp"
 #include "core/log.hpp"
+#include "esp32/serial.hpp"
 
 namespace mbr::pages {
 
@@ -89,18 +91,14 @@ void serial_page::draw_top_lhs() {
         ImGui::SameLine();
 
         ImGui::SetNextItemWidth(100.0F);
-        if (ImGui::BeginCombo("##baud_dropdown",
-                              std::to_string(context_->backend->serial_manager.get_baud_rate())
-                                  .c_str())) { // TODO(tcs): This is ugly
+        if (ImGui::BeginCombo(
+                "##baud_dropdown",
+                baud_rate_string(context_->backend->serial_manager.get_baud_rate()))) {
             const auto cleanup_combo{gsl::finally(ImGui::EndCombo)};
-            // This can stay inside DrawTopLHS or be a static member
-            static const u32 BAUD_RATES[] = {
-                300, 1'200, 2'400, 4'800, 9'600, 19'200, 38'400, 57'600, 115'200};
-
-            for (const u32 rate : BAUD_RATES) {
+            for (const auto rate : stdx::enum_range<baud_rate_t>()) {
                 const bool is_selected =
                     (context_->backend->serial_manager.get_baud_rate() == rate);
-                if (ImGui::Selectable(std::to_string(rate).c_str(), is_selected)) {
+                if (ImGui::Selectable(baud_rate_string(rate), is_selected)) {
                     context_->backend->serial_manager.change_baud_rate(rate);
                 }
                 if (is_selected) { ImGui::SetItemDefaultFocus(); }
@@ -123,11 +121,11 @@ void serial_page::draw_top_rhs() {
 }
 
 void serial_page::draw_bottom() {
-    if (pages::utils::draw_input_box("##command",
-                                     serial_buffer_,
-                                     "Send Serial Data Here",
-                                     1900.0F,
-                                     ImGuiInputTextFlags_EnterReturnsTrue)) {
+    if (utils::draw_input_box("##command",
+                              serial_buffer_,
+                              "Send Serial Data Here",
+                              1900.0F,
+                              ImGuiInputTextFlags_EnterReturnsTrue)) {
         context_->backend->serial_manager.send_data(serial_buffer_ + "\n");
         serial_buffer_ = {};
         ImGui::SetKeyboardFocusHere(-1);
@@ -135,7 +133,7 @@ void serial_page::draw_bottom() {
     if (ImGui::BeginChild("##datalog")) {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
         ImGui::Separator();
-        pages::utils::draw_data_log(context_->backend->serial_manager.return_data_stream());
+        utils::draw_data_log(context_->backend->serial_manager.return_data_stream());
     }
 }
 

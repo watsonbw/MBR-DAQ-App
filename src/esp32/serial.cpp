@@ -10,6 +10,7 @@
 
 #include <ankerl/unordered_dense.h>
 #include <serial/serial.h>
+#include <stdx/assert.hh>
 #include <stdx/types.hh>
 
 #include "core/log.hpp"
@@ -17,6 +18,36 @@
 using namespace std::chrono_literals;
 
 namespace mbr {
+
+[[nodiscard]] u32 baud_rate_value(baud_rate_t baud) noexcept {
+    switch (baud) {
+    case baud_rate_t::THREE:           return 300;
+    case baud_rate_t::TWELVE:          return 1'200;
+    case baud_rate_t::TWENTYFOUR:      return 2'400;
+    case baud_rate_t::FORTYEIGHT:      return 4'800;
+    case baud_rate_t::NINETYSIX:       return 9'600;
+    case baud_rate_t::ONENIGHTYTWO:    return 19'200;
+    case baud_rate_t::THREEEIGHTYFOUR: return 38'400;
+    case baud_rate_t::FIVESEVENTYSIX:  return 57'600;
+    case baud_rate_t::ONEONEFIFTYTWO:  return 115'200;
+    default:                           UNREACHABLE("Unknown baud rate");
+    }
+}
+
+[[nodiscard]] const char* baud_rate_string(baud_rate_t baud) noexcept {
+    switch (baud) {
+    case baud_rate_t::THREE:           return "300";
+    case baud_rate_t::TWELVE:          return "1200";
+    case baud_rate_t::TWENTYFOUR:      return "2400";
+    case baud_rate_t::FORTYEIGHT:      return "4800";
+    case baud_rate_t::NINETYSIX:       return "9600";
+    case baud_rate_t::ONENIGHTYTWO:    return "19200";
+    case baud_rate_t::THREEEIGHTYFOUR: return "38400";
+    case baud_rate_t::FIVESEVENTYSIX:  return "57600";
+    case baud_rate_t::ONEONEFIFTYTWO:  return "115200";
+    default:                           UNREACHABLE("Unknown baud rate");
+    }
+}
 
 serial_manager_t::~serial_manager_t() { stop(); }
 
@@ -42,7 +73,7 @@ bool serial_manager_t::open_port(const std::string& port, const std::string& des
         timeout.read_timeout_multiplier  = 0;
         timeout.write_timeout_constant   = 0;
         timeout.write_timeout_multiplier = 0;
-        auto ser = std::make_unique<serial::Serial>(port, baud_rate_, timeout);
+        auto ser = std::make_unique<serial::Serial>(port, baud_rate_value(baud_rate_), timeout);
         if (ser->isOpen()) {
             ports_.emplace(port, std::move(ser));
             log_info(log_, "[SerialManager] Opened: {}", port);
@@ -158,13 +189,12 @@ void serial_manager_t::close_all() {
     chosen_ports_.clear();
 }
 
-void serial_manager_t::change_baud_rate(u32 baud) {
+void serial_manager_t::change_baud_rate(baud_rate_t baud) {
     const std::scoped_lock lock{mutex_};
-    baud_rate_ =
-        static_cast<i32>(baud); // TODO(blake) why is m_BaudRate an i32 but this func takes a u32
+    baud_rate_ = baud;
     for (auto& [port, ser] : ports_) {
         try {
-            ser->setBaudrate(baud_rate_);
+            ser->setBaudrate(baud_rate_value(baud_rate_));
         } catch (const std::exception& e) {
             log_error(log_, "[SerialManager] Baud rate change failed on {}: {}", port, e.what());
         }
