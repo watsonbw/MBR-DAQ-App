@@ -55,15 +55,8 @@ void telemetry_data::init_data() {
 void telemetry_data::write_data(const std::string& identifier, const std::string& value) {
     PROFILE_FUNCTION();
     try {
-        f64 val;
-        {
-            std::string_view to_parse{value};
-            auto             res = std::from_chars(to_parse.begin(), to_parse.end(), val);
-            if (res.ec != std::errc{} || res.ptr != to_parse.end()) {
-                return log_error(log_, "Failed to parse data into an f64");
-            }
-        }
-
+        // This cannot be from_chars since apple clang doesn't support it :(
+        f64 val = std::stod(value);
         series[identifier].emplace_back(val);
         if (identifier == "T") {
             u64 raw_micros = static_cast<u64>(val);
