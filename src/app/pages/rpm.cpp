@@ -44,9 +44,9 @@ void rpm_page::DrawLHS(const std::vector<std::string>& raw_lines) {
         text_drawer_.data_download_button(raw_lines, download_fd_text_);
         ImGui::SameLine();
 
-        HEADER(pages::utils::draw_input_box("##extra_rpm", download_fd_text_, "File descriptor"));
+        HEADER(utils::draw_input_box("##extra_rpm", download_fd_text_, "File descriptor"));
         ImGui::Separator();
-        pages::utils::draw_data_log(raw_lines);
+        utils::draw_data_log(raw_lines);
     }
 }
 
@@ -62,8 +62,8 @@ void rpm_page::DrawRHS(gsl::span<const f64> time,
 
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
-            pages::utils::plot_if_non_empty<f64>("Wheel Speed", time, wheel);
-            pages::utils::plot_if_non_empty<f64>("Engine Speed", time, engine);
+            utils::plot_if_non_empty<f64>("Wheel Speed", time, wheel);
+            utils::plot_if_non_empty<f64>("Engine Speed", time, engine);
         }
     }
 }

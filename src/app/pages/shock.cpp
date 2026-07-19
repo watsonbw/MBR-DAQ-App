@@ -47,9 +47,9 @@ void shock_page::draw_lhs(const std::vector<std::string>& raw_lines) {
         text_utils_.data_download_button(raw_lines, download_fd_text_);
         ImGui::SameLine();
 
-        HEADER(pages::utils::draw_input_box("##extra_shock", download_fd_text_, "File descriptor"));
+        HEADER(utils::draw_input_box("##extra_shock", download_fd_text_, "File descriptor"));
         ImGui::Separator();
-        pages::utils::draw_data_log(raw_lines);
+        utils::draw_data_log(raw_lines);
     }
 }
 
@@ -67,10 +67,10 @@ void shock_page::draw_rhs(gsl::span<const f64> time,
 
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
-            pages::utils::plot_if_non_empty<f64>("Front Right Shock Travel", time, fr);
-            pages::utils::plot_if_non_empty<f64>("Front Left Shock Travel", time, fl);
-            pages::utils::plot_if_non_empty<f64>("Rear Right Shock Travel", time, br);
-            pages::utils::plot_if_non_empty<f64>("Rear Left Shock Travel", time, bl);
+            utils::plot_if_non_empty<f64>("Front Right Shock Travel", time, fr);
+            utils::plot_if_non_empty<f64>("Front Left Shock Travel", time, fl);
+            utils::plot_if_non_empty<f64>("Rear Right Shock Travel", time, br);
+            utils::plot_if_non_empty<f64>("Rear Left Shock Travel", time, bl);
         }
     }
 }

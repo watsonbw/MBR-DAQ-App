@@ -58,7 +58,7 @@ void home_page::draw_top_lhs() {
     if (ImGui::BeginChild("##sd_control", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar)) {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
         local_time t;
-        HEADER(pages::utils::draw_input_box(
+        HEADER(utils::draw_input_box(
             "##sd_name", set_name_, fmt::format("Name ({})", t.to_string(false)).c_str()));
         ImGui::SameLine();
         if (ImGui::Button("Create File")) {
@@ -182,27 +182,27 @@ void home_page::draw_ip_controls() {
     }
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_FIRST", ip_buf_.first, previous_ip_.first.c_str(), 75.0F);
+    utils::draw_input_box("##ip_FIRST", ip_buf_.first, previous_ip_.first.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_SECOND", ip_buf_.second, previous_ip_.second.c_str(), 75.0F);
+    utils::draw_input_box("##ip_SECOND", ip_buf_.second, previous_ip_.second.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_THIRD", ip_buf_.third, previous_ip_.third.c_str(), 75.0F);
+    utils::draw_input_box("##ip_THIRD", ip_buf_.third, previous_ip_.third.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(".");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_FOURTH", ip_buf_.fourth, previous_ip_.fourth.c_str(), 75.0F);
+    utils::draw_input_box("##ip_FOURTH", ip_buf_.fourth, previous_ip_.fourth.c_str(), 75.0F);
     ImGui::SameLine();
     ImGui::TextUnformatted(":");
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##ip_PORT", ip_buf_.port, previous_ip_.port.c_str(), 50.0F);
+    utils::draw_input_box("##ip_PORT", ip_buf_.port, previous_ip_.port.c_str(), 50.0F);
 }
 
 void home_page::draw_credential_controls() {
@@ -213,9 +213,9 @@ void home_page::draw_credential_controls() {
     }
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##username", username_buf_, "Username", 150.0F);
+    utils::draw_input_box("##username", username_buf_, "Username", 150.0F);
     ImGui::SameLine();
-    pages::utils::draw_input_box("##password", password_buf_, "Password", 150.0F);
+    utils::draw_input_box("##password", password_buf_, "Password", 150.0F);
 }
 
 } // namespace mbr::pages

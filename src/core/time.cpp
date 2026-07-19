@@ -1,6 +1,5 @@
 #include "core/time.hpp"
 
-#include <cassert>
 #include <chrono>
 #include <ctime>
 #include <sstream>

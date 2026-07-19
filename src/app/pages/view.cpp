@@ -1,7 +1,6 @@
 #include "app/pages/view.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <cstddef>
 #include <exception>
 #include <filesystem>
@@ -329,43 +328,43 @@ void view_page::draw_rhs() {
         view_page::dynamic_plot_loop();
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
-            pages::utils::plot_if_non_empty<f64>("Wheel Speed",
-                                                 data.time_minutes_normalized,
-                                                 data.series.at("W"),
-                                                 data_show_ == data_view_t::ALL ||
-                                                     data_show_ == data_view_t::RPMDATA,
-                                                 plot_percent_);
-            pages::utils::plot_if_non_empty<f64>("Engine Speed",
-                                                 data.time_minutes_normalized,
-                                                 data.series.at("E"),
-                                                 data_show_ == data_view_t::ALL ||
-                                                     data_show_ == data_view_t::RPMDATA,
-                                                 plot_percent_);
+            utils::plot_if_non_empty<f64>("Wheel Speed",
+                                          data.time_minutes_normalized,
+                                          data.series.at("W"),
+                                          data_show_ == data_view_t::ALL ||
+                                              data_show_ == data_view_t::RPMDATA,
+                                          plot_percent_);
+            utils::plot_if_non_empty<f64>("Engine Speed",
+                                          data.time_minutes_normalized,
+                                          data.series.at("E"),
+                                          data_show_ == data_view_t::ALL ||
+                                              data_show_ == data_view_t::RPMDATA,
+                                          plot_percent_);
 
-            pages::utils::plot_if_non_empty<f64>("Front Right Shock Travel",
-                                                 data.time_minutes_normalized,
-                                                 data.series.at("FR"),
-                                                 data_show_ == data_view_t::ALL ||
-                                                     data_show_ == data_view_t::SHOCKDATA,
-                                                 plot_percent_);
-            pages::utils::plot_if_non_empty<f64>("Front Left Shock Travel",
-                                                 data.time_minutes_normalized,
-                                                 data.series.at("FL"),
-                                                 data_show_ == data_view_t::ALL ||
-                                                     data_show_ == data_view_t::SHOCKDATA,
-                                                 plot_percent_);
-            pages::utils::plot_if_non_empty<f64>("Rear Right Shock Travel",
-                                                 data.time_minutes_normalized,
-                                                 data.series.at("RR"),
-                                                 data_show_ == data_view_t::ALL ||
-                                                     data_show_ == data_view_t::SHOCKDATA,
-                                                 plot_percent_);
-            pages::utils::plot_if_non_empty<f64>("Rear Left Shock Travel",
-                                                 data.time_minutes_normalized,
-                                                 data.series.at("RL"),
-                                                 data_show_ == data_view_t::ALL ||
-                                                     data_show_ == data_view_t::SHOCKDATA,
-                                                 plot_percent_);
+            utils::plot_if_non_empty<f64>("Front Right Shock Travel",
+                                          data.time_minutes_normalized,
+                                          data.series.at("FR"),
+                                          data_show_ == data_view_t::ALL ||
+                                              data_show_ == data_view_t::SHOCKDATA,
+                                          plot_percent_);
+            utils::plot_if_non_empty<f64>("Front Left Shock Travel",
+                                          data.time_minutes_normalized,
+                                          data.series.at("FL"),
+                                          data_show_ == data_view_t::ALL ||
+                                              data_show_ == data_view_t::SHOCKDATA,
+                                          plot_percent_);
+            utils::plot_if_non_empty<f64>("Rear Right Shock Travel",
+                                          data.time_minutes_normalized,
+                                          data.series.at("RR"),
+                                          data_show_ == data_view_t::ALL ||
+                                              data_show_ == data_view_t::SHOCKDATA,
+                                          plot_percent_);
+            utils::plot_if_non_empty<f64>("Rear Left Shock Travel",
+                                          data.time_minutes_normalized,
+                                          data.series.at("RL"),
+                                          data_show_ == data_view_t::ALL ||
+                                              data_show_ == data_view_t::SHOCKDATA,
+                                          plot_percent_);
         }
     }
 }
@@ -453,7 +452,7 @@ void view_page::draw_sync_video_buttons() {
     }
 
     ImGui::SameLine();
-    pages::utils::draw_input_box("##extra_view", creation_metadata_text_buf_, "HH:MM:SS", 120.0F);
+    utils::draw_input_box("##extra_view", creation_metadata_text_buf_, "HH:MM:SS", 120.0F);
     timestamp_input_focused_ = ImGui::IsItemFocused();
     ImGui::SameLine();
     if (ImGui::Checkbox("Dynamic Plotting", &dynamic_plotting_)) {
