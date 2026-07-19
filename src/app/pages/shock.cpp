@@ -1,5 +1,6 @@
 #include "app/pages/shock.hpp"
 
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -25,12 +26,13 @@ void shock_page::update() {
     if (ImGui::BeginTable(
             "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
         const auto cleanup_split{gsl::finally(ImGui::EndTable)};
-        const auto data = context_->backend->pack_data();
+        const std::shared_lock lock{context_->backend->get_data_latch()};
+        const auto& data = context_->backend->get_data();
 
         ImGui::TableNextColumn();
-        draw_lhs(data.raw_lines);
+        draw_lhs(data.get_raw_lines());
         ImGui::TableNextColumn();
-        draw_rhs(data.time_minutes_normalized,
+        draw_rhs(data.get_time(),
                  data.series.at("FR"),
                  data.series.at("FL"),
                  data.series.at("RR"),

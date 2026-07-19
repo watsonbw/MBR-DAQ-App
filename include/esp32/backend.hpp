@@ -40,12 +40,7 @@ class telemetry_backend {
     void start();
     void kill();
     void send_cmd(const std::string& text);
-
-    // Returns a safely accessible grouping of relevant data.
-    //
-    // This automatically manages the Data's mutex!
-    [[nodiscard]] telemetry_data::packed_data pack_data();
-    void                                      set_ip(const ipv4_t& ipv4);
+    void set_ip(const ipv4_t& ipv4);
 
     [[nodiscard]] rw_latch&             get_data_latch() noexcept { return data_latch_; }
     [[nodiscard]] telemetry_data&       get_data() noexcept { return data_; }

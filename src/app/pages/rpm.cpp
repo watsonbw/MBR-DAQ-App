@@ -1,5 +1,6 @@
 #include "app/pages/rpm.hpp"
 
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -26,12 +27,13 @@ void rpm_page::update() {
     if (ImGui::BeginTable(
             "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
         const auto cleanup_split{gsl::finally(ImGui::EndTable)};
-        const auto data = context_->backend->pack_data();
+        const std::shared_lock lock{context_->backend->get_data_latch()};
+        const auto& data = context_->backend->get_data();
 
         ImGui::TableNextColumn();
-        DrawLHS(data.raw_lines);
+        DrawLHS(data.get_raw_lines());
         ImGui::TableNextColumn();
-        DrawRHS(data.time_minutes_normalized, data.series.at("W"), data.series.at("E"));
+        DrawRHS(data.get_time(), data.series.at("W"), data.series.at("E"));
     }
 }
 

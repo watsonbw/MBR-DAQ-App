@@ -321,9 +321,10 @@ void view_page::draw_rhs() {
             }
         }
 
-        const auto data = context_->backend->pack_data();
+        const std::shared_lock lock{context_->backend->get_data_latch()};
+        const auto& data = context_->backend->get_data();
 
-        const auto sync_lt    = context_->backend->get_data().get_sync_lt();
+        const auto sync_lt    = data.get_sync_lt();
         const auto plot_title = sync_lt
                                     ? fmt::format("Data View from {}", sync_lt.value().to_string())
                                     : "No Synced Time";
@@ -332,38 +333,38 @@ void view_page::draw_rhs() {
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
             utils::plot_if_non_empty<f64>("Wheel Speed",
-                                          data.time_minutes_normalized,
+                                          data.get_time(),
                                           data.series.at("W"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::RPMDATA,
                                           plot_percent_);
             utils::plot_if_non_empty<f64>("Engine Speed",
-                                          data.time_minutes_normalized,
+                                          data.get_time(),
                                           data.series.at("E"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::RPMDATA,
                                           plot_percent_);
 
             utils::plot_if_non_empty<f64>("Front Right Shock Travel",
-                                          data.time_minutes_normalized,
+                                          data.get_time(),
                                           data.series.at("FR"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::SHOCKDATA,
                                           plot_percent_);
             utils::plot_if_non_empty<f64>("Front Left Shock Travel",
-                                          data.time_minutes_normalized,
+                                          data.get_time(),
                                           data.series.at("FL"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::SHOCKDATA,
                                           plot_percent_);
             utils::plot_if_non_empty<f64>("Rear Right Shock Travel",
-                                          data.time_minutes_normalized,
+                                          data.get_time(),
                                           data.series.at("RR"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::SHOCKDATA,
                                           plot_percent_);
             utils::plot_if_non_empty<f64>("Rear Left Shock Travel",
-                                          data.time_minutes_normalized,
+                                          data.get_time(),
                                           data.series.at("RL"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::SHOCKDATA,
