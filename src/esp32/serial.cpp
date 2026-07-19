@@ -1,5 +1,6 @@
 #include "esp32/serial.hpp"
 
+#include <algorithm>
 #include <exception>
 #include <memory>
 #include <mutex>
@@ -101,14 +102,9 @@ void serial_manager_t::clean_ports() {
     }
     std::vector<std::string> to_remove;
     for (auto& [port, ser] : ports_) {
-        bool found = false;
-        for (const auto& info : available) {
-            if (info.port == port) {
-                found = true;
-                break;
-            }
+        if (!std::ranges::contains(available, port, &serial::PortInfo::port)) {
+            to_remove.emplace_back(port);
         }
-        if (!found) { to_remove.emplace_back(port); }
     }
     for (const auto& port : to_remove) { close_port(port); }
 }
