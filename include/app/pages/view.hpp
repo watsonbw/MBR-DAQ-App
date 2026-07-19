@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 #include <memory>
@@ -9,22 +10,24 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 #include <imgui.h>
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/mat.hpp>
 #include <sokol_gfx.h>
 #include <stdx/option.hh>
 
 #include "app/assets/texture.hpp"
+#include "app/context.hpp"
 #include "app/pages/page.hpp"
 #include "core/time.hpp"
 
 namespace mbr::pages {
 
-class view_page : public page_base {
+class view_page : public page {
   public:
-    using selected_video_t    = std::optional<std::pair<std::string, std::optional<date_time>>>;
-    using selected_txt_file_t = std::optional<std::string>;
+    using selected_video_t    = stdx::option<std::pair<std::string, stdx::option<date_time>>>;
+    using selected_txt_file_t = stdx::option<std::string>;
 
     enum class data_view_t : uint8_t {
         ALL,
@@ -56,12 +59,12 @@ class view_page : public page_base {
     selected_video_t open_video_file(const std::string& previous_file);
     void             request_seek(int frame_index);
 
-    selected_txt_file_t   open_text_file(const std::string& previous_file);
-    void                  load_data();
-    std::optional<size_t> sync_data_video(const std::vector<uint64_t>& micros_times);
-    void                  delete_extra(size_t erase_pos);
-    void                  dynamic_plot_start();
-    void                  dynamic_plot_loop();
+    selected_txt_file_t  open_text_file(const std::string& previous_file);
+    void                 load_data();
+    stdx::option<size_t> sync_data_video(const std::vector<uint64_t>& micros_times);
+    void                 delete_extra(size_t erase_pos);
+    void                 dynamic_plot_start();
+    void                 dynamic_plot_loop();
 
     void start_decoding_thread();
     void stop_decoding_thread();
@@ -72,15 +75,15 @@ class view_page : public page_base {
   private:
     std::shared_ptr<bool> is_alive_;
 
-    std::string               video_path_;
-    std::optional<local_time> video_creation_ts_;
-    std::string               creation_metadata_text_buf_;
-    std::atomic<bool>         video_dialog_running_{false};
-    std::mutex                video_path_mutex_;
-    selected_video_t          selected_video_;
-    std::string               input_time_;
-    bool                      video_loaded_{false};
-    bool                      video_hovered_{false};
+    std::string              video_path_;
+    stdx::option<local_time> video_creation_ts_;
+    std::string              creation_metadata_text_buf_;
+    std::atomic<bool>        video_dialog_running_{false};
+    std::mutex               video_path_mutex_;
+    selected_video_t         selected_video_;
+    std::string              input_time_;
+    bool                     video_loaded_{false};
+    bool                     video_hovered_{false};
 
     bool   dynamic_plotting_{false};
     size_t plot_percent_;

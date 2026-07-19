@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -20,10 +21,9 @@ enum class baud_rate : uint32_t {
     ONEONEFIFTYTWO  = 115'200,
 };
 
-class serial_page : public page_base {
+class serial_page : public page {
   public:
-    explicit serial_page(const std::shared_ptr<app_context>& ctx)
-        : page_base{ctx}, text_drawer_{ctx} {}
+    explicit serial_page(const std::shared_ptr<app_context>& ctx) : page{ctx}, text_drawer_{ctx} {}
     ~serial_page() override = default;
 
     void on_enter() override;

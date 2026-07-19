@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include <gsl/span>
 #include <imgui.h>
 #include <sokol_app.h>

@@ -1,4 +1,10 @@
+#include "app/pages/utils.hpp"
+
+#include <cerrno>
+#include <cstring>
 #include <fstream>
+#include <string>
+#include <vector>
 
 // clang-format off
 #include <imgui.h>
@@ -7,9 +13,10 @@
 // clang-format on
 
 #include <fmt/format.h>
+#include <gsl/span>
+#include <stdx/option.hh>
 
 #include "app/context.hpp"
-#include "app/pages/utils.hpp"
 #include "app/style.hpp"
 #include "core/log.hpp"
 #include "core/time.hpp"

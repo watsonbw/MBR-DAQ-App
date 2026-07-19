@@ -1,14 +1,18 @@
+#include "app/pages/rpm.hpp"
+
+#include <string>
+#include <vector>
+
 #include <fmt/format.h>
 #include <gsl/span>
+#include <gsl/util>
 #include <imgui.h>
 #include <implot.h>
 
-#include "core/log.hpp"
-#include "core/time.hpp"
-
-#include "app/pages/rpm.hpp"
 #include "app/pages/utils.hpp"
 #include "app/style.hpp"
+#include "core/log.hpp"
+#include "core/time.hpp"
 
 namespace mbr::pages {
 

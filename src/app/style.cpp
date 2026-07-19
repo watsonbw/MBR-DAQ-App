@@ -1,8 +1,11 @@
+#include "app/style.hpp"
+
 #include <array>
-#include <cassert>
 
 #ifdef _WIN32
 #    include <dwmapi.h>
+#    include <minwindef.h>
+#    include <windef.h>
 #endif
 
 #include <imgui.h>
@@ -11,7 +14,6 @@
 #include <stdx/option.hh>
 
 #include "app/assets/fonts/open_sans.hpp"
-#include "app/style.hpp"
 #include "core/log.hpp"
 
 namespace mbr {

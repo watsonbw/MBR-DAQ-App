@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "app/context.hpp"
 #include "app/pages/page.hpp"
@@ -26,7 +27,7 @@ class gui_t {
     void draw_main_menu_bar();
 
   private:
-    std::unique_ptr<pages::page_base> current_page_;
+    std::unique_ptr<pages::page> current_page_;
     std::shared_ptr<app_context>      context_;
     std::string                       command_buf_;
 };

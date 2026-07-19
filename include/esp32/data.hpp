@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <nlohmann/json.hpp>
@@ -49,7 +51,7 @@ class telemetry_data {
     }
 
     [[nodiscard]] const std::vector<std::string>&  get_raw_lines() const { return raw_lines_; };
-    [[nodiscard]] const std::optional<local_time>& get_sync_lt() const { return sync_lt_; }
+    [[nodiscard]] const stdx::option<local_time>& get_sync_lt() const { return sync_lt_; }
     [[nodiscard]] const std::string&               get_current_line() { return current_line_; }
 
     void write_data(const std::string& identifier, const std::string& value);
@@ -68,7 +70,7 @@ class telemetry_data {
     std::vector<double>       time_;
     std::vector<std::string>  raw_lines_;
     double                    sync_start_;
-    std::optional<local_time> sync_lt_;
+    stdx::option<local_time> sync_lt_;
 
     friend class pages::view_page;
 };

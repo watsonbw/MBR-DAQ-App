@@ -1,7 +1,12 @@
+#include "app/pages/serialmon.hpp"
+
+#include <cstdint>
+#include <string>
+
 #include <gsl/util>
 #include <imgui.h>
 
-#include "app/pages/serialmon.hpp"
+#include "app/pages/utils.hpp"
 #include "app/style.hpp"
 #include "core/log.hpp"
 

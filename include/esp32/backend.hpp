@@ -1,15 +1,20 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <functional>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <ixwebsocket/IXWebSocket.h>
+#include <ixwebsocket/IXWebSocketMessage.h>
 #include <stdx/fixed/enum_map.hh>
 #include <stdx/option.hh>
+#include <stdx/types.hh>
 
 #include "core/ip.hpp"
 #include "core/log.hpp"
@@ -60,7 +65,7 @@ class telemetry_backend {
     void worker_loop();
     void on_message(const ix::WebSocketMessagePtr& msg);
 
-    std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
+    stdx::option<std::vector<std::pair<std::string_view, std::string_view>>>
          validate_packet(std::string_view str) const;
     void handle_response(std::string_view line);
     void register_handlers();

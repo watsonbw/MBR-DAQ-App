@@ -3,15 +3,15 @@
 #include <memory>
 #include <string>
 
+#include "app/context.hpp"
 #include "core/ip.hpp"
-
 #include "app/pages/page.hpp"
 
 namespace mbr::pages {
 
-class home_page : public page_base {
+class home_page : public page {
   public:
-    explicit home_page(const std::shared_ptr<app_context>& ctx) : page_base{ctx} {}
+    explicit home_page(const std::shared_ptr<app_context>& ctx) : page{ctx} {}
     ~home_page() override = default;
 
     void on_enter() override;

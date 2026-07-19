@@ -22,8 +22,8 @@ struct local_time {
     [[nodiscard]] double   minutes_since_midnight() const;
 
     // Tries to parse a string formatted as "HH:MM:SS".
-    [[nodiscard]] static std::optional<local_time> from_string(const std::string& input);
-    [[nodiscard]] static std::optional<local_time> from_minutes(double minutes);
+    [[nodiscard]] static stdx::option<local_time> from_string(const std::string& input);
+    [[nodiscard]] static stdx::option<local_time> from_minutes(double minutes);
 
     uint64_t hour;
     uint64_t minute;
@@ -48,7 +48,7 @@ struct date_time {
     uint64_t   day;
     local_time local;
 
-    [[nodiscard]] static std::optional<date_time> from_video_metadata(const std::string& path);
+    [[nodiscard]] static stdx::option<date_time> from_video_metadata(const std::string& path);
     [[nodiscard]] std::string                     to_string(fmt_t fmt = fmt_t::DISPLAY) const;
 };
 

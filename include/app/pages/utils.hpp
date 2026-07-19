@@ -1,9 +1,14 @@
 #pragma once
 
+#include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include <gsl/span>
+#include <imgui.h>
 #include <implot.h>
 #include <stdx/option.hh>
 
@@ -43,7 +48,7 @@ class text_drawers {
 
 bool draw_input_box(const char*                label,
                     std::string&               buf,
-                    std::optional<const char*> hint        = std::nullopt,
+                    stdx::option<const char*> hint        = stdx::none,
                     float                      width_scale = 200.0F,
                     ImGuiInputTextFlags        flags       = 0);
 void draw_data_log(gsl::span<const std::string> raw_lines);
