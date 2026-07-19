@@ -63,17 +63,23 @@ This software dynamically links against a custom LGPL FFmpeg distribution provid
 
 This software builds the following from source:
 
+- [fmt](https://github.com/fmtlib/fmt)
+- [gsl](https://github.com/microsoft/gsl)
 - [Dear ImGUI](https://github.com/ocornut/imgui)
 - [ImPlot](https://github.com/epezent/implot)
 - [IXWebSocket](https://github.com/machinezone/IXWebSocket)
+- [nlohmann/json](https://github.com/nlohmann/json)
 - [tinyfiledialogs](https://github.com/native-toolkit/libtinyfiledialogs)
+- [magic_enum](https://github.com/Neargye/magic_enum)
 - [OpenCV](https://github.com/opencv/opencv)
+- [Serial](https://github.com/wjwwood/serial)
 - [Sokol](https://github.com/floooh/sokol)
 - [spdlog](https://github.com/gabime/spdlog)
 - [stb](https://github.com/nothings/stb)
 - [taglib](https://github.com/taglib/taglib)
+- [stdx](https://github.com/trevorswan11/stdx)
 - [utfcpp](https://github.com/nemtrif/utfcpp)
-- [serial](https://github.com/wjwwood/serial)
+- [unordered_dense](https://github.com/martinus/unordered_dense)
 
 All third-party libraries listed above are licensed under terms compatible with the MIT License.
 
