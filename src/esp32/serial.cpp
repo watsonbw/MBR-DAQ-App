@@ -11,6 +11,7 @@
 #include <ankerl/unordered_dense.h>
 #include <serial/serial.h>
 #include <stdx/assert.hh>
+#include <stdx/profiler.hh>
 #include <stdx/types.hh>
 
 #include "core/log.hpp"
@@ -146,6 +147,7 @@ void serial_manager_t::send_data(const std::string& msg) {
 }
 
 void serial_manager_t::receive_data() {
+    PROFILE_FUNCTION();
     const std::scoped_lock   lock{mutex_};
     std::vector<std::string> failed;
     for (const auto& port : chosen_ports_) {

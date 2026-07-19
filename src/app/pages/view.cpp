@@ -27,6 +27,7 @@
 #include <sokol_imgui.h>
 #include <stdx/assert.hh>
 #include <stdx/option.hh>
+#include <stdx/profiler.hh>
 #include <stdx/types.hh>
 #include <tinyfiledialogs.h>
 
@@ -70,6 +71,7 @@ void view_page::on_exit() {
 }
 
 void view_page::update() {
+    PROFILE_FUNCTION();
     if (ImGui::BeginTable(
             "##viewsplt", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
         const auto cleanup_table{gsl::finally(ImGui::EndTable)};
@@ -577,17 +579,20 @@ void view_page::start_decoding_thread() {
             }
 
             auto current_frame_index = static_cast<i32>(cap.get(cv::CAP_PROP_POS_FRAMES));
-            if (cap.read(raw_frame)) {
-                cv::cvtColor(raw_frame, rgba_frame, cv::COLOR_BGR2RGBA);
-                const cv::Mat frame_copy = rgba_frame.clone();
+            {
+                PROFILE_SCOPE("view_page::decode_frame");
+                if (cap.read(raw_frame)) {
+                    cv::cvtColor(raw_frame, rgba_frame, cv::COLOR_BGR2RGBA);
+                    const cv::Mat frame_copy = rgba_frame.clone();
 
-                const std::scoped_lock<std::mutex> lock{frame_mutex_};
-                frame_queue_.emplace_back(frame_copy, current_frame_index);
-            } else {
-                if (is_looping_) {
-                    cap.set(cv::CAP_PROP_POS_FRAMES, 0);
+                    const std::scoped_lock<std::mutex> lock{frame_mutex_};
+                    frame_queue_.emplace_back(frame_copy, current_frame_index);
                 } else {
-                    std::this_thread::sleep_for(10ms);
+                    if (is_looping_) {
+                        cap.set(cv::CAP_PROP_POS_FRAMES, 0);
+                    } else {
+                        std::this_thread::sleep_for(10ms);
+                    }
                 }
             }
         }
@@ -604,6 +609,7 @@ void view_page::stop_decoding_thread() {
 }
 
 void view_page::update_texture(bool is_timer_tick) {
+    PROFILE_FUNCTION();
     cv::Mat frame_to_upload;
     bool    frame_ready = false;
     {

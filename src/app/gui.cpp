@@ -13,6 +13,7 @@
 #include <sokol_glue.h>
 #include <sokol_imgui.h>
 #include <sokol_log.h>
+#include <stdx/profiler.hh>
 #include <stdx/types.hh>
 
 #include "app/assets/images/app_icon.hpp"
@@ -121,6 +122,7 @@ void gui_t::on_init() {
 }
 
 void gui_t::on_frame() {
+    PROFILE_FUNCTION();
     sokol_start_frame();
     const auto cleanup_frame{gsl::finally(sokol_end_frame)};
     MAIN_MENU_BAR(draw_main_menu_bar());
@@ -151,6 +153,7 @@ void gui_t::on_frame() {
 }
 
 void gui_t::on_event(const sapp_event* event) { // NOLINT
+    PROFILE_FUNCTION();
     if (event->type == SAPP_EVENTTYPE_QUIT_REQUESTED) { sapp_quit(); }
     simgui_handle_event(event);
 }
@@ -181,6 +184,7 @@ void gui_t::change_page(page_type_t type) {
 }
 
 void gui_t::draw_main_menu_bar() {
+    PROFILE_FUNCTION();
     // DO NOT MOVE THIS BEGIN CALL IT WILL BREAK
     if (ImGui::BeginMainMenuBar()) {
         const auto cleanup_mm{gsl::finally(ImGui::EndMainMenuBar)};

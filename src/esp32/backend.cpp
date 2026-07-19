@@ -23,6 +23,7 @@
 #include <stdx/fixed/hash_table.hh>
 #include <stdx/hash.hh>
 #include <stdx/option.hh>
+#include <stdx/profiler.hh>
 #include <stdx/string.hh>
 #include <stdx/types.hh>
 
@@ -125,6 +126,7 @@ void telemetry_backend::worker_loop() {
 }
 
 void telemetry_backend::on_message(const ix::WebSocketMessagePtr& msg) {
+    PROFILE_FUNCTION();
     if (msg->type == ix::WebSocketMessageType::Message) {
         buffer_.append(msg->str);
         usize newline_pos;
@@ -166,6 +168,7 @@ void telemetry_backend::on_message(const ix::WebSocketMessagePtr& msg) {
 // or response handling. See "HandleResponse" for response logic
 stdx::option<std::vector<std::pair<std::string_view, std::string_view>>>
 telemetry_backend::validate_packet(std::string_view str) const {
+    PROFILE_FUNCTION();
     std::vector<std::pair<std::string_view, std::string_view>> parsed;
     parsed.reserve(data.data_values.size());
 
