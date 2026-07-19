@@ -1,13 +1,17 @@
+#include "app/pages/home.hpp"
+
+#include <string>
+#include <utility>
+
 #include <fmt/format.h>
 #include <gsl/util>
 #include <imgui.h>
 #include <sokol_app.h>
 
-#include "core/log.hpp"
-
-#include "app/pages/home.hpp"
 #include "app/pages/utils.hpp"
 #include "app/style.hpp"
+#include "core/log.hpp"
+#include "core/time.hpp"
 
 namespace mbr::pages {
 

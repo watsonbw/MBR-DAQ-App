@@ -1,4 +1,7 @@
-#include <cassert>
+#include "app/gui.hpp"
+
+#include <memory>
+#include <string>
 
 #include <fmt/format.h>
 #include <gsl/pointers>
@@ -13,11 +16,12 @@
 
 #include "app/assets/images/app_icon.hpp"
 #include "app/assets/texture.hpp"
-#include "app/gui.hpp"
+#include "app/context.hpp"
 #include "app/pages/home.hpp"
 #include "app/pages/rpm.hpp"
 #include "app/pages/serialmon.hpp"
 #include "app/pages/shock.hpp"
+#include "app/pages/utils.hpp"
 #include "app/pages/view.hpp"
 #include "app/style.hpp"
 #include "core/time.hpp"

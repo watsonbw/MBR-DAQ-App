@@ -1,10 +1,13 @@
+#include "app/app.hpp"
+
+#include <memory>
+
 #include <ixwebsocket/IXNetSystem.h>
 #include <sokol_app.h>
 #include <sokol_gfx.h>
 #include <sokol_glue.h>
 #include <sokol_imgui.h>
 
-#include "app/app.hpp"
 #include "app/context.hpp"
 #include "app/gui.hpp"
 #include "core/log.hpp"

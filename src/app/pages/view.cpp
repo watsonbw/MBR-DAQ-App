@@ -1,26 +1,42 @@
+#include "app/pages/view.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
+#include <exception>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 #include <fmt/format.h>
 #include <gsl/util>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <implot.h>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/videoio.hpp>
 #include <sokol_app.h>
 #include <sokol_gfx.h>
 #include <sokol_glue.h>
 #include <sokol_imgui.h>
 #include <stdx/assert.hh>
+#include <stdx/option.hh>
 #include <tinyfiledialogs.h>
 
 #include "app/assets/images/image_buttons.hpp"
+#include "app/pages/page.hpp"
 #include "app/pages/utils.hpp"
-#include "app/pages/view.hpp"
 #include "app/style.hpp"
 #include "core/log.hpp"
+#include "core/time.hpp"
 
 using namespace std::chrono_literals;
 
@@ -38,7 +54,7 @@ const char* view_page::data_type_string(data_view_t type) {
 }
 
 view_page::view_page(const std::shared_ptr<app_context>& ctx)
-    : page_base{ctx}, is_alive_{std::make_shared<bool>(true)},
+    : page{ctx}, is_alive_{std::make_shared<bool>(true)},
       play_button_{assets::PLAY_BUTTON_PNG}, pause_button_{assets::PAUSE_BUTTON_PNG},
       step_button_{assets::STEP_BUTTON_PNG} {}
 

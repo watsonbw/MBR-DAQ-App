@@ -1,5 +1,6 @@
 #pragma once
 
+#include "stdx/utility.hh"
 #include <memory>
 
 namespace mbr {
@@ -11,6 +12,7 @@ class app_t {
   public:
     explicit app_t(int arc, char* argv[]);
     ~app_t();
+    MAKE_PINNED(app_t);
 
     void run();
 

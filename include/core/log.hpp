@@ -1,13 +1,16 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <sstream>
 #include <string>
 #include <string_view>
 
+#include <fmt/base.h>
 #include <fmt/format.h>
-#include <spdlog/spdlog.h>
+#include <spdlog/common.h>
+#include <spdlog/logger.h>
 
 namespace mbr {
 

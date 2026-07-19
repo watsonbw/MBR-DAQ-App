@@ -1,10 +1,11 @@
+#include "app/assets/texture.hpp"
+
 #include <cassert>
 #include <cstddef>
 
+#include <gsl/span>
 #include <stb_image.h>
 #include <stdx/assert.hh>
-
-#include "app/assets/texture.hpp"
 
 namespace mbr::assets {
 

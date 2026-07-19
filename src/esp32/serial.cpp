@@ -1,12 +1,18 @@
+#include "esp32/serial.hpp"
+
+#include <cstdint>
 #include <exception>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
+#include <serial/serial.h>
+
 #include "core/log.hpp"
-#include "esp32/serial.hpp"
-#include "serial/serial.h"
 
 using namespace std::chrono_literals;
 
@@ -21,7 +27,7 @@ void serial_manager_t::start() {
     worker_      = std::jthread([this]() {
         while (keep_running) {
             this->clean_ports();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(1s);
             if (is_serial_write) { this->receive_data(); }
         }
     });

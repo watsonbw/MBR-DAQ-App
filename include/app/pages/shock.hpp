@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include <gsl/span>
 
@@ -9,10 +11,9 @@
 
 namespace mbr::pages {
 
-class shock_page : public page_base {
+class shock_page : public page {
   public:
-    explicit shock_page(const std::shared_ptr<app_context>& ctx)
-        : page_base{ctx}, text_utils_{ctx} {}
+    explicit shock_page(const std::shared_ptr<app_context>& ctx) : page{ctx}, text_utils_{ctx} {}
     ~shock_page() override = default;
 
     void on_enter() override;

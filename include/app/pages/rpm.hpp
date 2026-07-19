@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include <gsl/span>
 
@@ -9,10 +11,9 @@
 
 namespace mbr::pages {
 
-class rpm_page : public page_base {
+class rpm_page : public page {
   public:
-    explicit rpm_page(const std::shared_ptr<app_context>& ctx)
-        : page_base{ctx}, text_drawer_{ctx} {}
+    explicit rpm_page(const std::shared_ptr<app_context>& ctx) : page{ctx}, text_drawer_{ctx} {}
     ~rpm_page() override = default;
 
     void on_enter() override;
