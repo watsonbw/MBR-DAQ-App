@@ -2,8 +2,6 @@
 
 #include <atomic>
 #include <condition_variable>
-#include <cstddef>
-#include <cstdint>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -16,6 +14,7 @@
 #include <opencv2/core/mat.hpp>
 #include <sokol_gfx.h>
 #include <stdx/option.hh>
+#include <stdx/types.hh>
 
 #include "app/assets/texture.hpp"
 #include "app/context.hpp"
@@ -29,7 +28,7 @@ class view_page : public page {
     using selected_video_t    = stdx::option<std::pair<std::string, stdx::option<date_time>>>;
     using selected_txt_file_t = stdx::option<std::string>;
 
-    enum class data_view_t : uint8_t {
+    enum class data_view_t : u8 {
         ALL,
         RPMDATA,
         SHOCKDATA,
@@ -57,14 +56,14 @@ class view_page : public page {
     void draw_sync_video_buttons();
 
     selected_video_t open_video_file(const std::string& previous_file);
-    void             request_seek(int frame_index);
+    void             request_seek(i32 frame_index);
 
-    selected_txt_file_t  open_text_file(const std::string& previous_file);
-    void                 load_data();
-    stdx::option<size_t> sync_data_video(const std::vector<uint64_t>& micros_times);
-    void                 delete_extra(size_t erase_pos);
-    void                 dynamic_plot_start();
-    void                 dynamic_plot_loop();
+    selected_txt_file_t open_text_file(const std::string& previous_file);
+    void                load_data();
+    stdx::option<usize> sync_data_video(const std::vector<u64>& micros_times);
+    void                delete_extra(usize erase_pos);
+    void                dynamic_plot_start();
+    void                dynamic_plot_loop();
 
     void start_decoding_thread();
     void stop_decoding_thread();
@@ -86,7 +85,7 @@ class view_page : public page {
     bool                     video_hovered_{false};
 
     bool   dynamic_plotting_{false};
-    size_t plot_percent_;
+    usize  plot_percent_;
     double points_per_{0.0};
     double data_count_{0.0};
     double data_from_end_{0.0};
@@ -98,24 +97,24 @@ class view_page : public page {
     bool                txt_loaded_{false};
     bool                data_and_time_sync_{false};
 
-    int         total_frames_{0};
+    i32         total_frames_{0};
     double      video_fps_{0.0};
     double      video_length_minutes_{0.0};
     std::string video_length_formatted_;
     double      frame_duration_{0.0};
     double      time_accumulator_{0.0};
-    int         current_frame_ui_{0};
+    i32         current_frame_ui_{0};
 
     std::atomic<bool> is_playing_{false};
     std::atomic<bool> is_looping_{false};
-    std::atomic<int>  seek_target_{-1};
+    std::atomic<i32>  seek_target_{-1};
     std::atomic<bool> force_update_frame_{false};
     data_view_t       data_show_{data_view_t::ALL};
 
     std::jthread                        decode_thread_;
     std::atomic<bool>                   thread_running_{false};
     std::mutex                          frame_mutex_;
-    std::deque<std::pair<cv::Mat, int>> frame_queue_;
+    std::deque<std::pair<cv::Mat, i32>> frame_queue_;
     std::condition_variable             queue_cv_;
 
     ImVec2                 button_size_{24, 24};
@@ -126,8 +125,8 @@ class view_page : public page {
     sg_image    video_texture_{SG_INVALID_ID};
     sg_view     video_view_{SG_INVALID_ID};
     ImTextureID video_texture_id_{0};
-    int         texture_width_{0};
-    int         texture_height_{0};
+    i32         texture_width_{0};
+    i32         texture_height_{0};
 
     bool timestamp_input_focused_{false};
 };

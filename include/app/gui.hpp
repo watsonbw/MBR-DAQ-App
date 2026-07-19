@@ -28,8 +28,8 @@ class gui_t {
 
   private:
     std::unique_ptr<pages::page> current_page_;
-    std::shared_ptr<app_context>      context_;
-    std::string                       command_buf_;
+    std::shared_ptr<app_context> context_;
+    std::string                  command_buf_;
 };
 
 } // namespace mbr

@@ -1,7 +1,9 @@
 #pragma once
 
-#include "stdx/utility.hh"
 #include <memory>
+
+#include <stdx/types.hh>
+#include <stdx/utility.hh>
 
 namespace mbr {
 
@@ -10,7 +12,7 @@ class gui_t;
 
 class app_t {
   public:
-    explicit app_t(int arc, char* argv[]);
+    explicit app_t(i32 arc, char** argv);
     ~app_t();
     MAKE_PINNED(app_t);
 

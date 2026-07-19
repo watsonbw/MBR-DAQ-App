@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
-#include <cstdint>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -29,6 +28,7 @@
 #include <sokol_imgui.h>
 #include <stdx/assert.hh>
 #include <stdx/option.hh>
+#include <stdx/types.hh>
 #include <tinyfiledialogs.h>
 
 #include "app/assets/images/image_buttons.hpp"
@@ -42,7 +42,7 @@ using namespace std::chrono_literals;
 
 namespace mbr::pages {
 
-static constexpr size_t MAX_QUEUE_SIZE = 10;
+static constexpr usize MAX_QUEUE_SIZE = 10;
 
 const char* view_page::data_type_string(data_view_t type) {
     switch (type) {
@@ -54,9 +54,8 @@ const char* view_page::data_type_string(data_view_t type) {
 }
 
 view_page::view_page(const std::shared_ptr<app_context>& ctx)
-    : page{ctx}, is_alive_{std::make_shared<bool>(true)},
-      play_button_{assets::PLAY_BUTTON_PNG}, pause_button_{assets::PAUSE_BUTTON_PNG},
-      step_button_{assets::STEP_BUTTON_PNG} {}
+    : page{ctx}, is_alive_{std::make_shared<bool>(true)}, play_button_{assets::PLAY_BUTTON_PNG},
+      pause_button_{assets::PAUSE_BUTTON_PNG}, step_button_{assets::STEP_BUTTON_PNG} {}
 
 view_page::~view_page() {
     *is_alive_ = false;
@@ -104,8 +103,8 @@ void view_page::draw_lhs() {
         // Clear Video button is right aligned
         const char*  label       = "Clear Video";
         const ImVec2 button_size = ImGui::CalcTextSize(label);
-        const float  padding     = ImGui::GetStyle().FramePadding.x * 2.0F;
-        const float  right_x     = ImGui::GetWindowContentRegionMax().x - (button_size.x + padding);
+        const f32    padding     = ImGui::GetStyle().FramePadding.x * 2.0F;
+        const f32    right_x     = ImGui::GetWindowContentRegionMax().x - (button_size.x + padding);
 
         ImGui::SetCursorPosX(right_x);
         if (ImGui::Button(label)) {
@@ -122,7 +121,7 @@ void view_page::draw_lhs() {
         bool is_timer_tick = false;
         if (is_playing_ && video_fps_ > 0.0F) {
             time_accumulator_ += ImGui::GetIO().DeltaTime;
-            const auto frames_to_advance = static_cast<int>(time_accumulator_ / frame_duration_);
+            const auto frames_to_advance = static_cast<i32>(time_accumulator_ / frame_duration_);
 
             // We have to handle skipped frames gracefully
             if (frames_to_advance > 0) {
@@ -132,7 +131,7 @@ void view_page::draw_lhs() {
                     const std::scoped_lock<std::mutex> lock{frame_mutex_};
 
                     const auto recoverable_frames =
-                        std::min(static_cast<int>(frame_queue_.size()) - 1, frames_to_advance - 1);
+                        std::min(static_cast<i32>(frame_queue_.size()) - 1, frames_to_advance - 1);
                     for (auto i = 0; i < recoverable_frames; i++) { frame_queue_.pop_front(); }
                 }
 
@@ -143,10 +142,9 @@ void view_page::draw_lhs() {
         update_texture(is_timer_tick);
 
         if (video_texture_.id != SG_INVALID_ID && texture_width_ > 0) {
-            const float aspect =
-                static_cast<float>(texture_width_) / static_cast<float>(texture_height_);
-            const float avail_w = ImGui::GetContentRegionAvail().x;
-            const float h       = avail_w / aspect;
+            const f32 aspect = static_cast<f32>(texture_width_) / static_cast<f32>(texture_height_);
+            const f32 avail_w = ImGui::GetContentRegionAvail().x;
+            const f32 h       = avail_w / aspect;
 
             ImGui::Image(video_texture_id_, {avail_w, h});
             video_hovered_ = ImGui::IsItemHovered();
@@ -162,7 +160,7 @@ void view_page::draw_lhs() {
 void view_page::draw_lhs_controls() {
     // Slider
     const auto current_timestamp_min =
-        (static_cast<double>(current_frame_ui_) / total_frames_) * video_length_minutes_;
+        (static_cast<f64>(current_frame_ui_) / total_frames_) * video_length_minutes_;
     const auto current_timestamp = local_time::from_minutes(current_timestamp_min);
     const auto formatted_timestamp =
         current_timestamp.value_or(local_time::zero()).to_string(false);
@@ -173,7 +171,7 @@ void view_page::draw_lhs_controls() {
         ImGui::PushItemWidth(-1);
         const auto cleanup_width{gsl::finally(ImGui::PopItemWidth)};
 
-        int slider_pos = current_frame_ui_;
+        i32 slider_pos = current_frame_ui_;
         if (ImGui::SliderInt(
                 "##scrub", &slider_pos, 0, total_frames_, "", ImGuiSliderFlags_NoInput)) {
             is_playing_.exchange(false);
@@ -331,43 +329,43 @@ void view_page::draw_rhs() {
         view_page::dynamic_plot_loop();
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
-            pages::utils::plot_if_non_empty<double>("Wheel Speed",
-                                                    data.time_minutes_normalized,
-                                                    data.series.at("W"),
-                                                    data_show_ == data_view_t::ALL ||
-                                                        data_show_ == data_view_t::RPMDATA,
-                                                    plot_percent_);
-            pages::utils::plot_if_non_empty<double>("Engine Speed",
-                                                    data.time_minutes_normalized,
-                                                    data.series.at("E"),
-                                                    data_show_ == data_view_t::ALL ||
-                                                        data_show_ == data_view_t::RPMDATA,
-                                                    plot_percent_);
+            pages::utils::plot_if_non_empty<f64>("Wheel Speed",
+                                                 data.time_minutes_normalized,
+                                                 data.series.at("W"),
+                                                 data_show_ == data_view_t::ALL ||
+                                                     data_show_ == data_view_t::RPMDATA,
+                                                 plot_percent_);
+            pages::utils::plot_if_non_empty<f64>("Engine Speed",
+                                                 data.time_minutes_normalized,
+                                                 data.series.at("E"),
+                                                 data_show_ == data_view_t::ALL ||
+                                                     data_show_ == data_view_t::RPMDATA,
+                                                 plot_percent_);
 
-            pages::utils::plot_if_non_empty<double>("Front Right Shock Travel",
-                                                    data.time_minutes_normalized,
-                                                    data.series.at("FR"),
-                                                    data_show_ == data_view_t::ALL ||
-                                                        data_show_ == data_view_t::SHOCKDATA,
-                                                    plot_percent_);
-            pages::utils::plot_if_non_empty<double>("Front Left Shock Travel",
-                                                    data.time_minutes_normalized,
-                                                    data.series.at("FL"),
-                                                    data_show_ == data_view_t::ALL ||
-                                                        data_show_ == data_view_t::SHOCKDATA,
-                                                    plot_percent_);
-            pages::utils::plot_if_non_empty<double>("Rear Right Shock Travel",
-                                                    data.time_minutes_normalized,
-                                                    data.series.at("RR"),
-                                                    data_show_ == data_view_t::ALL ||
-                                                        data_show_ == data_view_t::SHOCKDATA,
-                                                    plot_percent_);
-            pages::utils::plot_if_non_empty<double>("Rear Left Shock Travel",
-                                                    data.time_minutes_normalized,
-                                                    data.series.at("RL"),
-                                                    data_show_ == data_view_t::ALL ||
-                                                        data_show_ == data_view_t::SHOCKDATA,
-                                                    plot_percent_);
+            pages::utils::plot_if_non_empty<f64>("Front Right Shock Travel",
+                                                 data.time_minutes_normalized,
+                                                 data.series.at("FR"),
+                                                 data_show_ == data_view_t::ALL ||
+                                                     data_show_ == data_view_t::SHOCKDATA,
+                                                 plot_percent_);
+            pages::utils::plot_if_non_empty<f64>("Front Left Shock Travel",
+                                                 data.time_minutes_normalized,
+                                                 data.series.at("FL"),
+                                                 data_show_ == data_view_t::ALL ||
+                                                     data_show_ == data_view_t::SHOCKDATA,
+                                                 plot_percent_);
+            pages::utils::plot_if_non_empty<f64>("Rear Right Shock Travel",
+                                                 data.time_minutes_normalized,
+                                                 data.series.at("RR"),
+                                                 data_show_ == data_view_t::ALL ||
+                                                     data_show_ == data_view_t::SHOCKDATA,
+                                                 plot_percent_);
+            pages::utils::plot_if_non_empty<f64>("Rear Left Shock Travel",
+                                                 data.time_minutes_normalized,
+                                                 data.series.at("RL"),
+                                                 data_show_ == data_view_t::ALL ||
+                                                     data_show_ == data_view_t::SHOCKDATA,
+                                                 plot_percent_);
         }
     }
 }
@@ -438,7 +436,7 @@ void view_page::draw_sync_video_buttons() {
         }
         creation_metadata_text_buf_ = {};
 
-        stdx::option<size_t> sync_time_pos;
+        stdx::option<usize> sync_time_pos;
         {
             const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
             sync_time_pos = sync_data_video(context_->backend->data.get_time_no_normal());
@@ -512,7 +510,7 @@ void view_page::load_data() {
     while (file >> ident >> value) { context_->backend->data.write_data(ident, value); }
 }
 
-void view_page::request_seek(int frame_index) {
+void view_page::request_seek(i32 frame_index) {
     // Prevent stepping out of bounds, though it is recoverable
     const auto clamped_frame = std::clamp(frame_index, 0, total_frames_);
 
@@ -541,8 +539,8 @@ void view_page::start_decoding_thread() {
 
         video_fps_                 = cap.get(cv::CAP_PROP_FPS);
         frame_duration_            = 1.0 / video_fps_;
-        total_frames_              = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
-        video_length_minutes_      = (static_cast<double>(total_frames_) / video_fps_) / 60.0;
+        total_frames_              = static_cast<i32>(cap.get(cv::CAP_PROP_FRAME_COUNT));
+        video_length_minutes_      = (static_cast<f64>(total_frames_) / video_fps_) / 60.0;
         const auto video_length_lt = local_time::from_minutes(video_length_minutes_);
         if (!video_length_lt) {
             log_error(context_->log, "Video length could not be determined");
@@ -563,7 +561,7 @@ void view_page::start_decoding_thread() {
                 if (!thread_running_) { break; }
             }
 
-            const int seek_req    = seek_target_.exchange(-1);
+            const i32 seek_req    = seek_target_.exchange(-1);
             bool      just_sought = false;
 
             if (seek_req != -1) {
@@ -579,7 +577,7 @@ void view_page::start_decoding_thread() {
                 continue;
             }
 
-            auto current_frame_index = static_cast<int>(cap.get(cv::CAP_PROP_POS_FRAMES));
+            auto current_frame_index = static_cast<i32>(cap.get(cv::CAP_PROP_POS_FRAMES));
             if (cap.read(raw_frame)) {
                 cv::cvtColor(raw_frame, rgba_frame, cv::COLOR_BGR2RGBA);
                 const cv::Mat frame_copy = rgba_frame.clone();
@@ -672,21 +670,21 @@ void view_page::try_cleanup_sokol_resources() {
     texture_height_ = 0;
 }
 
-stdx::option<size_t> view_page::sync_data_video(const std::vector<uint64_t>& micros_times) {
+stdx::option<usize> view_page::sync_data_video(const std::vector<u64>& micros_times) {
     if (!video_creation_ts_) { return stdx::none; }
 
-    data_and_time_sync_               = true;
-    const auto     creation_timestamp = video_creation_ts_.value();
-    const uint64_t micros_to_sync     = creation_timestamp.micros_since_midnight();
-    const auto     it                 = std::ranges::lower_bound(micros_times, micros_to_sync);
+    data_and_time_sync_           = true;
+    const auto creation_timestamp = video_creation_ts_.value();
+    const u64  micros_to_sync     = creation_timestamp.micros_since_midnight();
+    const auto it                 = std::ranges::lower_bound(micros_times, micros_to_sync);
     if (it != micros_times.end()) { return std::distance(micros_times.begin(), it); }
 
     return stdx::none;
 }
 
-void view_page::delete_extra(size_t erase_pos) {
+void view_page::delete_extra(usize erase_pos) {
     const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
-    std::vector<double>* const         data[] = {
+    std::vector<f64>* const            data[] = {
         &context_->backend->data.time_,
         &context_->backend->data.series.at("W"),
         &context_->backend->data.series.at("E"),
@@ -712,20 +710,20 @@ void view_page::dynamic_plot_start() {
         if (time_vec.empty()) { return; }
         const auto begin_time_min = context_->backend->data.time_[0];
 
-        const double target_end_time = begin_time_min + video_length_minutes_;
-        const auto   end_it          = std::ranges::lower_bound(time_vec, target_end_time);
+        const f64  target_end_time = begin_time_min + video_length_minutes_;
+        const auto end_it          = std::ranges::lower_bound(time_vec, target_end_time);
 
-        const size_t end_idx = std::distance(time_vec.begin(), end_it);
-        const size_t end_idy = std::distance(end_it, time_vec.end());
-        data_from_end_       = static_cast<double>(end_idy);
-        data_count_          = static_cast<double>(end_idx);
-        points_per_          = static_cast<double>(end_idx) / total_frames_;
+        const usize end_idx = std::distance(time_vec.begin(), end_it);
+        const usize end_idy = std::distance(end_it, time_vec.end());
+        data_from_end_      = static_cast<f64>(end_idy);
+        data_count_         = static_cast<f64>(end_idx);
+        points_per_         = static_cast<f64>(end_idx) / total_frames_;
     }
 }
 
 void view_page::dynamic_plot_loop() {
     if (dynamic_plotting_) {
-        plot_percent_ = static_cast<size_t>(std::max(
+        plot_percent_ = static_cast<usize>(std::max(
             data_count_ - (points_per_ * current_frame_ui_) + data_from_end_, data_from_end_));
         return;
     }

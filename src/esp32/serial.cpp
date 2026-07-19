@@ -1,6 +1,5 @@
 #include "esp32/serial.hpp"
 
-#include <cstdint>
 #include <exception>
 #include <memory>
 #include <mutex>
@@ -11,6 +10,7 @@
 #include <vector>
 
 #include <serial/serial.h>
+#include <stdx/types.hh>
 
 #include "core/log.hpp"
 
@@ -158,10 +158,10 @@ void serial_manager_t::close_all() {
     chosen_ports_.clear();
 }
 // change baud rate (its in the name)
-void serial_manager_t::change_baud_rate(uint32_t baud) {
+void serial_manager_t::change_baud_rate(u32 baud) {
     const std::scoped_lock lock{mutex_};
     baud_rate_ =
-        static_cast<int>(baud); // TODO(blake) why is m_BaudRate an int but this func takes a u32
+        static_cast<i32>(baud); // TODO(blake) why is m_BaudRate an i32 but this func takes a u32
     for (auto& [port, ser] : ports_) {
         try {
             ser->setBaudrate(baud_rate_);

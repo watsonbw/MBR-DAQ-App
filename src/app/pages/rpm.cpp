@@ -8,6 +8,7 @@
 #include <gsl/util>
 #include <imgui.h>
 #include <implot.h>
+#include <stdx/types.hh>
 
 #include "app/pages/utils.hpp"
 #include "app/style.hpp"
@@ -49,9 +50,9 @@ void rpm_page::DrawLHS(const std::vector<std::string>& raw_lines) {
     }
 }
 
-void rpm_page::DrawRHS(gsl::span<const double> time,
-                       gsl::span<const double> wheel,
-                       gsl::span<const double> engine) {
+void rpm_page::DrawRHS(gsl::span<const f64> time,
+                       gsl::span<const f64> wheel,
+                       gsl::span<const f64> engine) {
     if (ImGui::BeginChild("##graph")) {
         const auto cleanup_graph{gsl::finally(ImGui::EndChild)};
         const auto sync_lt    = context_->backend->data.get_sync_lt();
@@ -61,8 +62,8 @@ void rpm_page::DrawRHS(gsl::span<const double> time,
 
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
-            pages::utils::plot_if_non_empty<double>("Wheel Speed", time, wheel);
-            pages::utils::plot_if_non_empty<double>("Engine Speed", time, engine);
+            pages::utils::plot_if_non_empty<f64>("Wheel Speed", time, wheel);
+            pages::utils::plot_if_non_empty<f64>("Engine Speed", time, engine);
         }
     }
 }

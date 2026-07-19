@@ -1,8 +1,10 @@
 #pragma once
 
 #include <atomic>
-#include <cstdint>
 #include <memory>
+#include <string>
+
+#include <stdx/types.hh>
 
 #include "app/style.hpp"
 #include "core/log.hpp"
@@ -10,7 +12,7 @@
 
 namespace mbr {
 
-enum class page_type_t : uint8_t {
+enum class page_type_t : u8 {
     HOME,
     RPM,
     SHOCK,

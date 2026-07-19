@@ -12,6 +12,7 @@
 #include <sokol_app.h>
 #include <stdx/assert.hh>
 #include <stdx/option.hh>
+#include <stdx/types.hh>
 
 #include "app/assets/fonts/open_sans.hpp"
 #include "core/log.hpp"
@@ -42,22 +43,22 @@ app_fonts load_fonts() {
 
     auto* regular =
         io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_REGULAR_TTF.data(),
-                                       static_cast<int>(assets::OPEN_SANS_REGULAR_TTF.size()),
+                                       static_cast<i32>(assets::OPEN_SANS_REGULAR_TTF.size()),
                                        DEFAULT_FONT_SIZE,
                                        &cfg);
 
     auto* bold = io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_BOLD_TTF.data(),
-                                                static_cast<int>(assets::OPEN_SANS_BOLD_TTF.size()),
+                                                static_cast<i32>(assets::OPEN_SANS_BOLD_TTF.size()),
                                                 DEFAULT_FONT_SIZE,
                                                 &cfg);
     auto* italic =
         io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_ITALIC_TTF.data(),
-                                       static_cast<int>(assets::OPEN_SANS_ITALIC_TTF.size()),
+                                       static_cast<i32>(assets::OPEN_SANS_ITALIC_TTF.size()),
                                        DEFAULT_FONT_SIZE,
                                        &cfg);
     auto* bold_italic =
         io.Fonts->AddFontFromMemoryTTF(assets::OPEN_SANS_BOLD_ITALIC_TTF.data(),
-                                       static_cast<int>(assets::OPEN_SANS_BOLD_ITALIC_TTF.size()),
+                                       static_cast<i32>(assets::OPEN_SANS_BOLD_ITALIC_TTF.size()),
                                        DEFAULT_FONT_SIZE,
                                        &cfg);
 

@@ -1,8 +1,9 @@
 #include <stdx/profiler.hh>
+#include <stdx/types.hh>
 
 #include "app/app.hpp"
 
-int main(int argc, char* argv[]) {
+i32 main(i32 argc, char** argv) {
     stdx::profiler profiler{argv[0]};
     mbr::app_t     app{argc, argv};
     app.run();

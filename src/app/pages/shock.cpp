@@ -8,6 +8,7 @@
 #include <gsl/util>
 #include <imgui.h>
 #include <implot.h>
+#include <stdx/types.hh>
 
 #include "app/pages/utils.hpp"
 #include "app/style.hpp"
@@ -52,11 +53,11 @@ void shock_page::draw_lhs(const std::vector<std::string>& raw_lines) {
     }
 }
 
-void shock_page::draw_rhs(gsl::span<const double> time,
-                          gsl::span<const double> fr,
-                          gsl::span<const double> fl,
-                          gsl::span<const double> br,
-                          gsl::span<const double> bl) {
+void shock_page::draw_rhs(gsl::span<const f64> time,
+                          gsl::span<const f64> fr,
+                          gsl::span<const f64> fl,
+                          gsl::span<const f64> br,
+                          gsl::span<const f64> bl) {
     if (ImGui::BeginChild("##graph")) {
         const auto cleanup_graph{gsl::finally(ImGui::EndChild)};
         const auto sync_lt = context_->backend->data.get_sync_lt();
@@ -66,10 +67,10 @@ void shock_page::draw_rhs(gsl::span<const double> time,
 
         if (ImPlot::BeginPlot(plot_title.c_str(), {-1, -1})) {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
-            pages::utils::plot_if_non_empty<double>("Front Right Shock Travel", time, fr);
-            pages::utils::plot_if_non_empty<double>("Front Left Shock Travel", time, fl);
-            pages::utils::plot_if_non_empty<double>("Rear Right Shock Travel", time, br);
-            pages::utils::plot_if_non_empty<double>("Rear Left Shock Travel", time, bl);
+            pages::utils::plot_if_non_empty<f64>("Front Right Shock Travel", time, fr);
+            pages::utils::plot_if_non_empty<f64>("Front Left Shock Travel", time, fl);
+            pages::utils::plot_if_non_empty<f64>("Rear Right Shock Travel", time, br);
+            pages::utils::plot_if_non_empty<f64>("Rear Left Shock Travel", time, bl);
         }
     }
 }

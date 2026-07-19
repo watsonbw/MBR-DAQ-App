@@ -4,8 +4,6 @@
 #include <cassert>
 #include <charconv>
 #include <chrono>
-#include <cstddef>
-#include <cstdint>
 #include <mutex>
 #include <string>
 #include <string_view>
@@ -25,6 +23,7 @@
 #include <stdx/fixed/hash_table.hh>
 #include <stdx/hash.hh>
 #include <stdx/option.hh>
+#include <stdx/types.hh>
 
 #include "app/context.hpp"
 #include "core/ip.hpp"
@@ -126,7 +125,7 @@ void telemetry_backend::worker_loop() {
 void telemetry_backend::on_message(const ix::WebSocketMessagePtr& msg) {
     if (msg->type == ix::WebSocketMessageType::Message) {
         buffer_.append(msg->str);
-        size_t newline_pos;
+        usize newline_pos;
         while ((newline_pos = buffer_.find('\n')) != std::string::npos) {
             const auto line = buffer_.substr(0, newline_pos);
             buffer_.erase(0, newline_pos + 1);
@@ -168,12 +167,12 @@ telemetry_backend::validate_packet(std::string_view str) const {
     std::vector<std::pair<std::string_view, std::string_view>> parsed;
     parsed.reserve(data.data_values.size());
 
-    size_t pos = 0;
+    usize pos = 0;
     // runs through the whole sent packet. this ensures that the packet must be valid but doesn't
     // need every m_packetfield.
     while (pos < str.size()) {
-        bool         is_key      = false;
-        const size_t ident_start = pos;
+        bool        is_key      = false;
+        const usize ident_start = pos;
 
         // run until space to find key
         while (pos < str.size() && str[pos] != ' ') { pos++; }
@@ -181,7 +180,7 @@ telemetry_backend::validate_packet(std::string_view str) const {
 
         // run until start of value
         while (pos < str.size() && str[pos] == ' ') { pos++; }
-        const size_t value_start = pos;
+        const usize value_start = pos;
 
         // run until space again to find value
         while (pos < str.size() && str[pos] != ' ') { pos++; }
@@ -197,8 +196,8 @@ telemetry_backend::validate_packet(std::string_view str) const {
         }
         if (!is_key) { return stdx::none; }
         if (key == "T") {
-            uint64_t t   = 0;
-            auto     res = std::from_chars(value.data(), value.data() + value.size(), t);
+            u64  t   = 0;
+            auto res = std::from_chars(value.data(), value.data() + value.size(), t);
             if (res.ec != std::errc{} || t == 0) { return stdx::none; }
         }
         parsed.emplace_back(key, value);
@@ -259,7 +258,7 @@ constexpr auto response_lut = [] {
 // The response is parsed by checking the string with the response type ENUM and calling the
 // corresponding handler For reference, general responses look like this: RES CMD_TYPE CMD_PAYLOAD
 void telemetry_backend::handle_response(std::string_view line) {
-    constexpr size_t res_length = 4;
+    constexpr usize res_length = 4;
     if (line.size() <= res_length) {
         log_error(log_, "Invalid response length: {}", line.size());
         return;
@@ -292,7 +291,7 @@ void telemetry_backend::handle_response(std::string_view line) {
 // not just a simple string mapped lambda
 void telemetry_backend::register_handlers() {
     response_handlers_[response_type_t::SYNC] = [this](std::string_view line) {
-        uint64_t micros = 0;
+        u64 micros = 0;
         std::from_chars(line.data(), line.data() + line.size(), micros);
         local_time t{micros};
         log_info(log_, "Time successfully synced at: {}", t.to_string(false));
@@ -336,7 +335,7 @@ auto TelemetryBackend::HandleCommand(
     }
     auto response = parsed.value()[1];
     if (response.first == "SYNC") {
-        uint64_t micros = 0;
+        u64 micros = 0;
         std::from_chars(
             response.second.data(), response.second.data() + response.second.size(), micros);
         LocalTime t{micros};
@@ -368,7 +367,7 @@ auto TelemetryBackend::HandleCommand(
     }
 }
 for (const auto& field : m_PacketFields) {
-    const size_t ident_start = pos;
+    const usize ident_start = pos;
     while (pos < str.size() && str[pos] != ' ') {
         pos += 1;
     }
@@ -380,7 +379,7 @@ for (const auto& field : m_PacketFields) {
         pos += 1;
     }
 
-    const size_t value_start = pos;
+    const usize value_start = pos;
     while (pos < str.size() && str[pos] != ' ') {
         pos += 1;
     }
@@ -389,7 +388,7 @@ for (const auto& field : m_PacketFields) {
 
     // Uncalibrated packets or unparsable times are invalid
     if (field == "T") {
-        uint64_t t   = 0;
+        u64 t   = 0;
         auto     res = std::from_chars(value.data(), value.data() + value.size(), t);
         if (res.ec != std::errc{} || t == 0) { return stdx::none; }
     }

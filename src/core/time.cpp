@@ -2,14 +2,13 @@
 
 #include <cassert>
 #include <chrono>
-#include <cstddef>
-#include <cstdint>
 #include <ctime>
 #include <sstream>
 #include <string>
 
 #include <fmt/format.h>
 #include <stdx/option.hh>
+#include <stdx/types.hh>
 #include <taglib/mp4/mp4file.h>
 #include <tbytevector.h>
 
@@ -17,7 +16,7 @@ using namespace std::chrono;
 
 namespace mbr {
 
-const uint64_t UNIX_1904_DIFF = 2'082'844'800ULL;
+const u64 UNIX_1904_DIFF = 2'082'844'800ULL;
 
 local_time::local_time() {
     const auto now = system_clock::now();
@@ -30,39 +29,38 @@ local_time::local_time() {
     localtime_r(&time_now, &lt);
 #endif
 
-    hour   = static_cast<uint64_t>(lt.tm_hour);
-    minute = static_cast<uint64_t>(lt.tm_min);
-    second = static_cast<uint64_t>(lt.tm_sec);
+    hour   = static_cast<u64>(lt.tm_hour);
+    minute = static_cast<u64>(lt.tm_min);
+    second = static_cast<u64>(lt.tm_sec);
 
     const auto duration = now.time_since_epoch();
     auto       ms       = duration_cast<milliseconds>(duration) % 1'000;
-    millisecond         = static_cast<uint64_t>(ms.count());
+    millisecond         = static_cast<u64>(ms.count());
 
     auto us     = duration_cast<microseconds>(duration) % 1'000;
-    microsecond = static_cast<uint64_t>(us.count());
+    microsecond = static_cast<u64>(us.count());
 }
 
-local_time::local_time(
-    uint64_t hour, uint64_t minute, uint64_t second, uint64_t millisecond, uint64_t microsecond)
+local_time::local_time(u64 hour, u64 minute, u64 second, u64 millisecond, u64 microsecond)
     : hour{hour}, minute{minute}, second{second}, millisecond{millisecond},
       microsecond{microsecond} {}
 
-local_time::local_time(uint64_t micros) {
-    microsecond                  = micros % 1'000;
-    const uint64_t total_ms      = micros / 1'000;
-    millisecond                  = total_ms % 1'000;
-    const uint64_t total_seconds = total_ms / 1'000;
-    second                       = total_seconds % 60;
-    const uint64_t total_minutes = total_seconds / 60;
-    minute                       = total_minutes % 60;
-    const uint64_t total_hours   = total_minutes / 60;
-    hour                         = total_hours % 24;
+local_time::local_time(u64 micros) {
+    microsecond             = micros % 1'000;
+    const u64 total_ms      = micros / 1'000;
+    millisecond             = total_ms % 1'000;
+    const u64 total_seconds = total_ms / 1'000;
+    second                  = total_seconds % 60;
+    const u64 total_minutes = total_seconds / 60;
+    minute                  = total_minutes % 60;
+    const u64 total_hours   = total_minutes / 60;
+    hour                    = total_hours % 24;
 }
 
 local_time local_time::zero() noexcept { return local_time{0, 0, 0, 0, 0}; }
 
-uint64_t local_time::micros_since_midnight() const {
-    uint64_t acc = 0;
+u64 local_time::micros_since_midnight() const {
+    u64 acc = 0;
     acc += hour * 3'600'000'000;
     acc += minute * 60'000'000;
     acc += second * 1'000'000;
@@ -71,13 +69,13 @@ uint64_t local_time::micros_since_midnight() const {
     return acc;
 }
 
-double local_time::minutes_since_midnight() const {
-    double acc = 0;
-    acc += static_cast<double>(hour) * 60.0;
-    acc += static_cast<double>(minute);
-    acc += static_cast<double>(second) / 60.0;
-    acc += static_cast<double>(millisecond) / 60'000.0;
-    acc += static_cast<double>(microsecond) / 60'000'000.0;
+f64 local_time::minutes_since_midnight() const {
+    f64 acc = 0;
+    acc += static_cast<f64>(hour) * 60.0;
+    acc += static_cast<f64>(minute);
+    acc += static_cast<f64>(second) / 60.0;
+    acc += static_cast<f64>(millisecond) / 60'000.0;
+    acc += static_cast<f64>(microsecond) / 60'000'000.0;
     return acc;
 }
 
@@ -91,26 +89,23 @@ std::string local_time::to_string(bool high_precision) const {
 
 stdx::option<local_time> local_time::from_string(const std::string& input) {
     std::istringstream ss{input};
-    int                h, m, s;
+    i32                h, m, s;
     char               c1, c2;
 
     if (ss >> h >> c1 >> m >> c2 >> s) {
         if (c1 == ':' && c2 == ':' && ss.eof()) {
             if (h >= 0 && h < 24 && m >= 0 && m < 60 && s >= 0 && s < 60) {
-                return local_time{static_cast<uint64_t>(h),
-                                  static_cast<uint64_t>(m),
-                                  static_cast<uint64_t>(s),
-                                  0,
-                                  0};
+                return local_time{
+                    static_cast<u64>(h), static_cast<u64>(m), static_cast<u64>(s), 0, 0};
             }
         }
     }
     return stdx::none;
 }
 
-stdx::option<local_time> local_time::from_minutes(double minutes) {
+stdx::option<local_time> local_time::from_minutes(f64 minutes) {
     if (minutes < 0) { return stdx::none; }
-    const auto micros = static_cast<uint64_t>(minutes * 60'000'000.0);
+    const auto micros = static_cast<u64>(minutes * 60'000'000.0);
     return local_time{micros};
 }
 
@@ -131,15 +126,15 @@ date_time::date_time() {
     day   = lt.tm_mday;
 
     const auto total_us = duration_cast<microseconds>(duration).count();
-    local               = local_time{static_cast<uint64_t>(lt.tm_hour),
-                       static_cast<uint64_t>(lt.tm_min),
-                       static_cast<uint64_t>(lt.tm_sec),
-                       static_cast<uint64_t>((total_us / 1'000) % 1'000),
-                       static_cast<uint64_t>(total_us % 1'000)};
+    local               = local_time{static_cast<u64>(lt.tm_hour),
+                       static_cast<u64>(lt.tm_min),
+                       static_cast<u64>(lt.tm_sec),
+                       static_cast<u64>((total_us / 1'000) % 1'000),
+                       static_cast<u64>(total_us % 1'000)};
 }
 
-date_time::date_time(uint64_t creation_time_seconds) {
-    const uint64_t unix_seconds = creation_time_seconds - UNIX_1904_DIFF;
+date_time::date_time(u64 creation_time_seconds) {
+    const u64 unix_seconds = creation_time_seconds - UNIX_1904_DIFF;
 
     const auto time_now = static_cast<time_t>(unix_seconds);
     std::tm    lt{};
@@ -154,9 +149,9 @@ date_time::date_time(uint64_t creation_time_seconds) {
     day   = lt.tm_mday;
 
     // Accuracy is restricted to seconds
-    local = local_time{static_cast<uint64_t>(lt.tm_hour),
-                       static_cast<uint64_t>(lt.tm_min),
-                       static_cast<uint64_t>(lt.tm_sec),
+    local = local_time{static_cast<u64>(lt.tm_hour),
+                       static_cast<u64>(lt.tm_min),
+                       static_cast<u64>(lt.tm_sec),
                        0,
                        0};
 }
@@ -167,28 +162,27 @@ stdx::option<date_time> date_time::from_video_metadata(const std::string& path) 
 
     // Search the first 100KB for the desired metadata block
     f.seek(0);
-    TagLib::ByteVector data = f.readBlock(static_cast<size_t>(100 * 1'024));
+    TagLib::ByteVector data = f.readBlock(static_cast<usize>(100 * 1'024));
 
-    const int pos = data.find("mvhd");
+    const i32 pos = data.find("mvhd");
     if (pos == -1) { return stdx::none; }
 
     // Decode the raw metadata based on header version
     const unsigned char version               = data[pos + 4];
-    uint64_t            creation_time_seconds = 0;
+    u64                 creation_time_seconds = 0;
 
     // v0 == 32 bit, v1 == 64 bit (different shift values too)
     if (version == 0) {
-        uint32_t t = 0;
+        u32 t = 0;
         t |= static_cast<unsigned char>(data[pos + 8]) << 24;
         t |= static_cast<unsigned char>(data[pos + 9]) << 16;
         t |= static_cast<unsigned char>(data[pos + 10]) << 8;
         t |= static_cast<unsigned char>(data[pos + 11]);
         creation_time_seconds = t;
     } else if (version == 1) {
-        for (int i = 0; i < 8; ++i) {
-            creation_time_seconds |=
-                static_cast<uint64_t>(static_cast<unsigned char>(data[pos + 8 + i]))
-                << (56 - (i * 8));
+        for (i32 i = 0; i < 8; ++i) {
+            creation_time_seconds |= static_cast<u64>(static_cast<unsigned char>(data[pos + 8 + i]))
+                                     << (56 - (i * 8));
         }
     }
 

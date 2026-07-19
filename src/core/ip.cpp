@@ -15,8 +15,8 @@ namespace mbr {
 
 namespace {
 
-stdx::option<uint64_t> validate_digit(std::string_view sv) noexcept {
-    uint64_t   value;
+stdx::option<u64> validate_digit(std::string_view sv) noexcept {
+    u64        value;
     const auto res = std::from_chars(sv.begin(), sv.end(), value);
     if (res.ec != std::errc{} || res.ptr != sv.end()) { return stdx::none; }
     return value;

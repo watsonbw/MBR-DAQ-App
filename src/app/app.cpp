@@ -7,6 +7,7 @@
 #include <sokol_gfx.h>
 #include <sokol_glue.h>
 #include <sokol_imgui.h>
+#include <stdx/types.hh>
 
 #include "app/context.hpp"
 #include "app/gui.hpp"
@@ -16,8 +17,7 @@
 
 namespace mbr {
 
-app_t::app_t([[maybe_unused]] int arc, [[maybe_unused]] char* argv[])
-    : context_{std::make_shared<app_context>()} /*, m_Manager{m_Context}*/ {
+app_t::app_t(i32, char**) : context_{std::make_shared<app_context>()} /*, m_Manager{m_Context}*/ {
     context_->log = context_->logger.get_log_fn();
     ix::initNetSystem();
     gui_              = std::make_unique<gui_t>(context_);

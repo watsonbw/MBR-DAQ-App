@@ -1,15 +1,16 @@
 #pragma once
 
-#include <cstdint>
 #include <memory>
 #include <string>
+
+#include <stdx/types.hh>
 
 #include "app/pages/page.hpp"
 #include "app/pages/utils.hpp"
 
 namespace mbr::pages {
 
-enum class baud_rate : uint32_t {
+enum class baud_rate : u32 {
     THREE           = 300,
     TWELVE          = 1'200,
     TWENTYFOUR      = 2'400,
@@ -36,8 +37,8 @@ class serial_page : public page {
     void draw_bottom();
 
   private:
-    pages::utils::text_drawers text_drawer_;
-    std::string                serial_buffer_;
+    utils::text_drawers text_drawer_;
+    std::string         serial_buffer_;
 };
 
 } // namespace mbr::pages

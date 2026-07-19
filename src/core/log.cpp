@@ -1,6 +1,5 @@
 #include "core/log.hpp"
 
-#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -12,12 +11,13 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/ostream_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <stdx/types.hh>
 
 namespace mbr {
 
 log_t::log_t() {
     std::vector<spdlog::sink_ptr> log_sinks;
-    size_t                        log_idx = 0;
+    usize                         log_idx = 0;
 #ifdef LOGGING
     log_sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
     log_sinks.emplace_back(
