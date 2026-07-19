@@ -5,7 +5,6 @@
 #include <charconv>
 #include <chrono>
 #include <mutex>
-#include <shared_mutex>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -222,13 +221,6 @@ telemetry_backend::validate_packet(std::string_view str) const {
     return parsed;
 }
 
-telemetry_data::packed_data telemetry_backend::pack_data() {
-    const std::shared_lock lock{data_latch_};
-    return {.time_micros_raw         = data_.get_time_no_normal(),
-            .time_minutes_normalized = data_.get_time(),
-            .series                  = data_.series,
-            .raw_lines               = data_.get_raw_lines()};
-}
 
 void telemetry_backend::set_ip(const ipv4_t& ipv4) {
     if (!ipv4.is_valid()) {

@@ -24,12 +24,7 @@ using json = nlohmann::json;
 
 class telemetry_data {
   public:
-    struct packed_data {
-        std::vector<u64>                                               time_micros_raw;
-        std::vector<double>                                            time_minutes_normalized;
-        ankerl::unordered_dense::map<std::string, std::vector<double>> series;
-        std::vector<std::string>                                       raw_lines;
-    };
+
 
     struct data_info {
         std::string key;
