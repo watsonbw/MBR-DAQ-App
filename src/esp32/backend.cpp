@@ -262,7 +262,7 @@ void telemetry_backend::handle_response(std::string_view line) {
         return;
     }
 
-    if (auto handler = response_handlers.get_opt(*type)) {
+    if (auto handler = response_handlers_.get_opt(*type)) {
         (*handler)(rest.substr(space + 1));
     } else {
         log_error(log_, "No handler for response: {}", command);
@@ -275,14 +275,14 @@ void telemetry_backend::handle_response(std::string_view line) {
 // This also requires additions to ResStringtoEnum as these are ENUM mapped lambdas,
 // not just a simple string mapped lambda
 void telemetry_backend::register_handlers() {
-    response_handlers[response_type_t::SYNC] = [this](std::string_view line) {
+    response_handlers_[response_type_t::SYNC] = [this](std::string_view line) {
         uint64_t micros = 0;
         std::from_chars(line.data(), line.data() + line.size(), micros);
         local_time t{micros};
         log_info(log_, "Time successfully synced at: {}", t.to_string(false));
     };
 
-    response_handlers[response_type_t::SDSTART] = [this](std::string_view line) {
+    response_handlers_[response_type_t::SDSTART] = [this](std::string_view line) {
         if (line == "deadbeef") {
             log_error(log_, "SD Card Failed Initialization");
         } else {
@@ -291,7 +291,7 @@ void telemetry_backend::register_handlers() {
         }
     };
 
-    response_handlers[response_type_t::SDWRITE] = [this](std::string_view line) {
+    response_handlers_[response_type_t::SDWRITE] = [this](std::string_view line) {
         if (line == "1") {
             log_info(log_, "SD Card Has Begun Writing");
             is_writing = true;
@@ -301,7 +301,7 @@ void telemetry_backend::register_handlers() {
         }
     };
 
-    response_handlers[response_type_t::SDCLOSE] = [this](std::string_view line) {
+    response_handlers_[response_type_t::SDCLOSE] = [this](std::string_view line) {
         if (line == "1") {
             is_open = false;
             log_info(log_, "SD Card Has Closed Succesfully");

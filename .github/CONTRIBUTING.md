@@ -14,6 +14,26 @@ Releases are compiled with Apple Clang on macOS and GCC 15 on Windows through th
 
 MSVC is not directly supported on windows, but clang-cl can be used to serve as a GCC-like frontend if you are interested. All ABI issues are handled for you regardless! Linux is not and will never be strictly supported as the project's goals do not require Linux compatibility. You may find that you can build and run the project on your Linux machine, but please do not submit issues relating to Linux compatibility issues.
 
+## IDE
+
+We recommend using Zed for development as it supports C++ out of the box. On some windows systems, the `clangd` LSP might become upset over meaningless things due to having conflicting compilers installed on your system (e.g. having both GCC and MSVC). You might find success in creating a project-local settings file in zed at `.zed/settings.json` with the following content:
+
+```json
+{
+    "lsp": {
+        "clangd": {
+            "binary": {
+                "arguments": [
+                    "--query-driver=C:\\tools\\msys64\\ucrt64\\bin\\*"
+                ]
+            }
+        }
+    }
+}
+```
+
+Note that this is an example configuration and you should change the path passed as the `query-driver` based on your system's compiler installation path.
+
 ## Installing Dependencies
 
 This project uses CMake, and it is highly recommended that you use the Ninja build system to speed up builds. The following commands assume you have [homebrew](https://brew.sh/) available in your path on macOS and [msys2](https://www.msys2.org/) on Windows.

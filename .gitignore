@@ -10,8 +10,9 @@ build*/
 .boardcode
 .theia
 .vscode
-.zed
 .pio
+
+.zed/settings.json
 
 __cmake*
 *.log
