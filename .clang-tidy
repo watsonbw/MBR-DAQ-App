@@ -24,6 +24,7 @@ Checks: >
   -misc-non-private-member-variables-in-classes,
   -misc-use-anonymous-namespace,
   -modernize-avoid-c-arrays,
+  -modernize-use-trailing-return-type,
   -google-build-using-namespace,
   -google-explicit-constructor,
   -bugprone-easily-swappable-parameters,
@@ -54,4 +55,4 @@ CheckOptions:
   - { key: readability-identifier-naming.ProtectedMemberCase,   value: lower_case }
   - { key: readability-identifier-naming.ProtectedMemberPrefix, value: _          }
 
-  - readability-magic-numbers.IgnoreMacros: true
+  - { key: readability-magic-numbers.IgnoreMacros,              value: "true" }

@@ -2,6 +2,7 @@
 #include <cstddef>
 
 #include <stb_image.h>
+#include <stdx/assert.hh>
 
 #include "app/assets/texture.hpp"
 
@@ -11,7 +12,7 @@ button_texture::button_texture(gsl::span<const unsigned char> data) {
     int   width, height, comp;
     auto* pixels = stbi_load_from_memory(
         data.data(), static_cast<int>(data.size()), &width, &height, &comp, 4);
-    assert(pixels);
+    ASSERT(pixels, "Image load from memory failed");
 
     sg_image_desc img_desc           = {};
     img_desc.width                   = width;
@@ -23,13 +24,13 @@ button_texture::button_texture(gsl::span<const unsigned char> data) {
 
     image_ = sg_make_image(&img_desc);
     stbi_image_free(pixels);
-    assert(image_.id != SG_INVALID_ID);
+    ASSERT(image_.id != SG_INVALID_ID, "Image allocation failed");
 
     sg_view_desc view_desc  = {};
     view_desc.texture.image = image_;
 
     view_ = sg_make_view(&view_desc);
-    assert(view_.id != SG_INVALID_ID);
+    ASSERT(view_.id != SG_INVALID_ID, "View allocation failed");
     im_tex_id_ = simgui_imtextureid(view_);
 }
 
