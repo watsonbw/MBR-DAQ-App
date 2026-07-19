@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string>
@@ -11,6 +10,7 @@
 #include <imgui.h>
 #include <implot.h>
 #include <stdx/option.hh>
+#include <stdx/types.hh>
 
 namespace mbr {
 
@@ -23,10 +23,10 @@ void plot_if_non_empty(const char*        label,
                        gsl::span<const T> x,
                        gsl::span<const T> y,
                        bool               extra_condition    = true,
-                       size_t             data_clip_position = 0) {
+                       usize              data_clip_position = 0) {
     if (!x.empty() && !y.empty() && extra_condition) {
-        const size_t n     = std::min(x.size(), y.size());
-        const size_t count = n - std::min(n, data_clip_position);
+        const usize n     = std::min(x.size(), y.size());
+        const usize count = n - std::min(n, data_clip_position);
         ImPlot::PlotLine(label, x.data(), y.data(), count);
     }
 }
@@ -46,11 +46,11 @@ class text_drawers {
     std::shared_ptr<app_context> context_;
 };
 
-bool draw_input_box(const char*                label,
-                    std::string&               buf,
+bool draw_input_box(const char*               label,
+                    std::string&              buf,
                     stdx::option<const char*> hint        = stdx::none,
-                    float                      width_scale = 200.0F,
-                    ImGuiInputTextFlags        flags       = 0);
+                    float                     width_scale = 200.0F,
+                    ImGuiInputTextFlags       flags       = 0);
 void draw_data_log(gsl::span<const std::string> raw_lines);
 
 } // namespace pages::utils

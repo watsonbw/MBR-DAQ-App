@@ -13,6 +13,7 @@
 #include <sokol_glue.h>
 #include <sokol_imgui.h>
 #include <sokol_log.h>
+#include <stdx/types.hh>
 
 #include "app/assets/images/app_icon.hpp"
 #include "app/assets/texture.hpp"
@@ -224,7 +225,7 @@ void gui_t::draw_main_menu_bar() {
         const bool connected = context_->backend->is_connected;
         const bool receiving = context_->backend->is_receiving;
 
-        const float  radius = 10.0F;
+        const f32    radius = 10.0F;
         const ImVec2 pos    = ImGui::GetCursorScreenPos();
         const ImVec2 center = ImVec2(pos.x + radius, pos.y + (ImGui::GetFrameHeight() * 0.5F));
 

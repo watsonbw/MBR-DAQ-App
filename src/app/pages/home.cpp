@@ -7,6 +7,7 @@
 #include <gsl/util>
 #include <imgui.h>
 #include <sokol_app.h>
+#include <stdx/types.hh>
 
 #include "app/pages/utils.hpp"
 #include "app/style.hpp"
@@ -19,9 +20,9 @@ void home_page::on_enter() { log_info(context_->log, "Entered HomePage"); }
 void home_page::on_exit() { log_info(context_->log, "Exited HomePage"); }
 
 void home_page::update() {
-    const float full_height   = ImGui::GetContentRegionAvail().y;
-    const float top_height    = full_height * 0.66F;
-    const float bottom_height = full_height - top_height;
+    const f32 full_height   = ImGui::GetContentRegionAvail().y;
+    const f32 top_height    = full_height * 0.66F;
+    const f32 bottom_height = full_height - top_height;
 
     if (ImGui::BeginChild("##topsec", {0, top_height})) {
         const auto cleanup_top{gsl::finally(ImGui::EndChild)};

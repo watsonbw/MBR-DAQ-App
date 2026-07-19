@@ -27,8 +27,8 @@ class rpm_page : public page {
                  gsl::span<const double> engine);
 
   private:
-    pages::utils::text_drawers text_drawer_;
-    std::string                download_fd_text_;
+    utils::text_drawers text_drawer_;
+    std::string         download_fd_text_;
 };
 
 } // namespace mbr::pages

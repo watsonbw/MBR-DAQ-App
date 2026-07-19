@@ -1,10 +1,10 @@
 #include "app/pages/serialmon.hpp"
 
-#include <cstdint>
 #include <string>
 
 #include <gsl/util>
 #include <imgui.h>
+#include <stdx/types.hh>
 
 #include "app/pages/utils.hpp"
 #include "app/style.hpp"
@@ -16,9 +16,9 @@ void serial_page::on_enter() { log_info(context_->log, "Entered SerialPage"); }
 void serial_page::on_exit() { log_info(context_->log, "Exited SerialPage"); }
 
 void serial_page::update() {
-    const float full_height   = ImGui::GetContentRegionAvail().y;
-    const float top_height    = full_height * 0.66F;
-    const float bottom_height = full_height - top_height;
+    const f32 full_height   = ImGui::GetContentRegionAvail().y;
+    const f32 top_height    = full_height * 0.66F;
+    const f32 bottom_height = full_height - top_height;
 
     if (ImGui::BeginChild("##topsec", {0, top_height})) {
         const auto cleanup_top{gsl::finally(ImGui::EndChild)};
@@ -94,10 +94,10 @@ void serial_page::draw_top_lhs() {
                                   .c_str())) { // TODO(tcs): This is ugly
             const auto cleanup_combo{gsl::finally(ImGui::EndCombo)};
             // This can stay inside DrawTopLHS or be a static member
-            static const uint32_t BAUD_RATES[] = {
+            static const u32 BAUD_RATES[] = {
                 300, 1'200, 2'400, 4'800, 9'600, 19'200, 38'400, 57'600, 115'200};
 
-            for (const uint32_t rate : BAUD_RATES) {
+            for (const u32 rate : BAUD_RATES) {
                 const bool is_selected =
                     (context_->backend->serial_manager.get_baud_rate() == rate);
                 if (ImGui::Selectable(std::to_string(rate).c_str(), is_selected)) {

@@ -1,19 +1,20 @@
 #pragma once
 
-#include <cstdint>
+#include <filesystem>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <nlohmann/json.hpp>
 #include <stdx/option.hh>
+#include <stdx/types.hh>
 
 #include "core/log.hpp"
 #include "core/time.hpp"
 
-#define MBR_JSON "MBR_data.json"
-
 namespace mbr {
+
+inline const std::filesystem::path DEFAULT_JSON_PATH{"MBR_data.json"};
 
 namespace pages { class view_page; } // namespace pages
 
@@ -24,7 +25,7 @@ using json = nlohmann::json;
 class telemetry_data {
   public:
     struct packed_data {
-        std::vector<uint64_t>                                time_micros_raw;
+        std::vector<u64>                                     time_micros_raw;
         std::vector<double>                                  time_minutes_normalized;
         std::unordered_map<std::string, std::vector<double>> series;
         std::vector<std::string>                             raw_lines;
@@ -46,13 +47,13 @@ class telemetry_data {
     std::vector<data_info>                               data_values;
     std::unordered_map<std::string, std::vector<double>> series;
     [[nodiscard]] const std::vector<double>&             get_time() const { return time_; }
-    [[nodiscard]] const std::vector<uint64_t>&           get_time_no_normal() const {
+    [[nodiscard]] const std::vector<u64>&                get_time_no_normal() const {
         return time_no_normal_micros_;
     }
 
-    [[nodiscard]] const std::vector<std::string>&  get_raw_lines() const { return raw_lines_; };
+    [[nodiscard]] const std::vector<std::string>& get_raw_lines() const { return raw_lines_; };
     [[nodiscard]] const stdx::option<local_time>& get_sync_lt() const { return sync_lt_; }
-    [[nodiscard]] const std::string&               get_current_line() { return current_line_; }
+    [[nodiscard]] const std::string&              get_current_line() { return current_line_; }
 
     void write_data(const std::string& identifier, const std::string& value);
     void write_raw_line(const std::string& message);
@@ -64,12 +65,12 @@ class telemetry_data {
     void init_data();
 
   private:
-    log_fn_t                  log_;
-    std::string               current_line_;
-    std::vector<uint64_t>     time_no_normal_micros_;
-    std::vector<double>       time_;
-    std::vector<std::string>  raw_lines_;
-    double                    sync_start_;
+    log_fn_t                 log_;
+    std::string              current_line_;
+    std::vector<u64>         time_no_normal_micros_;
+    std::vector<double>      time_;
+    std::vector<std::string> raw_lines_;
+    double                   sync_start_;
     stdx::option<local_time> sync_lt_;
 
     friend class pages::view_page;

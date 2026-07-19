@@ -1,13 +1,12 @@
 #pragma once
 
-#include <cstddef>
-
 #include <gsl/span>
 #include <imgui.h>
 #include <sokol_app.h>
 #include <sokol_gfx.h>
 #include <sokol_imgui.h>
 #include <stb_image.h>
+#include <stdx/types.hh>
 
 namespace mbr::assets {
 
@@ -33,8 +32,8 @@ class button_texture {
 template <bool Managed = false> struct icon_texture {
     icon_texture(gsl::span<const unsigned char> data)
         : pixels{stbi_load_from_memory(
-              data.data(), static_cast<int>(data.size()), &width, &height, &comp, 4)} {
-        size = static_cast<size_t>(width * height) * comp;
+              data.data(), static_cast<i32>(data.size()), &width, &height, &comp, 4)} {
+        size = static_cast<usize>(width * height) * comp;
     }
     ~icon_texture() { release(); };
 
@@ -51,11 +50,11 @@ template <bool Managed = false> struct icon_texture {
         }
     }
 
-    int            width;
-    int            height;
-    int            comp;
+    i32            width;
+    i32            height;
+    i32            comp;
     unsigned char* pixels;
-    size_t         size;
+    usize          size;
 };
 
 } // namespace mbr::assets

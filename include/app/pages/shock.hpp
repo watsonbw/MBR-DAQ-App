@@ -28,8 +28,8 @@ class shock_page : public page {
                   gsl::span<const double> bl);
 
   private:
-    pages::utils::text_drawers text_utils_;
-    std::string                download_fd_text_;
+    utils::text_drawers text_utils_;
+    std::string         download_fd_text_;
 };
 
 } // namespace mbr::pages

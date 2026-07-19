@@ -1,18 +1,16 @@
 #include "app/assets/texture.hpp"
 
-#include <cassert>
-#include <cstddef>
-
 #include <gsl/span>
 #include <stb_image.h>
 #include <stdx/assert.hh>
+#include <stdx/types.hh>
 
 namespace mbr::assets {
 
 button_texture::button_texture(gsl::span<const unsigned char> data) {
-    int   width, height, comp;
+    i32   width, height, comp;
     auto* pixels = stbi_load_from_memory(
-        data.data(), static_cast<int>(data.size()), &width, &height, &comp, 4);
+        data.data(), static_cast<i32>(data.size()), &width, &height, &comp, 4);
     ASSERT(pixels, "Image load from memory failed");
 
     sg_image_desc img_desc           = {};
@@ -21,7 +19,7 @@ button_texture::button_texture(gsl::span<const unsigned char> data) {
     img_desc.pixel_format            = SG_PIXELFORMAT_RGBA8;
     img_desc.num_mipmaps             = 1;
     img_desc.data.mip_levels[0].ptr  = pixels;
-    img_desc.data.mip_levels[0].size = static_cast<size_t>(width * height) * comp;
+    img_desc.data.mip_levels[0].size = static_cast<usize>(width * height) * comp;
 
     image_ = sg_make_image(&img_desc);
     stbi_image_free(pixels);

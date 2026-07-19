@@ -15,6 +15,7 @@
 #include <fmt/format.h>
 #include <gsl/span>
 #include <stdx/option.hh>
+#include <stdx/types.hh>
 
 #include "app/context.hpp"
 #include "app/style.hpp"
@@ -85,7 +86,7 @@ void text_drawers::data_download_button(const std::vector<std::string>& raw_line
 bool draw_input_box(const char*               label,
                     std::string&              buf,
                     stdx::option<const char*> hint,
-                    float                     width_scale,
+                    f32                       width_scale,
                     ImGuiInputTextFlags       flags) {
     ImGui::SetNextItemWidth(width_scale);
     if (hint) { return ImGui::InputTextWithHint(label, *hint, &buf, flags); }
