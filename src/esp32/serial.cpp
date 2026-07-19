@@ -57,10 +57,15 @@ void serial_manager_t::start() {
     if (worker_.joinable()) { return; }
     keep_running_ = true;
     worker_       = std::jthread([this]() {
+        i32       scan_counter     = 0;
+        const i32 scan_counter_max = 200; // 200 * 5ms = 1 second
         while (keep_running_) {
-            this->clean_ports();
-            std::this_thread::sleep_for(1s);
+            if (scan_counter++ >= scan_counter_max) {
+                scan_counter = 0;
+                this->clean_ports();
+            }
             if (is_serial_write_) { this->receive_data(); }
+            std::this_thread::sleep_for(5ms);
         }
     });
 }
@@ -89,8 +94,8 @@ bool serial_manager_t::open_port(const std::string& port, const std::string& des
 
 // Close ports that have disappeared, open ports that have appeared
 void serial_manager_t::clean_ports() {
-    const std::scoped_lock              lock{mutex_};
     const std::vector<serial::PortInfo> available = serial::list_ports();
+    const std::scoped_lock              lock{mutex_};
     for (const auto& info : available) {
         if (!ports_.contains(info.port)) { open_port(info.port, info.description); }
     }
