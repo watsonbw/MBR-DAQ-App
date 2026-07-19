@@ -1,11 +1,11 @@
 #pragma once
 
-#include <optional>
 #include <string>
 #include <vector>
 
 #include <gsl/span>
 #include <implot.h>
+#include <stdx/option.hh>
 
 namespace mbr {
 
@@ -14,11 +14,11 @@ struct app_context;
 namespace pages::utils {
 
 template <typename T>
-static void plot_if_non_empty(const char*        label,
-                              gsl::span<const T> x,
-                              gsl::span<const T> y,
-                              bool               extra_condition    = true,
-                              size_t             data_clip_position = 0) {
+void plot_if_non_empty(const char*        label,
+                       gsl::span<const T> x,
+                       gsl::span<const T> y,
+                       bool               extra_condition    = true,
+                       size_t             data_clip_position = 0) {
     if (!x.empty() && !y.empty() && extra_condition) {
         const size_t n     = std::min(x.size(), y.size());
         const size_t count = n - std::min(n, data_clip_position);

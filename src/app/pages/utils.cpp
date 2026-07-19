@@ -75,11 +75,11 @@ void text_drawers::data_download_button(const std::vector<std::string>& raw_line
     });
 }
 
-bool draw_input_box(const char*                label,
-                    std::string&               buf,
-                    std::optional<const char*> hint,
-                    float                      width_scale,
-                    ImGuiInputTextFlags        flags) {
+bool draw_input_box(const char*               label,
+                    std::string&              buf,
+                    stdx::option<const char*> hint,
+                    float                     width_scale,
+                    ImGuiInputTextFlags       flags) {
     ImGui::SetNextItemWidth(width_scale);
     if (hint) { return ImGui::InputTextWithHint(label, *hint, &buf, flags); }
     return ImGui::InputText(label, &buf, flags);

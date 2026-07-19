@@ -1,12 +1,13 @@
 #pragma once
 
-#include <optional>
 #include <string>
 #include <vector>
 
+#include <nlohmann/json.hpp>
+#include <stdx/option.hh>
+
 #include "core/log.hpp"
 #include "core/time.hpp"
-#include <nlohmann/json.hpp>
 
 #define MBR_JSON "MBR_data.json"
 

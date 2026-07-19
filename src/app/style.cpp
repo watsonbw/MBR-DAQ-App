@@ -1,6 +1,5 @@
 #include <array>
 #include <cassert>
-#include <optional>
 
 #ifdef _WIN32
 #    include <dwmapi.h>
@@ -9,6 +8,7 @@
 #include <imgui.h>
 #include <sokol_app.h>
 #include <stdx/assert.hh>
+#include <stdx/option.hh>
 
 #include "app/assets/fonts/open_sans.hpp"
 #include "app/style.hpp"
@@ -18,7 +18,7 @@ namespace mbr {
 
 namespace {
 
-constinit std::optional<std::array<ImVec4, ImGuiCol_COUNT>> color_cache = std::nullopt;
+constinit stdx::option<std::array<ImVec4, ImGuiCol_COUNT>> color_cache = stdx::none;
 
 void initialize_imgui_color_cache(ImVec4 colors[ImGuiCol_COUNT]) {
     auto& cache = color_cache.emplace();

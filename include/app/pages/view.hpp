@@ -6,21 +6,18 @@
 #include <deque>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <string>
 #include <thread>
 #include <utility>
 
 #include <imgui.h>
-
 #include <opencv2/opencv.hpp>
-
 #include <sokol_gfx.h>
-
-#include "core/time.hpp"
+#include <stdx/option.hh>
 
 #include "app/assets/texture.hpp"
 #include "app/pages/page.hpp"
+#include "core/time.hpp"
 
 namespace mbr::pages {
 
@@ -104,7 +101,7 @@ class view_page : public page_base {
     std::string video_length_formatted_;
     double      frame_duration_{0.0};
     double      time_accumulator_{0.0};
-    int         current_frame_ui{0};
+    int         current_frame_ui_{0};
 
     std::atomic<bool> is_playing_{false};
     std::atomic<bool> is_looping_{false};
@@ -112,7 +109,7 @@ class view_page : public page_base {
     std::atomic<bool> force_update_frame_{false};
     data_view_t       data_show_{data_view_t::ALL};
 
-    std::thread                         decode_thread_;
+    std::jthread                        decode_thread_;
     std::atomic<bool>                   thread_running_{false};
     std::mutex                          frame_mutex_;
     std::deque<std::pair<cv::Mat, int>> frame_queue_;

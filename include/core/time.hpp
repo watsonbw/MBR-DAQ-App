@@ -1,8 +1,9 @@
 #pragma once
 
 #include <cstdint>
-#include <optional>
 #include <string>
+
+#include <stdx/option.hh>
 
 namespace mbr {
 
