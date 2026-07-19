@@ -83,7 +83,7 @@ std::string local_time::to_string(bool high_precision) const {
     return fmt::format("{:02}:{:02}:{:02}", hour, minute, second);
 }
 
-std::optional<local_time> local_time::from_string(const std::string& input) {
+stdx::option<local_time> local_time::from_string(const std::string& input) {
     std::istringstream ss{input};
     int                h, m, s;
     char               c1, c2;
@@ -99,11 +99,11 @@ std::optional<local_time> local_time::from_string(const std::string& input) {
             }
         }
     }
-    return std::nullopt;
+    return stdx::none;
 }
 
-std::optional<local_time> local_time::from_minutes(double minutes) {
-    if (minutes < 0) { return std::nullopt; }
+stdx::option<local_time> local_time::from_minutes(double minutes) {
+    if (minutes < 0) { return stdx::none; }
     const auto micros = static_cast<uint64_t>(minutes * 60'000'000.0);
     return local_time{micros};
 }
@@ -155,16 +155,16 @@ date_time::date_time(uint64_t creation_time_seconds) {
                        0};
 }
 
-std::optional<date_time> date_time::from_video_metadata(const std::string& path) {
+stdx::option<date_time> date_time::from_video_metadata(const std::string& path) {
     TagLib::MP4::File f(path.c_str());
-    if (!f.isValid()) { return std::nullopt; }
+    if (!f.isValid()) { return stdx::none; }
 
     // Search the first 100KB for the desired metadata block
     f.seek(0);
     TagLib::ByteVector data = f.readBlock(static_cast<size_t>(100 * 1'024));
 
     const int pos = data.find("mvhd");
-    if (pos == -1) { return std::nullopt; }
+    if (pos == -1) { return stdx::none; }
 
     // Decode the raw metadata based on header version
     const unsigned char version               = data[pos + 4];
@@ -187,7 +187,7 @@ std::optional<date_time> date_time::from_video_metadata(const std::string& path)
     }
 
     if (creation_time_seconds > UNIX_1904_DIFF) { return date_time{creation_time_seconds}; }
-    return std::nullopt;
+    return stdx::none;
 }
 
 std::string date_time::to_string(fmt_t fmt) const {

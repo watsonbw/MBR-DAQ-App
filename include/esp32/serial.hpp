@@ -53,7 +53,7 @@ class serial_manager_t {
     int                                                              timeout_ms_;
     std::unordered_map<std::string, std::unique_ptr<serial::Serial>> ports_;
     std::unordered_set<std::string>                                  chosen_ports_;
-    std::thread                                                      worker_;
+    std::jthread                                                     worker_;
     std::vector<std::string>                                         input_stream_;
     mutable std::recursive_mutex                                     mutex_;
 };

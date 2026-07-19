@@ -146,7 +146,7 @@ void view_page::draw_lhs() {
 void view_page::draw_lhs_controls() {
     // Slider
     const auto current_timestamp_min =
-        (static_cast<double>(current_frame_ui) / total_frames_) * video_length_minutes_;
+        (static_cast<double>(current_frame_ui_) / total_frames_) * video_length_minutes_;
     const auto current_timestamp = local_time::from_minutes(current_timestamp_min);
     const auto formatted_timestamp =
         current_timestamp.value_or(local_time::zero()).to_string(false);
@@ -157,7 +157,7 @@ void view_page::draw_lhs_controls() {
         ImGui::PushItemWidth(-1);
         const auto cleanup_width{gsl::finally(ImGui::PopItemWidth)};
 
-        int slider_pos = current_frame_ui;
+        int slider_pos = current_frame_ui_;
         if (ImGui::SliderInt(
                 "##scrub", &slider_pos, 0, total_frames_, "", ImGuiSliderFlags_NoInput)) {
             is_playing_.exchange(false);
@@ -181,7 +181,7 @@ void view_page::draw_lhs_controls() {
                            {0, 1},
                            {0, 0, 0, 0},
                            tint_color)) {
-        request_seek(current_frame_ui - 5);
+        request_seek(current_frame_ui_ - 5);
         is_playing_.exchange(false);
     }
     ImGui::SameLine();
@@ -203,7 +203,7 @@ void view_page::draw_lhs_controls() {
                            {1, 1},
                            {0, 0, 0, 0},
                            tint_color)) {
-        request_seek(current_frame_ui + 5);
+        request_seek(current_frame_ui_ + 5);
         is_playing_.exchange(false);
     }
 
@@ -215,22 +215,22 @@ void view_page::draw_lhs_controls() {
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow, false)) {
-            request_seek(current_frame_ui - 1);
+            request_seek(current_frame_ui_ - 1);
             is_playing_.exchange(false);
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, false)) {
-            request_seek(current_frame_ui - 10);
+            request_seek(current_frame_ui_ - 10);
             is_playing_.exchange(false);
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_RightArrow, false)) {
-            request_seek(current_frame_ui + 1);
+            request_seek(current_frame_ui_ + 1);
             is_playing_.exchange(false);
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, false)) {
-            request_seek(current_frame_ui + 10);
+            request_seek(current_frame_ui_ + 10);
             is_playing_.exchange(false);
         }
     }
@@ -244,7 +244,7 @@ void view_page::draw_open_video() {
             stop_decoding_thread();
             try_cleanup_sokol_resources();
             video_path_     = selected_video_.value().first;
-            selected_video_ = std::nullopt;
+            selected_video_ = stdx::none;
             video_loaded_   = true;
             start_decoding_thread();
         }
@@ -261,7 +261,7 @@ void view_page::draw_open_video() {
         const auto  alive         = is_alive_;
         const auto& previous_file = video_path_;
 
-        std::thread([this, alive, previous_file]() noexcept {
+        std::jthread([this, alive, previous_file]() noexcept {
             try {
                 const auto path = open_video_file(previous_file);
                 if (*alive) {
@@ -362,7 +362,7 @@ void view_page::draw_open_text() {
         const std::scoped_lock<std::mutex> lock{txt_path_mutex_};
         if (selected_txt_) {
             txt_path_     = selected_txt_.value();
-            selected_txt_ = std::nullopt;
+            selected_txt_ = stdx::none;
             txt_loaded_   = true;
             load_data();
         }
@@ -379,7 +379,7 @@ void view_page::draw_open_text() {
         const auto alive         = is_alive_;
         const auto previous_path = txt_path_;
 
-        std::thread([this, alive, previous_path]() noexcept {
+        std::jthread([this, alive, previous_path]() noexcept {
             try {
                 const auto path = open_text_file(previous_path);
                 if (*alive) {
@@ -422,7 +422,7 @@ void view_page::draw_sync_video_buttons() {
         }
         creation_metadata_text_buf_ = {};
 
-        std::optional<size_t> sync_time_pos;
+        stdx::option<size_t> sync_time_pos;
         {
             const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
             sync_time_pos = sync_data_video(context_->backend->data.get_time_no_normal());
@@ -453,7 +453,7 @@ view_page::selected_video_t view_page::open_video_file(const std::string& previo
         "Select a video file", previous_file.c_str(), std::size(filters), filters, nullptr, 0);
     if (path == nullptr) {
         log_warn(context_->log, "No file selected");
-        return std::nullopt;
+        return stdx::none;
     }
 
     const std::string real_path{path};
@@ -476,7 +476,7 @@ view_page::selected_txt_file_t view_page::open_text_file(const std::string& prev
         "Select a text file", previous_file.c_str(), std::size(filters), filters, nullptr, 0);
     if (path == nullptr) {
         log_warn(context_->log, "No file selected");
-        return std::nullopt;
+        return stdx::none;
     }
 
     log_info(context_->log, "Selected file: {}", path);
@@ -507,7 +507,7 @@ void view_page::request_seek(int frame_index) {
 
     seek_target_        = clamped_frame;
     force_update_frame_ = true;
-    current_frame_ui    = clamped_frame;
+    current_frame_ui_   = clamped_frame;
     queue_cv_.notify_one();
 }
 
@@ -515,7 +515,7 @@ void view_page::start_decoding_thread() {
     thread_running_ = true;
     is_playing_     = true;
 
-    decode_thread_ = std::thread([this]() {
+    decode_thread_ = std::jthread([this]() {
         cv::VideoCapture cap{video_path_};
         if (!cap.isOpened()) {
             log_error(context_->log, "Failed to open video");
@@ -598,9 +598,9 @@ void view_page::update_texture(bool is_timer_tick) {
         const bool                         should_consume = is_timer_tick || force_update_frame_;
 
         if (should_consume && !frame_queue_.empty()) {
-            const auto p     = frame_queue_.front();
-            frame_to_upload  = p.first;
-            current_frame_ui = p.second;
+            const auto p      = frame_queue_.front();
+            frame_to_upload   = p.first;
+            current_frame_ui_ = p.second;
 
             frame_queue_.pop_front();
             frame_ready = true;
@@ -656,8 +656,8 @@ void view_page::try_cleanup_sokol_resources() {
     texture_height_ = 0;
 }
 
-std::optional<size_t> view_page::sync_data_video(const std::vector<uint64_t>& micros_times) {
-    if (!video_creation_ts_) { return std::nullopt; }
+stdx::option<size_t> view_page::sync_data_video(const std::vector<uint64_t>& micros_times) {
+    if (!video_creation_ts_) { return stdx::none; }
 
     data_and_time_sync_               = true;
     const auto     creation_timestamp = video_creation_ts_.value();
@@ -665,7 +665,7 @@ std::optional<size_t> view_page::sync_data_video(const std::vector<uint64_t>& mi
     const auto     it                 = std::ranges::lower_bound(micros_times, micros_to_sync);
     if (it != micros_times.end()) { return std::distance(micros_times.begin(), it); }
 
-    return std::nullopt;
+    return stdx::none;
 }
 
 void view_page::delete_extra(size_t erase_pos) {
@@ -710,7 +710,7 @@ void view_page::dynamic_plot_start() {
 void view_page::dynamic_plot_loop() {
     if (dynamic_plotting_) {
         plot_percent_ = static_cast<size_t>(std::max(
-            data_count_ - (points_per_ * current_frame_ui) + data_from_end_, data_from_end_));
+            data_count_ - (points_per_ * current_frame_ui_) + data_from_end_, data_from_end_));
         return;
     }
     plot_percent_ = 0;

@@ -1,32 +1,32 @@
 #include <algorithm>
+#include <charconv>
 #include <cstdint>
-#include <optional>
 #include <string_view>
 
 #include <fmt/format.h>
+#include <stdx/option.hh>
 
 #include "core/ip.hpp"
 
 namespace mbr {
 
+namespace {
+
+stdx::option<uint64_t> validate_digit(std::string_view sv) noexcept {
+    uint64_t   value;
+    const auto res = std::from_chars(sv.begin(), sv.end(), value);
+    if (res.ec != std::errc{} || res.ptr != sv.end()) { return stdx::none; }
+    return value;
+};
+
+} // namespace
+
 bool ipv4_t::is_valid() const {
-    const auto validate_digit = [](std::string_view sv) -> std::optional<uint64_t> {
-        if (sv.empty()) { return std::nullopt; }
-
-        uint64_t value = 0;
-        for (const char& c : sv) {
-            if (c < '0' || c > '9') { return std::nullopt; }
-            value = (value * 10) + (c - '0');
-        }
-
-        return value;
-    };
-
-    const std::optional<uint64_t> ip_nums[] = {validate_digit(first),
-                                               validate_digit(second),
-                                               validate_digit(third),
-                                               validate_digit(fourth)};
-    if (std::ranges::any_of(ip_nums, [](const auto& opt) { return !opt || opt.value() >= 256; })) {
+    const std::array ip_nums = {validate_digit(first),
+                                validate_digit(second),
+                                validate_digit(third),
+                                validate_digit(fourth)};
+    if (std::ranges::any_of(ip_nums, [](const auto& opt) { return !opt || *opt >= 256; })) {
         return false;
     }
 

@@ -72,7 +72,7 @@ void telemetry_backend::start() {
     });
 
     web_sockets_.start();
-    worker_ = std::thread(&telemetry_backend::worker_loop, this);
+    worker_ = std::jthread(&telemetry_backend::worker_loop, this);
 }
 
 void telemetry_backend::kill() {
@@ -147,7 +147,7 @@ void telemetry_backend::on_message(const ix::WebSocketMessagePtr& msg) {
 // This function serves to handle the incoming message recovered from OnMEssage.
 // The goal is to primarly handle the data packing itself and doesn't have any command
 // or response handling. See "HandleResponse" for response logic
-std::optional<std::vector<std::pair<std::string_view, std::string_view>>>
+stdx::option<std::vector<std::pair<std::string_view, std::string_view>>>
 telemetry_backend::validate_packet(std::string_view str) const {
     std::vector<std::pair<std::string_view, std::string_view>> parsed;
     parsed.reserve(data.data_values.size());
@@ -169,7 +169,7 @@ telemetry_backend::validate_packet(std::string_view str) const {
 
         // run until space again to find value
         while (pos < str.size() && str[pos] != ' ') { pos++; }
-        if (value_start == pos) { return std::nullopt; }
+        if (value_start == pos) { return stdx::none; }
         std::string_view value = str.substr(value_start, pos - value_start);
 
         // skip extra spaces
@@ -179,11 +179,11 @@ telemetry_backend::validate_packet(std::string_view str) const {
         for (const auto& field : data.data_values) {
             if (field.key == key) { is_key = true; }
         }
-        if (!is_key) { return std::nullopt; }
+        if (!is_key) { return stdx::none; }
         if (key == "T") {
             uint64_t t   = 0;
             auto     res = std::from_chars(value.data(), value.data() + value.size(), t);
-            if (res.ec != std::errc{} || t == 0) { return std::nullopt; }
+            if (res.ec != std::errc{} || t == 0) { return stdx::none; }
         }
         parsed.emplace_back(key, value);
     }
@@ -194,7 +194,7 @@ telemetry_backend::validate_packet(std::string_view str) const {
             break;
         }
     }
-    if (!has_t) { return std::nullopt; }
+    if (!has_t) { return stdx::none; }
 
     return parsed;
 }
@@ -313,7 +313,7 @@ void telemetry_backend::register_handlers() {
 
 /*
 auto TelemetryBackend::HandleCommand(
-    std::optional<std::vector<std::pair<std::string_view, std::string_view>>> parsed) -> void {
+    stdx::option<std::vector<std::pair<std::string_view, std::string_view>>> parsed) -> void {
     if (!parsed || parsed->size() < 2) {
         LOG_ERROR("Command Not Found");
         return;
@@ -356,10 +356,10 @@ for (const auto& field : m_PacketFields) {
     while (pos < str.size() && str[pos] != ' ') {
         pos += 1;
     }
-    if (str.substr(ident_start, pos - ident_start) != field) { return std::nullopt; }
+    if (str.substr(ident_start, pos - ident_start) != field) { return stdx::none; }
 
     // There can be an arbitrary amount of spaces between idents/values
-    if (pos >= str.size() || str[pos] != ' ') { return std::nullopt; }
+    if (pos >= str.size() || str[pos] != ' ') { return stdx::none; }
     while (pos < str.size() && str[pos] == ' ') {
         pos += 1;
     }
@@ -368,14 +368,14 @@ for (const auto& field : m_PacketFields) {
     while (pos < str.size() && str[pos] != ' ') {
         pos += 1;
     }
-    if (value_start == pos) { return std::nullopt; }
+    if (value_start == pos) { return stdx::none; }
     const auto value = str.substr(value_start, pos - value_start);
 
     // Uncalibrated packets or unparsable times are invalid
     if (field == "T") {
         uint64_t t   = 0;
         auto     res = std::from_chars(value.data(), value.data() + value.size(), t);
-        if (res.ec != std::errc{} || t == 0) { return std::nullopt; }
+        if (res.ec != std::errc{} || t == 0) { return stdx::none; }
     }
 
     parsed.emplace_back(field, value);

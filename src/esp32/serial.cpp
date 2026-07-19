@@ -18,7 +18,7 @@ serial_manager_t::~serial_manager_t() { stop(); }
 void serial_manager_t::start() {
     if (worker_.joinable()) { return; }
     keep_running = true;
-    worker_      = std::thread([this]() {
+    worker_      = std::jthread([this]() {
         while (keep_running) {
             this->clean_ports();
             std::this_thread::sleep_for(std::chrono::milliseconds(1));

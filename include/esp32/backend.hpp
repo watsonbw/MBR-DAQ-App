@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <functional>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -10,10 +9,10 @@
 
 #include <ixwebsocket/IXWebSocket.h>
 #include <stdx/fixed/enum_map.hh>
+#include <stdx/option.hh>
 
 #include "core/ip.hpp"
 #include "core/log.hpp"
-
 #include "esp32/data.hpp"
 #include "esp32/serial.hpp"
 
@@ -67,7 +66,7 @@ class telemetry_backend {
     void register_handlers();
 
   private:
-    std::thread                           worker_;
+    std::jthread                          worker_;
     ix::WebSocket                         web_sockets_;
     std::string                           buffer_;
     ipv4_t                                ip_addr_;
