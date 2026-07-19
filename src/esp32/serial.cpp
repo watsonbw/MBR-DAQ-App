@@ -5,10 +5,10 @@
 #include <mutex>
 #include <string>
 #include <thread>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include <ankerl/unordered_dense.h>
 #include <serial/serial.h>
 #include <stdx/types.hh>
 
@@ -44,7 +44,7 @@ bool serial_manager_t::open_port(const std::string& port, const std::string& des
         timeout.write_timeout_multiplier = 0;
         auto ser = std::make_unique<serial::Serial>(port, baud_rate_, timeout);
         if (ser->isOpen()) {
-            ports_[port] = std::move(ser);
+            ports_.emplace(port, std::move(ser));
             log_info(log_, "[SerialManager] Opened: {}", port);
             if (!description.empty()) { log_info(log_, description); }
             return true;
@@ -71,7 +71,7 @@ void serial_manager_t::clean_ports() {
                 break;
             }
         }
-        if (!found) { to_remove.push_back(port); }
+        if (!found) { to_remove.emplace_back(port); }
     }
     for (const auto& port : to_remove) { close_port(port); }
 }
@@ -86,7 +86,7 @@ std::vector<std::string> serial_manager_t::get_all_ports() const {
 }
 
 // TODO(blake): Is a copy really what we want here?
-std::unordered_set<std::string> serial_manager_t::get_chosen_ports() const {
+serial_manager_t::chosen_port_set_t serial_manager_t::get_chosen_ports() const {
     const std::scoped_lock lock{mutex_};
     return chosen_ports_;
 }
@@ -157,7 +157,7 @@ void serial_manager_t::close_all() {
     ports_.clear();
     chosen_ports_.clear();
 }
-// change baud rate (its in the name)
+
 void serial_manager_t::change_baud_rate(u32 baud) {
     const std::scoped_lock lock{mutex_};
     baud_rate_ =
