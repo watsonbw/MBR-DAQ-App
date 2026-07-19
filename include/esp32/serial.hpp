@@ -45,7 +45,7 @@ class serial_manager_t {
     void     change_baud_rate(uint32_t baud);
     void     stop();
     bool     is_running() const;
-    uint32_t get_baud_rate() { return baud_rate_; }
+    uint32_t get_baud_rate() const { return baud_rate_; }
 
   private:
     log_fn_t                                                         log_;

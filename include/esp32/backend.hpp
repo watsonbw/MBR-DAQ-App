@@ -21,7 +21,7 @@ namespace mbr {
 
 struct app_context;
 
-enum class response_type_t {
+enum class response_type_t : u8 {
     SYNC,
     SDSTART,
     SDWRITE,
@@ -71,10 +71,11 @@ class telemetry_backend {
     ix::WebSocket                         web_sockets_;
     std::string                           buffer_;
     ipv4_t                                ip_addr_;
-    std::chrono::steady_clock::time_point last_data_time_{};
+    std::chrono::steady_clock::time_point last_data_time_;
     std::atomic<bool>                     should_kill_{false};
 
-    stdx::fixed::enum_map<response_type_t, std::function<void(std::string_view)>> response_handlers;
+    stdx::fixed::enum_map<response_type_t, std::function<void(std::string_view)>>
+        response_handlers_;
 };
 
 } // namespace mbr
