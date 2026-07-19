@@ -8,6 +8,7 @@
 #include <iterator>
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <thread>
 #include <utility>
@@ -322,7 +323,7 @@ void view_page::draw_rhs() {
 
         const auto data = context_->backend->pack_data();
 
-        const auto sync_lt    = context_->backend->data.get_sync_lt();
+        const auto sync_lt    = context_->backend->get_data().get_sync_lt();
         const auto plot_title = sync_lt
                                     ? fmt::format("Data View from {}", sync_lt.value().to_string())
                                     : "No Synced Time";
@@ -401,7 +402,7 @@ void view_page::draw_open_text() {
                     const std::scoped_lock<std::mutex> lock{txt_path_mutex_};
                     selected_txt_                 = path;
                     txt_dialog_running_           = false;
-                    context_->backend->is_logging = false;
+                    context_->backend->set_logging(false);
                 }
             } catch (const std::exception& e) {
                 txt_dialog_running_ = false;
@@ -439,8 +440,8 @@ void view_page::draw_sync_video_buttons() {
 
         stdx::option<usize> sync_time_pos;
         {
-            const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
-            sync_time_pos = sync_data_video(context_->backend->data.get_time_no_normal());
+            const std::shared_lock lock{context_->backend->get_data_latch()};
+            sync_time_pos = sync_data_video(context_->backend->get_data().get_time_no_normal());
         }
 
         if (!sync_time_pos) {
@@ -505,10 +506,10 @@ void view_page::load_data() {
         return;
     }
 
-    const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
-    context_->backend->data.clear();
+    const std::unique_lock lock{context_->backend->get_data_latch()};
+    context_->backend->get_data().clear();
     std::string ident, value;
-    while (file >> ident >> value) { context_->backend->data.write_data(ident, value); }
+    while (file >> ident >> value) { context_->backend->get_data().write_data(ident, value); }
 }
 
 void view_page::request_seek(i32 frame_index) {
@@ -688,15 +689,15 @@ stdx::option<usize> view_page::sync_data_video(const std::vector<u64>& micros_ti
 }
 
 void view_page::delete_extra(usize erase_pos) {
-    const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
+    const std::unique_lock lock{context_->backend->get_data_latch()};
     std::vector<f64>* const            data[] = {
-        &context_->backend->data.time_,
-        &context_->backend->data.series.at("W"),
-        &context_->backend->data.series.at("E"),
-        &context_->backend->data.series.at("FR"),
-        &context_->backend->data.series.at("FL"),
-        &context_->backend->data.series.at("RR"),
-        &context_->backend->data.series.at("RL"),
+        &context_->backend->get_data().time_,
+        &context_->backend->get_data().series.at("W"),
+        &context_->backend->get_data().series.at("E"),
+        &context_->backend->get_data().series.at("FR"),
+        &context_->backend->get_data().series.at("FL"),
+        &context_->backend->get_data().series.at("RR"),
+        &context_->backend->get_data().series.at("RL"),
     };
 
     for (const auto& datum : data) {
@@ -710,10 +711,10 @@ void view_page::delete_extra(usize erase_pos) {
 
 void view_page::dynamic_plot_start() {
     if (dynamic_plotting_) {
-        const std::scoped_lock<std::mutex> lock{context_->backend->data_mutex};
-        const auto&                        time_vec = context_->backend->data.time_;
+        const std::shared_lock lock{context_->backend->get_data_latch()};
+        const auto&                        time_vec = context_->backend->get_data().time_;
         if (time_vec.empty()) { return; }
-        const auto begin_time_min = context_->backend->data.time_[0];
+        const auto begin_time_min = context_->backend->get_data().time_[0];
 
         const f64  target_end_time = begin_time_min + video_length_minutes_;
         const auto end_it          = std::ranges::lower_bound(time_vec, target_end_time);
