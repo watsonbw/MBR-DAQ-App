@@ -62,7 +62,7 @@ void shock_page::draw_rhs(gsl::span<const f64> time,
                           gsl::span<const f64> bl) {
     if (ImGui::BeginChild("##graph")) {
         const auto cleanup_graph{gsl::finally(ImGui::EndChild)};
-        const auto sync_lt = context_->backend->data.get_sync_lt();
+        const auto sync_lt = context_->backend->get_data().get_sync_lt();
         const auto plot_title =
             sync_lt ? fmt::format("Shock Travel Data from {}", sync_lt.value().to_string())
                     : "No Synced Time";

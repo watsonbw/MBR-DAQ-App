@@ -5,6 +5,7 @@
 #include <charconv>
 #include <chrono>
 #include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -39,7 +40,7 @@ using namespace std::chrono_literals;
 namespace mbr {
 
 telemetry_backend::telemetry_backend(log_fn_t log)
-    : log_{std::move(log)}, data{log_}, serial_manager{baud_rate_t::ONEONEFIFTYTWO, 500, log_} {
+    : log_{std::move(log)}, data_{log_}, serial_manager_{baud_rate_t::ONEONEFIFTYTWO, 500, log_} {
     buffer_.reserve(4'096);
     register_handlers();
 }
@@ -64,16 +65,16 @@ void telemetry_backend::start() {
 
     web_sockets_.setOnMessageCallback([this](const ix::WebSocketMessagePtr& msg) {
         if (msg->type == ix::WebSocketMessageType::Open) {
-            is_connected = true;
-            is_receiving = false;
+            is_connected_ = true;
+            is_receiving_ = false;
             send_cmd("STATUS");
             log_info(log_, "Connected to ESP32");
         }
 
         if (msg->type == ix::WebSocketMessageType::Close ||
             msg->type == ix::WebSocketMessageType::Error) {
-            is_connected = false;
-            is_receiving = false;
+            is_connected_ = false;
+            is_receiving_ = false;
         }
         if (msg->type == ix::WebSocketMessageType::Close) { log_warn(log_, "WebSocket closed"); }
 
@@ -83,7 +84,7 @@ void telemetry_backend::start() {
         }
 
         if (msg->type == ix::WebSocketMessageType::Message) {
-            is_receiving = true;
+            is_receiving_ = true;
             this->on_message(msg);
             last_data_time_ = std::chrono::steady_clock::now();
         }
@@ -106,7 +107,7 @@ void telemetry_backend::send_cmd(const std::string& text) {
         const ix::WebSocketSendInfo info = web_sockets_.send(text);
         if (!info.success) {
             log_warn(log_, "Send failed:");
-            is_connected = false;
+            is_connected_ = false;
             return;
         }
 
@@ -120,8 +121,10 @@ void telemetry_backend::send_cmd(const std::string& text) {
 void telemetry_backend::worker_loop() {
     while (!should_kill_) {
         std::this_thread::sleep_for(10ms);
-        if (web_sockets_.getReadyState() != ix::ReadyState::Open) { is_connected = false; }
-        if (std::chrono::steady_clock::now() - last_data_time_ > 500ms) { is_receiving = false; }
+        if (web_sockets_.getReadyState() != ix::ReadyState::Open) { is_connected_ = false; }
+        if (std::chrono::steady_clock::now() - last_data_time_.load() > 500ms) {
+            is_receiving_ = false;
+        }
     }
 }
 
@@ -144,18 +147,18 @@ void telemetry_backend::on_message(const ix::WebSocketMessagePtr& msg) {
             if (!parsed) { continue; }
 
             // Now we can safely unpack the packet
-            const std::scoped_lock<std::mutex> lock{data_mutex};
+            const std::unique_lock lock{data_latch_};
 
             // write data
-            if (!is_logging) { continue; }
+            if (!is_logging_) { continue; }
 
             for (const auto& [ident, value] : parsed.value()) {
-                data.write_data(std::string{ident}, std::string{value});
+                data_.write_data(std::string{ident}, std::string{value});
             }
-            data.write_raw_line(line);
+            data_.write_raw_line(line);
             for (const auto& [ident, value] : parsed.value()) {
                 if (ident == "W") {
-                    data.save_current_line(line);
+                    data_.save_current_line(line);
                     break;
                 }
             }
@@ -170,7 +173,7 @@ stdx::option<std::vector<std::pair<std::string_view, std::string_view>>>
 telemetry_backend::validate_packet(std::string_view str) const {
     PROFILE_FUNCTION();
     std::vector<std::pair<std::string_view, std::string_view>> parsed;
-    parsed.reserve(data.data_values.size());
+    parsed.reserve(data_.data_values.size());
 
     // runs through the whole sent packet. this ensures that the packet must be valid but doesn't
     // need every m_packetfield.
@@ -199,7 +202,7 @@ telemetry_backend::validate_packet(std::string_view str) const {
 
         // Validate the key is actually allowed
         const auto valid_key =
-            std::ranges::any_of(data.data_values, [&](const auto& dv) { return dv.key == key; });
+            std::ranges::any_of(data_.data_values, [&](const auto& dv) { return dv.key == key; });
         if (!valid_key) { return stdx::none; }
 
         // Validate timestamp field "T" is numeric
@@ -220,11 +223,11 @@ telemetry_backend::validate_packet(std::string_view str) const {
 }
 
 telemetry_data::packed_data telemetry_backend::pack_data() {
-    const std::scoped_lock<std::mutex> lock{data_mutex};
-    return {.time_micros_raw         = data.get_time_no_normal(),
-            .time_minutes_normalized = data.get_time(),
-            .series                  = data.series,
-            .raw_lines               = data.get_raw_lines()};
+    const std::shared_lock lock{data_latch_};
+    return {.time_micros_raw         = data_.get_time_no_normal(),
+            .time_minutes_normalized = data_.get_time(),
+            .series                  = data_.series,
+            .raw_lines               = data_.get_raw_lines()};
 }
 
 void telemetry_backend::set_ip(const ipv4_t& ipv4) {
@@ -237,7 +240,7 @@ void telemetry_backend::set_ip(const ipv4_t& ipv4) {
     kill();
     should_kill_ = false;
     start();
-    try_connection = false;
+    try_connection_ = false;
 }
 
 namespace {
@@ -307,23 +310,23 @@ void telemetry_backend::register_handlers() {
             log_error(log_, "SD Card Failed Initialization");
         } else {
             log_info(log_, "SD Card Initialized At {}", line);
-            is_open = true;
+            is_open_ = true;
         }
     };
 
     response_handlers_[response_type_t::SDWRITE] = [this](std::string_view line) {
         if (line == "1") {
             log_info(log_, "SD Card Has Begun Writing");
-            is_writing = true;
+            is_writing_ = true;
         } else if (line == "0") {
             log_info(log_, "SD Card Has Stopped Writing");
-            is_writing = false;
+            is_writing_ = false;
         }
     };
 
     response_handlers_[response_type_t::SDCLOSE] = [this](std::string_view line) {
         if (line == "1") {
-            is_open = false;
+            is_open_ = false;
             log_info(log_, "SD Card Has Closed Succesfully");
         } else if (line == "0") {
             log_info(log_, "SD Card Failed Close");

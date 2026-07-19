@@ -149,7 +149,7 @@ void gui_t::on_frame() {
     }
 
     if (ImGui::IsKeyPressed(ImGuiKey_F11, false)) { sapp_toggle_fullscreen(); }
-    if (context_->backend->try_connection.exchange(false)) { context_->backend->start(); }
+    if (context_->backend->get_try_connection().exchange(false)) { context_->backend->start(); }
 }
 
 void gui_t::on_event(const sapp_event* event) { // NOLINT
@@ -220,14 +220,14 @@ void gui_t::draw_main_menu_bar() {
         if (ImGui::Button("Sync Time")) { context_->backend->send_cmd(command); }
 
         ImGui::Separator();
-        if (ImGui::Button("Restart Connection")) { context_->backend->try_connection = true; }
+        if (ImGui::Button("Restart Connection")) { context_->backend->get_try_connection() = true; }
         ImGui::Separator();
-        if (ImGui::Button("Clear Data")) { context_->backend->data.clear(); }
+        if (ImGui::Button("Clear Data")) { context_->backend->get_data().clear(); }
         ImGui::Separator();
 
         // Connection indicator
-        const bool connected = context_->backend->is_connected;
-        const bool receiving = context_->backend->is_receiving;
+        const bool connected = context_->backend->is_connected();
+        const bool receiving = context_->backend->is_receiving();
 
         const f32    radius = 10.0F;
         const ImVec2 pos    = ImGui::GetCursorScreenPos();

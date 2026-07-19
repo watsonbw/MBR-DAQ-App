@@ -78,10 +78,10 @@ void home_page::draw_top_lhs() {
         }
         ImGui::SameLine();
         ImGui::PushStyleColor(ImGuiCol_Button,
-                              context_->backend->is_writing ? ImVec4(0, 0.7F, 0, 1)
+                              context_->backend->is_writing() ? ImVec4(0, 0.7F, 0, 1)
                                                             : ImVec4(0.7F, 0, 0, 1));
-        if (ImGui::Button(context_->backend->is_writing ? "Write ON" : "Write OFF")) {
-            if (context_->backend->is_writing) {
+        if (ImGui::Button(context_->backend->is_writing() ? "Write ON" : "Write OFF")) {
+            if (context_->backend->is_writing()) {
                 context_->backend->send_cmd("SD_WRITE 0");
             } else {
                 context_->backend->send_cmd("SD_WRITE 1");
@@ -91,8 +91,8 @@ void home_page::draw_top_lhs() {
         ImGui::PopStyleColor();
         ImGui::SameLine();
         if (!sd_name_.empty()) {
-            if (ImGui::Button(context_->backend->is_open ? "Close SD" : "Open SD")) {
-                if (context_->backend->is_open) {
+            if (ImGui::Button(context_->backend->is_open() ? "Close SD" : "Open SD")) {
+                if (context_->backend->is_open()) {
                     context_->backend->send_cmd("SD_CLOSE");
                 } else {
                     const auto command = fmt::format("SD_START /{}.txt", sd_name_);
@@ -136,7 +136,7 @@ void home_page::draw_top_rhs() {
     ImGui::Separator();
 
     BOLD_DEFAULT(ImGui::SeparatorText("Metrics"));
-    ImGui::BulletText("Backend Status: %s", context_->backend->is_connected ? "Online" : "Offline");
+    ImGui::BulletText("Backend Status: %s", context_->backend->is_connected() ? "Online" : "Offline");
     ImGui::BulletText("Last IP Update: %s", previous_ip_.to_string().c_str());
     ImGui::BulletText("Application FPS: %.2f", ImGui::GetIO().Framerate);
 
