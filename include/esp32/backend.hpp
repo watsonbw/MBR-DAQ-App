@@ -65,12 +65,13 @@ class telemetry_backend {
     }
     void set_logging(bool value) noexcept { is_logging_.store(value, std::memory_order_relaxed); }
 
+    stdx::option<std::vector<std::pair<std::string_view, std::string_view>>>
+    validate_packet(std::string_view str) const;
+
   private:
     void worker_loop();
     void on_message(const ix::WebSocketMessagePtr& msg);
 
-    stdx::option<std::vector<std::pair<std::string_view, std::string_view>>>
-         validate_packet(std::string_view str) const;
     void handle_response(std::string_view line);
     void register_handlers();
 
