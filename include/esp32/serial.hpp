@@ -64,9 +64,13 @@ class serial_manager_t {
         is_serial_write_.store(value, std::memory_order_relaxed);
     }
 
+    [[nodiscard]] std::recursive_mutex&           get_mutex() const noexcept { return mutex_; }
+    [[nodiscard]] const std::vector<std::string>& get_data_stream() const noexcept {
+        return input_stream_;
+    }
+
     [[nodiscard]] std::vector<std::string> get_all_ports() const;
     [[nodiscard]] chosen_port_set_t        get_chosen_ports() const;
-    [[nodiscard]] std::vector<std::string> return_data_stream() const;
 
     void        send_data(const std::string& msg);
     void        receive_data();

@@ -56,7 +56,7 @@ serial_manager_t::~serial_manager_t() { stop(); }
 void serial_manager_t::start() {
     if (worker_.joinable()) { return; }
     keep_running_ = true;
-    worker_      = std::jthread([this]() {
+    worker_       = std::jthread([this]() {
         while (keep_running_) {
             this->clean_ports();
             std::this_thread::sleep_for(1s);
@@ -123,12 +123,6 @@ serial_manager_t::chosen_port_set_t serial_manager_t::get_chosen_ports() const {
     return chosen_ports_;
 }
 
-// TODO(blake): Is a copy really what we want here?
-std::vector<std::string> serial_manager_t::return_data_stream() const {
-    const std::scoped_lock lock{mutex_};
-    return input_stream_;
-}
-
 // Send Data to all selected Serial ports
 void serial_manager_t::send_data(const std::string& msg) {
     const std::scoped_lock   lock{mutex_};
@@ -157,6 +151,11 @@ void serial_manager_t::receive_data() {
             if (it->second->available() > 0) {
                 auto input = it->second->read(it->second->available());
                 input_stream_.push_back(input);
+                if (input_stream_.size() > 1'000) {
+                    input_stream_.erase(input_stream_.begin(),
+                                        input_stream_.begin() +
+                                            static_cast<idiff>(input_stream_.size() - 1'000));
+                }
             }
         } catch (const std::exception& e) {
             log_error(log_, "[SerialManager] Read failed on {}: {}", port, e.what());
