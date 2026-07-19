@@ -57,7 +57,7 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     target_link_libraries(mbrdaq_tests_${TARGET_NAME}
         PRIVATE catch2_${TARGET_NAME} mbrdaq_core_${TARGET_NAME})
     target_include_directories(mbrdaq_tests_${TARGET_NAME}
-        PRIVATE include tests/helpers)
+        PRIVATE include tests)
     target_compile_options(mbrdaq_tests_${TARGET_NAME}
         PRIVATE ${WARNING_IGNORE})
 

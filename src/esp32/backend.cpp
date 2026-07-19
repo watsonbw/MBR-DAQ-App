@@ -39,7 +39,7 @@ using namespace std::chrono_literals;
 namespace mbr {
 
 telemetry_backend::telemetry_backend(log_fn_t log)
-    : log_{std::move(log)}, data_{log_}, serial_manager_{baud_rate_t::ONEONEFIFTYTWO, 500, log_} {
+    : log_{std::move(log)}, data_{DEFAULT_JSON_PATH, log_}, serial_manager_{baud_rate_t::ONEONEFIFTYTWO, 500, log_} {
     buffer_.reserve(4'096);
     register_handlers();
 }

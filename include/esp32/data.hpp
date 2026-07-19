@@ -35,7 +35,7 @@ class telemetry_data {
     };
 
   public:
-    explicit telemetry_data(log_fn_t log = nullptr);
+    explicit telemetry_data(const std::filesystem::path& json_path = DEFAULT_JSON_PATH, log_fn_t log = nullptr);
 
     std::vector<data_info>                data_values;
     [[nodiscard]] const std::vector<f64>& get_time() const { return time_; }
@@ -67,7 +67,7 @@ class telemetry_data {
     void clear();
 
   private:
-    void init_json();
+    void init_json(const std::filesystem::path& path);
     void init_data();
 
   private:
