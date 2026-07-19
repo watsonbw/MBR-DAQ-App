@@ -15,8 +15,6 @@
 
 namespace mbr {
 
-inline const std::filesystem::path DEFAULT_JSON_PATH{"MBR_data.json"};
-
 namespace pages { class view_page; } // namespace pages
 
 struct app_context;
@@ -35,7 +33,7 @@ class telemetry_data {
     };
 
   public:
-    explicit telemetry_data(const std::filesystem::path& json_path = DEFAULT_JSON_PATH, log_fn_t log = nullptr);
+    explicit telemetry_data(const std::filesystem::path& json_path, log_fn_t log = nullptr);
 
     std::vector<data_info>                data_values;
     [[nodiscard]] const std::vector<f64>& get_time() const { return time_; }

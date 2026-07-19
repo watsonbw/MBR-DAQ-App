@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <filesystem>
 #include <functional>
 #include <string>
 #include <string_view>
@@ -34,7 +35,7 @@ enum class response_type_t : u8 {
 
 class telemetry_backend {
   public:
-    explicit telemetry_backend(log_fn_t log = nullptr);
+    explicit telemetry_backend(const std::filesystem::path& json_path, log_fn_t log = nullptr);
     ~telemetry_backend();
 
     void start();

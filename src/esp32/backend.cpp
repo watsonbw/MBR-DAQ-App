@@ -4,6 +4,7 @@
 #include <array>
 #include <charconv>
 #include <chrono>
+#include <filesystem>
 #include <mutex>
 #include <string>
 #include <string_view>
@@ -38,8 +39,9 @@ using namespace std::chrono_literals;
 
 namespace mbr {
 
-telemetry_backend::telemetry_backend(log_fn_t log)
-    : log_{std::move(log)}, data_{DEFAULT_JSON_PATH, log_}, serial_manager_{baud_rate_t::ONEONEFIFTYTWO, 500, log_} {
+telemetry_backend::telemetry_backend(const std::filesystem::path& json_path, log_fn_t log)
+    : log_{std::move(log)}, data_{json_path, log_},
+      serial_manager_{baud_rate_t::ONEONEFIFTYTWO, 500, log_} {
     buffer_.reserve(4'096);
     register_handlers();
 }
