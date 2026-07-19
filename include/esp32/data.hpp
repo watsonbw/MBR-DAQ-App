@@ -2,9 +2,9 @@
 
 #include <filesystem>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
+#include <ankerl/unordered_dense.h>
 #include <nlohmann/json.hpp>
 #include <stdx/option.hh>
 #include <stdx/types.hh>
@@ -25,10 +25,10 @@ using json = nlohmann::json;
 class telemetry_data {
   public:
     struct packed_data {
-        std::vector<u64>                                     time_micros_raw;
-        std::vector<double>                                  time_minutes_normalized;
-        std::unordered_map<std::string, std::vector<double>> series;
-        std::vector<std::string>                             raw_lines;
+        std::vector<u64>                                               time_micros_raw;
+        std::vector<double>                                            time_minutes_normalized;
+        ankerl::unordered_dense::map<std::string, std::vector<double>> series;
+        std::vector<std::string>                                       raw_lines;
     };
 
     struct data_info {
@@ -44,10 +44,10 @@ class telemetry_data {
     explicit telemetry_data(log_fn_t log = nullptr);
     ~telemetry_data() = default;
 
-    std::vector<data_info>                               data_values;
-    std::unordered_map<std::string, std::vector<double>> series;
-    [[nodiscard]] const std::vector<double>&             get_time() const { return time_; }
-    [[nodiscard]] const std::vector<u64>&                get_time_no_normal() const {
+    std::vector<data_info>                                         data_values;
+    ankerl::unordered_dense::map<std::string, std::vector<double>> series;
+    [[nodiscard]] const std::vector<double>& get_time() const { return time_; }
+    [[nodiscard]] const std::vector<u64>&    get_time_no_normal() const {
         return time_no_normal_micros_;
     }
 
