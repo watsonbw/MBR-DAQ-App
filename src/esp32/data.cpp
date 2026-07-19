@@ -2,6 +2,7 @@
 
 #include <charconv>
 #include <exception>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <string_view>
@@ -17,13 +18,14 @@
 
 namespace mbr {
 
-telemetry_data::telemetry_data(log_fn_t log) : log_{std::move(log)} {
-    init_json();
+telemetry_data::telemetry_data(const std::filesystem::path& json_path, log_fn_t log)
+    : log_{std::move(log)} {
+    init_json(json_path);
     init_data();
 }
 
-void telemetry_data::init_json() {
-    std::ifstream f{DEFAULT_JSON_PATH};
+void telemetry_data::init_json(const std::filesystem::path& path) {
+    std::ifstream f{path};
     if (!f.is_open()) {
         log_error(log_, "JSON FILE NOT OPENED");
         return;
