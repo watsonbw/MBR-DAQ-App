@@ -55,12 +55,12 @@ serial_manager_t::~serial_manager_t() { stop(); }
 // Initializes and maintains Serial behavior
 void serial_manager_t::start() {
     if (worker_.joinable()) { return; }
-    keep_running = true;
+    keep_running_ = true;
     worker_      = std::jthread([this]() {
-        while (keep_running) {
+        while (keep_running_) {
             this->clean_ports();
             std::this_thread::sleep_for(1s);
-            if (is_serial_write) { this->receive_data(); }
+            if (is_serial_write_) { this->receive_data(); }
         }
     });
 }
@@ -207,7 +207,7 @@ bool serial_manager_t::is_running() const { return worker_.joinable(); }
 
 void serial_manager_t::stop() {
     if (!worker_.joinable()) { return; }
-    keep_running = false;
+    keep_running_ = false;
     worker_.join();
     close_all();
 }

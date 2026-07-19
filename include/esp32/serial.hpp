@@ -46,13 +46,23 @@ class serial_manager_t {
     explicit serial_manager_t(baud_rate_t baud_rate  = baud_rate_t::ONEONEFIFTYTWO,
                               i32         timeout_ms = 0,
                               log_fn_t    log        = nullptr)
-        : log_{std::move(log)}, baud_rate_{baud_rate}, timeout_ms_{timeout_ms} {}
+        : log_{std::move(log)}, timeout_ms_{timeout_ms}, baud_rate_{baud_rate} {}
     ~serial_manager_t();
     MAKE_PINNED(serial_manager_t);
 
-    std::atomic<bool> keep_running{true};
-    std::atomic<bool> should_send_data{false};
-    std::atomic<bool> is_serial_write{false};
+    [[nodiscard]] bool should_send_data() const noexcept {
+        return should_send_data_.load(std::memory_order_relaxed);
+    }
+    void set_send_data(bool value) noexcept {
+        should_send_data_.store(value, std::memory_order_relaxed);
+    }
+
+    [[nodiscard]] bool is_serial_write() const noexcept {
+        return is_serial_write_.load(std::memory_order_relaxed);
+    }
+    void set_serial_write(bool value) noexcept {
+        is_serial_write_.store(value, std::memory_order_relaxed);
+    }
 
     [[nodiscard]] std::vector<std::string> get_all_ports() const;
     [[nodiscard]] chosen_port_set_t        get_chosen_ports() const;
@@ -76,8 +86,11 @@ class serial_manager_t {
 
   private:
     log_fn_t                     log_;
-    baud_rate_t                  baud_rate_;
     i32                          timeout_ms_;
+    baud_rate_t                  baud_rate_;
+    std::atomic<bool>            keep_running_{true};
+    std::atomic<bool>            should_send_data_{false};
+    std::atomic<bool>            is_serial_write_{false};
     port_map_t                   ports_;
     chosen_port_set_t            chosen_ports_;
     std::jthread                 worker_;
