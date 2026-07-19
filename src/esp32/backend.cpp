@@ -221,7 +221,6 @@ telemetry_backend::validate_packet(std::string_view str) const {
     return parsed;
 }
 
-
 void telemetry_backend::set_ip(const ipv4_t& ipv4) {
     if (!ipv4.is_valid()) {
         log_error(log_, "Requested Ip was invalid: {}", ipv4.to_string());
@@ -295,6 +294,7 @@ void telemetry_backend::register_handlers() {
         std::from_chars(line.data(), line.data() + line.size(), micros);
         local_time t{micros};
         log_info(log_, "Time successfully synced at: {}", t.to_string(false));
+        data_.set_sync_lt(t);
     };
 
     response_handlers_[response_type_t::SDSTART] = [this](std::string_view line) {

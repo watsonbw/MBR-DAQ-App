@@ -1,13 +1,19 @@
 #include "esp32/data.hpp"
 
+#include <charconv>
 #include <exception>
 #include <fstream>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <utility>
 #include <vector>
 
-#include "core/log.hpp"
 #include <stdx/profiler.hh>
+#include <stdx/types.hh>
+
+#include "core/log.hpp"
+#include "core/time.hpp"
 
 namespace mbr {
 
@@ -47,9 +53,22 @@ void telemetry_data::init_data() {
 void telemetry_data::write_data(const std::string& identifier, const std::string& value) {
     PROFILE_FUNCTION();
     try {
-        f64 val = std::stod(value);
+        f64 val;
+        {
+            std::string_view to_parse{value};
+            auto             res = std::from_chars(to_parse.begin(), to_parse.end(), val);
+            if (res.ec != std::errc{} || res.ptr != to_parse.end()) {
+                return log_error(log_, "Failed to parse data into an f64");
+            }
+        }
+
         series[identifier].emplace_back(val);
-    } catch (const std::exception& e) { log_error(log_, "Couldn't write to existng data vector"); }
+        if (identifier == "T") {
+            u64 raw_micros = static_cast<u64>(val);
+            time_no_normal_micros_.emplace_back(raw_micros);
+            time_.emplace_back(local_time{raw_micros}.minutes_since_midnight());
+        }
+    } catch (const std::exception& e) { log_error(log_, "Couldn't write to existing data vector"); }
 }
 
 void telemetry_data::clear() {
@@ -59,6 +78,7 @@ void telemetry_data::clear() {
     raw_lines_.clear();
     current_line_.clear();
     sync_lt_.reset();
+    logged_missing_keys_.clear();
 }
 
 void telemetry_data::save_current_line(const std::string& line) { current_line_ = line; }

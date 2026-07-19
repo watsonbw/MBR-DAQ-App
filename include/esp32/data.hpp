@@ -7,6 +7,7 @@
 #include <ankerl/unordered_dense.h>
 #include <nlohmann/json.hpp>
 #include <stdx/option.hh>
+#include <stdx/type_traits.hh>
 #include <stdx/types.hh>
 
 #include "core/log.hpp"
@@ -24,8 +25,6 @@ using json = nlohmann::json;
 
 class telemetry_data {
   public:
-
-
     struct data_info {
         std::string key;
         std::string name;
@@ -37,12 +36,10 @@ class telemetry_data {
 
   public:
     explicit telemetry_data(log_fn_t log = nullptr);
-    ~telemetry_data() = default;
 
-    std::vector<data_info>                                         data_values;
-    ankerl::unordered_dense::map<std::string, std::vector<double>> series;
-    [[nodiscard]] const std::vector<double>& get_time() const { return time_; }
-    [[nodiscard]] const std::vector<u64>&    get_time_no_normal() const {
+    std::vector<data_info>                data_values;
+    [[nodiscard]] const std::vector<f64>& get_time() const { return time_; }
+    [[nodiscard]] const std::vector<u64>& get_time_no_normal() const {
         return time_no_normal_micros_;
     }
 
@@ -50,6 +47,20 @@ class telemetry_data {
     [[nodiscard]] const stdx::option<local_time>& get_sync_lt() const { return sync_lt_; }
     [[nodiscard]] const std::string&              get_current_line() { return current_line_; }
 
+    template <typename Self>
+    [[nodiscard]] auto& get_series(this Self&& self, const std::string& key) noexcept {
+        auto it = self.series.find(key);
+        if (it != self.series.end()) { return it->second; }
+
+        if (!self.logged_missing_keys_.contains(key)) {
+            self.logged_missing_keys_.insert(key);
+            log_error(self.log_, "Key '{}' not found in telemetry configuration!", key);
+        }
+        static stdx::const_dispatch_t<Self, std::vector<f64>> dummy;
+        return dummy;
+    }
+
+    void set_sync_lt(local_time lt) noexcept { sync_lt_ = lt; }
     void write_data(const std::string& identifier, const std::string& value);
     void write_raw_line(const std::string& message);
     void save_current_line(const std::string& line);
@@ -60,13 +71,15 @@ class telemetry_data {
     void init_data();
 
   private:
-    log_fn_t                 log_;
-    std::string              current_line_;
-    std::vector<u64>         time_no_normal_micros_;
-    std::vector<double>      time_;
-    std::vector<std::string> raw_lines_;
-    double                   sync_start_;
-    stdx::option<local_time> sync_lt_;
+    log_fn_t                                                       log_;
+    std::string                                                    current_line_;
+    std::vector<u64>                                               time_no_normal_micros_;
+    std::vector<double>                                            time_;
+    std::vector<std::string>                                       raw_lines_;
+    double                                                         sync_start_;
+    stdx::option<local_time>                                       sync_lt_;
+    ankerl::unordered_dense::map<std::string, std::vector<double>> series;
+    mutable ankerl::unordered_dense::set<std::string>              logged_missing_keys_;
 
     friend class pages::view_page;
 };

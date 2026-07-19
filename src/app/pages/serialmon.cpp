@@ -58,7 +58,8 @@ void serial_page::draw_top_lhs() {
         ImGui::SameLine();
         text_drawer_.send_data_button();
         if (context_->backend->get_serial_manager().should_send_data()) {
-            context_->backend->get_serial_manager().send_data(context_->backend->get_data().get_current_line());
+            context_->backend->get_serial_manager().send_data(
+                context_->backend->get_data().get_current_line());
         }
         ImGui::Separator();
 
@@ -67,7 +68,8 @@ void serial_page::draw_top_lhs() {
         if (ImGui::BeginCombo("##port_dropdown", "Select Ports to Send Data")) {
             const auto cleanup{gsl::finally(ImGui::EndCombo)};
             for (const auto& port : all_ports) {
-                const bool is_selected = context_->backend->get_serial_manager().is_port_selected(port);
+                const bool is_selected =
+                    context_->backend->get_serial_manager().is_port_selected(port);
                 if (ImGui::Selectable(
                         port.c_str(), is_selected, ImGuiSelectableFlags_NoAutoClosePopups)) {
                     if (!is_selected) {
@@ -135,7 +137,8 @@ void serial_page::draw_bottom() {
     if (ImGui::BeginChild("##datalog")) {
         const auto cleanup{gsl::finally(ImGui::EndChild)};
         ImGui::Separator();
-        utils::draw_data_log(context_->backend->get_serial_manager().return_data_stream());
+        const std::scoped_lock lock{context_->backend->get_serial_manager().get_mutex()};
+        utils::draw_data_log(context_->backend->get_serial_manager().get_data_stream());
     }
 }
 

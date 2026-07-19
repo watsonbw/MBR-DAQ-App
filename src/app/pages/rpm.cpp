@@ -26,14 +26,14 @@ void rpm_page::update() {
     PROFILE_FUNCTION();
     if (ImGui::BeginTable(
             "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
-        const auto cleanup_split{gsl::finally(ImGui::EndTable)};
+        const auto             cleanup_split{gsl::finally(ImGui::EndTable)};
         const std::shared_lock lock{context_->backend->get_data_latch()};
-        const auto& data = context_->backend->get_data();
+        const auto&            data = context_->backend->get_data();
 
         ImGui::TableNextColumn();
         DrawLHS(data.get_raw_lines());
         ImGui::TableNextColumn();
-        DrawRHS(data.get_time(), data.series.at("W"), data.series.at("E"));
+        DrawRHS(data.get_time(), data.get_series("W"), data.get_series("E"));
     }
 }
 

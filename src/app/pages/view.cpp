@@ -1,7 +1,6 @@
 #include "app/pages/view.hpp"
 
 #include <algorithm>
-#include <cstddef>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -322,7 +321,7 @@ void view_page::draw_rhs() {
         }
 
         const std::shared_lock lock{context_->backend->get_data_latch()};
-        const auto& data = context_->backend->get_data();
+        const auto&            data = context_->backend->get_data();
 
         const auto sync_lt    = data.get_sync_lt();
         const auto plot_title = sync_lt
@@ -334,38 +333,38 @@ void view_page::draw_rhs() {
             const auto cleanup_plot{gsl::finally(ImPlot::EndPlot)};
             utils::plot_if_non_empty<f64>("Wheel Speed",
                                           data.get_time(),
-                                          data.series.at("W"),
+                                          data.get_series("W"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::RPMDATA,
                                           plot_percent_);
             utils::plot_if_non_empty<f64>("Engine Speed",
                                           data.get_time(),
-                                          data.series.at("E"),
+                                          data.get_series("E"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::RPMDATA,
                                           plot_percent_);
 
             utils::plot_if_non_empty<f64>("Front Right Shock Travel",
                                           data.get_time(),
-                                          data.series.at("FR"),
+                                          data.get_series("FR"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::SHOCKDATA,
                                           plot_percent_);
             utils::plot_if_non_empty<f64>("Front Left Shock Travel",
                                           data.get_time(),
-                                          data.series.at("FL"),
+                                          data.get_series("FL"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::SHOCKDATA,
                                           plot_percent_);
             utils::plot_if_non_empty<f64>("Rear Right Shock Travel",
                                           data.get_time(),
-                                          data.series.at("RR"),
+                                          data.get_series("RR"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::SHOCKDATA,
                                           plot_percent_);
             utils::plot_if_non_empty<f64>("Rear Left Shock Travel",
                                           data.get_time(),
-                                          data.series.at("RL"),
+                                          data.get_series("RL"),
                                           data_show_ == data_view_t::ALL ||
                                               data_show_ == data_view_t::SHOCKDATA,
                                           plot_percent_);
@@ -401,8 +400,8 @@ void view_page::draw_open_text() {
                 const auto path = open_text_file(previous_path);
                 if (*alive) {
                     const std::scoped_lock<std::mutex> lock{txt_path_mutex_};
-                    selected_txt_                 = path;
-                    txt_dialog_running_           = false;
+                    selected_txt_       = path;
+                    txt_dialog_running_ = false;
                     context_->backend->set_logging(false);
                 }
             } catch (const std::exception& e) {
@@ -690,15 +689,15 @@ stdx::option<usize> view_page::sync_data_video(const std::vector<u64>& micros_ti
 }
 
 void view_page::delete_extra(usize erase_pos) {
-    const std::unique_lock lock{context_->backend->get_data_latch()};
-    std::vector<f64>* const            data[] = {
+    const std::unique_lock  lock{context_->backend->get_data_latch()};
+    std::vector<f64>* const data[] = {
         &context_->backend->get_data().time_,
-        &context_->backend->get_data().series.at("W"),
-        &context_->backend->get_data().series.at("E"),
-        &context_->backend->get_data().series.at("FR"),
-        &context_->backend->get_data().series.at("FL"),
-        &context_->backend->get_data().series.at("RR"),
-        &context_->backend->get_data().series.at("RL"),
+        &context_->backend->get_data().get_series("W"),
+        &context_->backend->get_data().get_series("E"),
+        &context_->backend->get_data().get_series("FR"),
+        &context_->backend->get_data().get_series("FL"),
+        &context_->backend->get_data().get_series("RR"),
+        &context_->backend->get_data().get_series("RL"),
     };
 
     for (const auto& datum : data) {
@@ -706,14 +705,14 @@ void view_page::delete_extra(usize erase_pos) {
     }
 
     for (const auto& datum : data) {
-        datum->erase(datum->begin(), datum->begin() + static_cast<ptrdiff_t>(erase_pos));
+        datum->erase(datum->begin(), datum->begin() + static_cast<idiff>(erase_pos));
     }
 }
 
 void view_page::dynamic_plot_start() {
     if (dynamic_plotting_) {
         const std::shared_lock lock{context_->backend->get_data_latch()};
-        const auto&                        time_vec = context_->backend->get_data().time_;
+        const auto&            time_vec = context_->backend->get_data().time_;
         if (time_vec.empty()) { return; }
         const auto begin_time_min = context_->backend->get_data().time_[0];
 

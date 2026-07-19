@@ -25,18 +25,18 @@ void shock_page::update() {
     PROFILE_FUNCTION();
     if (ImGui::BeginTable(
             "##viewsplit", 2, ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
-        const auto cleanup_split{gsl::finally(ImGui::EndTable)};
+        const auto             cleanup_split{gsl::finally(ImGui::EndTable)};
         const std::shared_lock lock{context_->backend->get_data_latch()};
-        const auto& data = context_->backend->get_data();
+        const auto&            data = context_->backend->get_data();
 
         ImGui::TableNextColumn();
         draw_lhs(data.get_raw_lines());
         ImGui::TableNextColumn();
         draw_rhs(data.get_time(),
-                 data.series.at("FR"),
-                 data.series.at("FL"),
-                 data.series.at("RR"),
-                 data.series.at("RL"));
+                 data.get_series("FR"),
+                 data.get_series("FL"),
+                 data.get_series("RR"),
+                 data.get_series("RL"));
     }
 }
 
