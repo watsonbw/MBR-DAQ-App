@@ -35,10 +35,10 @@ void text_drawers::start_logging_button() {
 bool text_drawers::start_serial_button() {
     bool clicked = false;
     HEADER({
-        if (ImGui::Button(context_->backend->get_serial_manager().is_serial_write ? "Stop Serial"
+        if (ImGui::Button(context_->backend->get_serial_manager().is_serial_write() ? "Stop Serial"
                                                                             : "Start Serial")) {
-            context_->backend->get_serial_manager().is_serial_write =
-                !context_->backend->get_serial_manager().is_serial_write;
+            context_->backend->get_serial_manager().set_serial_write(
+                !context_->backend->get_serial_manager().is_serial_write());
             clicked = true;
         }
     });
@@ -47,10 +47,10 @@ bool text_drawers::start_serial_button() {
 
 void text_drawers::send_data_button() {
     HEADER({
-        if (ImGui::Button(context_->backend->get_serial_manager().should_send_data ? "Stop Data Send"
+        if (ImGui::Button(context_->backend->get_serial_manager().should_send_data() ? "Stop Data Send"
                                                                              : "Send Data")) {
-            context_->backend->get_serial_manager().should_send_data =
-                !context_->backend->get_serial_manager().should_send_data;
+            context_->backend->get_serial_manager().set_send_data(
+                !context_->backend->get_serial_manager().should_send_data());
         }
     });
 }

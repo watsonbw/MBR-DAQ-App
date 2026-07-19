@@ -57,7 +57,7 @@ void serial_page::draw_top_lhs() {
         }
         ImGui::SameLine();
         text_drawer_.send_data_button();
-        if (context_->backend->get_serial_manager().should_send_data) {
+        if (context_->backend->get_serial_manager().should_send_data()) {
             context_->backend->get_serial_manager().send_data(context_->backend->get_data().get_current_line());
         }
         ImGui::Separator();
