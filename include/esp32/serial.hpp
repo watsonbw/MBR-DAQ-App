@@ -97,7 +97,7 @@ class serial_manager_t {
     std::atomic<bool>            is_serial_write_{false};
     port_map_t                   ports_;
     chosen_port_set_t            chosen_ports_;
-    std::jthread                 worker_;
+    std::thread                  worker_;
     std::vector<std::string>     input_stream_;
     mutable std::recursive_mutex mutex_;
 };

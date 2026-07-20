@@ -57,7 +57,7 @@ serial_manager_t::~serial_manager_t() { stop(); }
 void serial_manager_t::start() {
     if (worker_.joinable()) { return; }
     keep_running_ = true;
-    worker_       = std::jthread([this]() {
+    worker_       = std::thread([this]() {
         i32       scan_counter     = 0;
         const i32 scan_counter_max = 200; // 200 * 5ms = 1 second
         while (keep_running_) {

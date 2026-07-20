@@ -88,7 +88,7 @@ class telemetry_backend {
     std::atomic<bool>                                  is_writing_{false};
     std::atomic<bool>                                  is_open_{false};
     std::atomic<bool>                                  should_kill_{false};
-    std::jthread                                       worker_;
+    std::thread                                        worker_;
     ix::WebSocket                                      web_sockets_;
     std::string                                        buffer_;
     ipv4_t                                             ip_addr_;

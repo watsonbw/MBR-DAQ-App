@@ -111,7 +111,7 @@ class view_page : public page {
     std::atomic<bool> force_update_frame_{false};
     data_view_t       data_show_{data_view_t::ALL};
 
-    std::jthread                        decode_thread_;
+    std::thread                         decode_thread_;
     std::atomic<bool>                   thread_running_{false};
     std::mutex                          frame_mutex_;
     std::deque<std::pair<cv::Mat, i32>> frame_queue_;

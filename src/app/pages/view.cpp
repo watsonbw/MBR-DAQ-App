@@ -276,7 +276,7 @@ void view_page::draw_open_video() {
         const auto  alive         = is_alive_;
         const auto& previous_file = video_path_;
 
-        std::jthread([this, alive, previous_file]() noexcept {
+        std::thread([this, alive, previous_file]() noexcept {
             try {
                 const auto path = open_video_file(previous_file);
                 if (*alive) {
@@ -395,7 +395,7 @@ void view_page::draw_open_text() {
         const auto alive         = is_alive_;
         const auto previous_path = txt_path_;
 
-        std::jthread([this, alive, previous_path]() noexcept {
+        std::thread([this, alive, previous_path]() noexcept {
             try {
                 const auto path = open_text_file(previous_path);
                 if (*alive) {
@@ -531,7 +531,7 @@ void view_page::start_decoding_thread() {
     thread_running_ = true;
     is_playing_     = true;
 
-    decode_thread_ = std::jthread([this]() {
+    decode_thread_ = std::thread([this]() {
         cv::VideoCapture cap{video_path_};
         if (!cap.isOpened()) {
             log_error(context_->log, "Failed to open video");

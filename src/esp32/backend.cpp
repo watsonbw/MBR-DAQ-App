@@ -92,7 +92,7 @@ void telemetry_backend::start() {
     });
 
     web_sockets_.start();
-    worker_ = std::jthread(&telemetry_backend::worker_loop, this);
+    worker_ = std::thread(&telemetry_backend::worker_loop, this);
 }
 
 void telemetry_backend::kill() {
