@@ -1,5 +1,10 @@
 function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(mbrdaq_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
+    set_target_properties(mbrdaq_core_${TARGET_NAME} PROPERTIES
+        AUTOMOC ON
+        AUTOUIC OFF
+        AUTORCC OFF
+    )
     target_link_libraries(mbrdaq_core_${TARGET_NAME} PUBLIC
         imgui_setup
         implot_setup
@@ -20,6 +25,8 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         magic_enum::magic_enum
         unordered_dense::unordered_dense
         stdx
+        Qt6::Core
+        Qt6::Widgets
     )
 
     target_include_directories(mbrdaq_core_${TARGET_NAME} PUBLIC include)
@@ -90,7 +97,6 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${TARGET_NAME}
         OUTPUT_NAME ${PROJECT_NAME})
 
-    # Windows still depends on a custom ffmpeg dll provided by opencv
     if(WIN32)
         add_custom_command(TARGET mbrdaq_${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -98,5 +104,14 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
                 "$<TARGET_FILE_DIR:mbrdaq_${TARGET_NAME}>"
             COMMENT "Copy FFMPEG to output directory"
         )
+
+        if(WINDEPLOYQT_EXE)
+            add_custom_command(TARGET mbrdaq_${TARGET_NAME} POST_BUILD
+                COMMAND ${WINDEPLOYQT_EXE}
+                    --dir "$<TARGET_FILE_DIR:mbrdaq_${TARGET_NAME}>"
+                    "$<TARGET_FILE:mbrdaq_${TARGET_NAME}>"
+                COMMENT "Deploy Qt runtime libraries"
+            )
+        endif()
     endif()
 endfunction()

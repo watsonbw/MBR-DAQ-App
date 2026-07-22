@@ -230,3 +230,14 @@ option(ENABLE_STDX_PROFILE "Enable profiling/tracing in stdx" OFF)
 set(STDX_PROFILE ${ENABLE_STDX_PROFILE} CACHE BOOL "" FORCE)
 
 add_vendor_subdirectory(vendor/stdx)
+
+# Qt
+if(WIN32)
+    list(APPEND CMAKE_PREFIX_PATH "C:/msys64/ucrt64")
+endif()
+
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_program(WINDEPLOYQT_EXE windeployqt
+    HINTS "${Qt6_DIR}/../../../bin" "${Qt6_DIR}/../../../share/qt6/bin"
+)
+message(STATUS "windeployqt found: ${WINDEPLOYQT_EXE}")
