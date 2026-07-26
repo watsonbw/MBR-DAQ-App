@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <QApplication>
 
 #include <stdx/types.hh>
 #include <stdx/utility.hh>
@@ -12,13 +13,14 @@ class gui_t;
 
 class app_t {
   public:
-    explicit app_t(i32 arc, char** argv);
+    explicit app_t(i32 argc, char** argv);
     ~app_t();
     MAKE_PINNED(app_t);
 
     void run();
 
   private:
+    std::unique_ptr<QApplication> qt_app_;
     std::unique_ptr<gui_t>       gui_;
     std::shared_ptr<app_context> context_;
 };

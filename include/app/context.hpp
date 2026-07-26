@@ -3,6 +3,7 @@
 #include <atomic>
 #include <memory>
 #include <string>
+#include <QWidget>
 
 #include <stdx/types.hh>
 
@@ -14,9 +15,8 @@ namespace mbr {
 
 enum class page_type_t : u8 {
     HOME,
-    RPM,
-    SHOCK,
-    VIEW,
+    PLOT,
+    ANALYSIS,
     SERIAL,
 };
 
