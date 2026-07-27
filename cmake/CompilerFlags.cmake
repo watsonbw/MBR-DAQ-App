@@ -8,7 +8,7 @@ elseif(WIN32)
 endif()
 
 if(MINGW)
-    add_link_options(-fuse-ld=lld)
+    add_link_options("-static-libgcc" "-static-libstdc++")
 endif()
 
 set(CMAKE_CXX_STANDARD 23)

@@ -159,10 +159,32 @@ add_vendor_subdirectory(vendor/stdx)
 # Qt
 if(WIN32)
     list(APPEND CMAKE_PREFIX_PATH "C:/msys64/ucrt64")
+elseif(APPLE)
+    # Homebrew Qt6 install location differs by CPU architecture
+    execute_process(
+        COMMAND brew --prefix qt
+        OUTPUT_VARIABLE HOMEBREW_QT_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    if(HOMEBREW_QT_PREFIX)
+        list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_QT_PREFIX}")
+    else()
+        # Fallback if `brew` isn't on PATH (e.g. CI) - covers both arches
+        list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/qt" "/usr/local/opt/qt")
+    endif()
 endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
-find_program(WINDEPLOYQT_EXE windeployqt
-    HINTS "${Qt6_DIR}/../../../bin" "${Qt6_DIR}/../../../share/qt6/bin"
-)
-message(STATUS "windeployqt found: ${WINDEPLOYQT_EXE}")
+
+if(WIN32)
+    find_program(WINDEPLOYQT_EXE windeployqt
+        HINTS "${Qt6_DIR}/../../../bin" "${Qt6_DIR}/../../../share/qt6/bin"
+    )
+    message(STATUS "windeployqt found: ${WINDEPLOYQT_EXE}")
+elseif(APPLE)
+    find_program(MACDEPLOYQT_EXE macdeployqt
+        HINTS "${Qt6_DIR}/../../../bin"
+    )
+    message(STATUS "macdeployqt found: ${MACDEPLOYQT_EXE}")
+endif()

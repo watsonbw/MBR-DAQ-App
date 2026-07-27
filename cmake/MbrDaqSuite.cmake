@@ -83,6 +83,14 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
         if (NOT MINGW)
             target_link_options(mbrdaq_${TARGET_NAME} PRIVATE "LINKER:/ENTRY:mainCRTStartup")
         endif()
+    elseif(APPLE)
+        add_executable(mbrdaq_${TARGET_NAME} MACOSX_BUNDLE src/main.cpp)
+        set_target_properties(mbrdaq_${TARGET_NAME} PROPERTIES
+            MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
+            MACOSX_BUNDLE_GUI_IDENTIFIER "com.mbr.daq.${TARGET_NAME}"
+            MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+            MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+        )
     else()
         add_executable(mbrdaq_${TARGET_NAME} src/main.cpp)
     endif()
@@ -123,6 +131,14 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
                     --no-translations
                     "$<TARGET_FILE:mbrdaq_${TARGET_NAME}>"
                 COMMENT "Deploy Qt runtime libraries"
+            )
+        endif()
+    elseif(APPLE)
+        if(MACDEPLOYQT_EXE)
+            add_custom_command(TARGET mbrdaq_${TARGET_NAME} POST_BUILD
+                COMMAND ${MACDEPLOYQT_EXE}
+                    "$<TARGET_BUNDLE_DIR:mbrdaq_${TARGET_NAME}>"
+                COMMENT "Deploy Qt frameworks into app bundle"
             )
         endif()
     endif()
