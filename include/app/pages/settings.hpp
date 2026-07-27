@@ -3,17 +3,18 @@
 #include <memory>
 #include <string>
 
-#include <stdx/types.hh>
 #include <QWidget>
 
+#include "app/context.hpp"
 #include "app/pages/page.hpp"
+#include "core/ip.hpp"
 
 namespace mbr::pages {
 
-class serial_page : public page {
+class settings_page : public page {
   public:
-    explicit serial_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) : page{ctx, parent} {}
-    ~serial_page() override = default;
+    explicit settings_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) : page{ctx, parent} {}
+    ~settings_page() override = default;
 
     void on_enter() override;
     void on_exit() override;
@@ -21,8 +22,9 @@ class serial_page : public page {
 
   private:
 
+
   private:
-    std::string         serial_buffer_;
+
 };
 
 } // namespace mbr::pages

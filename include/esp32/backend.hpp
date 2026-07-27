@@ -34,6 +34,29 @@ enum class response_type_t : u8 {
 };
 
 class telemetry_backend {
+
+    public:
+        using data_cb   = std::function<void(const ankerl::unordered_dense::map<std::string, std::vector<double>>&)>;
+        using status_cb = std::function<void(bool)>;
+        using receiving_cb = std::function<void(bool)>;
+        using cmd_cb    = std::function<void(const std::string&)>;
+
+        void set_on_data(data_cb cb)     { on_data_ = std::move(cb); }
+        void set_on_connection_changed(status_cb cb)   { on_connection_changed_ = std::move(cb); }
+        void set_on_receiving_changed(receiving_cb cb) { on_receiving_changed_ = std::move(cb); }
+        void set_on_cmd(cmd_cb cb)       { on_cmd_ = std::move(cb); }
+
+    private:
+        void notify_data(const ankerl::unordered_dense::map<std::string, std::vector<double>>& s) { if (on_data_) on_data_(s); }
+        void notify_connection_changed(bool c) { if (on_connection_changed_) on_connection_changed_(c); }
+        void notify_receiving_changed(bool r)  { if (on_receiving_changed_) on_receiving_changed_(r); }
+
+        data_cb      on_data_;
+        status_cb    on_connection_changed_;
+        receiving_cb on_receiving_changed_;
+        cmd_cb       on_cmd_;
+
+
   public:
     explicit telemetry_backend(const std::filesystem::path& json_path, log_fn_t log = nullptr);
     ~telemetry_backend();

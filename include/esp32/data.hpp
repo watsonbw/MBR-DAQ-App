@@ -47,8 +47,8 @@ class telemetry_data {
 
     template <typename Self>
     [[nodiscard]] auto& get_series(this Self&& self, const std::string& key) noexcept {
-        auto it = self.series.find(key);
-        if (it != self.series.end()) { return it->second; }
+        auto it = self.series_.find(key);
+        if (it != self.series_.end()) { return it->second; }
 
         if (!self.logged_missing_keys_.contains(key)) {
             self.logged_missing_keys_.insert(key);
@@ -56,6 +56,10 @@ class telemetry_data {
         }
         static stdx::const_dispatch_t<Self, std::vector<f64>> dummy;
         return dummy;
+    }
+
+    [[nodiscard]] auto& get_series() noexcept {
+        return series_;
     }
 
     void set_sync_lt(local_time lt) noexcept { sync_lt_ = lt; }
@@ -76,7 +80,7 @@ class telemetry_data {
     std::vector<std::string>                                       raw_lines_;
     double                                                         sync_start_;
     stdx::option<local_time>                                       sync_lt_;
-    ankerl::unordered_dense::map<std::string, std::vector<double>> series;
+    ankerl::unordered_dense::map<std::string, std::vector<double>> series_;
     mutable ankerl::unordered_dense::set<std::string>              logged_missing_keys_;
 
     friend class pages::view_page;

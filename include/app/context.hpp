@@ -7,7 +7,6 @@
 
 #include <stdx/types.hh>
 
-#include "app/style.hpp"
 #include "core/log.hpp"
 #include "esp32/backend.hpp"
 
@@ -18,6 +17,7 @@ enum class page_type_t : u8 {
     PLOT,
     ANALYSIS,
     SERIAL,
+    SETTINGS,
 };
 
 [[nodiscard]] constexpr const char* page_type_str(page_type_t page_type) {
@@ -26,6 +26,7 @@ enum class page_type_t : u8 {
     case page_type_t::PLOT:    return "Plot";
     case page_type_t::ANALYSIS:  return "Analysis";
     case page_type_t::SERIAL: return "Serial Monitor";
+    case page_type_t::SETTINGS: return "Settings";
     default:                  return "Unknown";
     }
 }
@@ -34,7 +35,6 @@ class telemetry_backend;
 
 struct app_context {
     log_t             logger;
-    app_style         style;
     page_type_t       current_page_type;
     std::atomic<bool> should_exit{false};
     bool              is_cmd_input_focused{false};

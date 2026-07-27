@@ -1,4 +1,4 @@
-#include "app/pages/plot.hpp"
+#include "app/pages/settings.hpp"
 
 #include <shared_mutex>
 #include <string>
@@ -14,10 +14,10 @@
 
 namespace mbr::pages {
 
-void plot_page::on_enter() { log_info(context_->log, "Entered PlotPage"); }
-void plot_page::on_exit() { log_info(context_->log, "Exited PlotPage"); }
+void settings_page::on_enter() { log_info(context_->log, "Entered SettingsPage"); }
+void settings_page::on_exit() { log_info(context_->log, "Exited SettingsPage"); }
 
-void plot_page::update() {
+void settings_page::update() {
 }
 
 } // namespace mbr::pages

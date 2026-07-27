@@ -5,15 +5,9 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         AUTOUIC OFF
         AUTORCC OFF
     )
+
     target_link_libraries(mbrdaq_core_${TARGET_NAME} PUBLIC
-        imgui_setup
-        implot_setup
         tinyfiledialogs
-        opencv_core
-        opencv_imgproc
-        opencv_imgcodecs
-        opencv_videoio
-        opencv_highgui
         spdlog::spdlog
         ixwebsocket
         stb_image_setup
@@ -42,11 +36,13 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
 
     target_compile_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
     target_compile_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
+
     if(APPLE)
-        target_link_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS} "-static-libstdc++")
+        target_link_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
     elseif(WIN32)
         target_link_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
     endif()
+
     set_target_properties(mbrdaq_core_${TARGET_NAME}
         PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${OUT_DIR})
 
@@ -60,6 +56,7 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     set_target_properties(catch2_${TARGET_NAME}
         PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${OUT_DIR})
 
+    # Test Executable
     add_executable(mbrdaq_tests_${TARGET_NAME} ${TEST_SOURCES})
     target_link_libraries(mbrdaq_tests_${TARGET_NAME}
         PRIVATE catch2_${TARGET_NAME} mbrdaq_core_${TARGET_NAME})
@@ -71,6 +68,7 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     target_compile_options(mbrdaq_tests_${TARGET_NAME}
         PRIVATE ${EXTRA_FLAGS})
     target_link_options(mbrdaq_tests_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
+
     set_target_properties(mbrdaq_tests_${TARGET_NAME}
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUT_DIR})
 endfunction()
@@ -90,6 +88,7 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
     endif()
 
     target_link_libraries(mbrdaq_${TARGET_NAME} PRIVATE mbrdaq_core_${TARGET_NAME})
+
     add_custom_target(${TARGET_NAME} DEPENDS
         mbrdaq_tests_${TARGET_NAME} mbrdaq_${TARGET_NAME})
 
@@ -98,17 +97,30 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
         OUTPUT_NAME ${PROJECT_NAME})
 
     if(WIN32)
+        # Ensure destination directory exists
         add_custom_command(TARGET mbrdaq_${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/bin"
             COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${CMAKE_BINARY_DIR}/bin"
                 "$<TARGET_FILE_DIR:mbrdaq_${TARGET_NAME}>"
-            COMMENT "Copy FFMPEG to output directory"
+            COMMENT "Copy FFMPEG binaries to output directory"
+        )
+
+        # Automatically copy MSYS2 GCC/MinGW compiler runtimes
+        add_custom_command(TARGET mbrdaq_${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "C:/msys64/ucrt64/bin/libstdc++-6.dll"
+                "C:/msys64/ucrt64/bin/libgcc_s_seh-1.dll"
+                "C:/msys64/ucrt64/bin/libwinpthread-1.dll"
+                "$<TARGET_FILE_DIR:mbrdaq_${TARGET_NAME}>"
+            COMMENT "Copying MinGW runtime DLLs"
         )
 
         if(WINDEPLOYQT_EXE)
             add_custom_command(TARGET mbrdaq_${TARGET_NAME} POST_BUILD
                 COMMAND ${WINDEPLOYQT_EXE}
                     --dir "$<TARGET_FILE_DIR:mbrdaq_${TARGET_NAME}>"
+                    --no-translations
                     "$<TARGET_FILE:mbrdaq_${TARGET_NAME}>"
                 COMMENT "Deploy Qt runtime libraries"
             )

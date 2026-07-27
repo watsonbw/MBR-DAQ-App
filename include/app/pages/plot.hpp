@@ -8,13 +8,12 @@
 #include <QWidget>
 
 #include "app/pages/page.hpp"
-#include "app/pages/utils.hpp"
 
 namespace mbr::pages {
 
 class plot_page : public page {
   public:
-    explicit plot_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) :  page{ctx, parent}, text_utils_{ctx} {}
+    explicit plot_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) :  page{ctx, parent} {}
     ~plot_page() override = default;
 
     void on_enter() override;
@@ -29,7 +28,6 @@ class plot_page : public page {
                   gsl::span<const double> bl);
 
   private:
-    utils::text_drawers text_utils_;
     std::string         download_fd_text_;
 };
 
