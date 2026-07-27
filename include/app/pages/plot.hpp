@@ -5,16 +5,17 @@
 #include <vector>
 
 #include <gsl/span>
+#include <QWidget>
 
 #include "app/pages/page.hpp"
 #include "app/pages/utils.hpp"
 
 namespace mbr::pages {
 
-class shock_page : public page {
+class plot_page : public page {
   public:
-    explicit shock_page(const std::shared_ptr<app_context>& ctx) : page{ctx}, text_utils_{ctx} {}
-    ~shock_page() override = default;
+    explicit plot_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) :  page{ctx, parent}, text_utils_{ctx} {}
+    ~plot_page() override = default;
 
     void on_enter() override;
     void on_exit() override;

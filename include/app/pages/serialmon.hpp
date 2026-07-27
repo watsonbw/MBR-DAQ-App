@@ -4,6 +4,7 @@
 #include <string>
 
 #include <stdx/types.hh>
+#include <QWidget>
 
 #include "app/pages/page.hpp"
 #include "app/pages/utils.hpp"
@@ -12,7 +13,7 @@ namespace mbr::pages {
 
 class serial_page : public page {
   public:
-    explicit serial_page(const std::shared_ptr<app_context>& ctx) : page{ctx}, text_drawer_{ctx} {}
+    explicit serial_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) : page{ctx, parent}, text_drawer_{ctx} {}
     ~serial_page() override = default;
 
     void on_enter() override;

@@ -21,7 +21,7 @@ namespace mbr {
 
 namespace { const std::filesystem::path DEFAULT_JSON_PATH{"MBR_data.json"}; } // namespace
 
-app_t::app_t(i32 argc, char** argv) : qt_app_{std::make_unique<QApplication>(argc, argv)}, context_{std::make_shared<app_context>()}  /*, m_Manager{m_Context}*/ {
+app_t::app_t(i32 argc, char** argv) : qt_app_{std::make_unique<QApplication>(argc, argv)}, context_{std::make_shared<app_context>()} {
     context_->log = context_->logger.get_log_fn();
     ix::initNetSystem();
     gui_              = std::make_unique<gui_t>(context_);

@@ -15,6 +15,7 @@
 #include <sokol_gfx.h>
 #include <stdx/option.hh>
 #include <stdx/types.hh>
+#include <QWidget>
 
 #include "app/assets/texture.hpp"
 #include "app/context.hpp"
@@ -23,7 +24,7 @@
 
 namespace mbr::pages {
 
-class view_page : public page {
+class analysis_page : public page {
   public:
     using selected_video_t    = stdx::option<std::pair<std::string, stdx::option<date_time>>>;
     using selected_txt_file_t = stdx::option<std::string>;
@@ -37,8 +38,8 @@ class view_page : public page {
     [[nodiscard]] static const char* data_type_string(data_view_t type);
 
   public:
-    explicit view_page(const std::shared_ptr<app_context>& ctx);
-    ~view_page() override;
+      explicit analysis_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) : page(ctx, parent) {};
+    ~analysis_page() override;
 
     void on_enter() override;
     void on_exit() override;
@@ -118,9 +119,9 @@ class view_page : public page {
     std::condition_variable             queue_cv_;
 
     ImVec2                 button_size_{24, 24};
-    assets::button_texture play_button_;
-    assets::button_texture pause_button_;
-    assets::button_texture step_button_;
+    //assets::button_texture play_button_;
+    //assets::button_texture pause_button_;
+    //assets::button_texture step_button_;
 
     sg_image    video_texture_{SG_INVALID_ID};
     sg_view     video_view_{SG_INVALID_ID};

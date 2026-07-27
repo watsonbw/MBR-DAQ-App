@@ -3,6 +3,8 @@
 #include <memory>
 #include <string>
 
+#include <QWidget>
+
 #include "app/context.hpp"
 #include "app/pages/page.hpp"
 #include "core/ip.hpp"
@@ -11,7 +13,7 @@ namespace mbr::pages {
 
 class home_page : public page {
   public:
-    explicit home_page(const std::shared_ptr<app_context>& ctx) : page{ctx} {}
+    explicit home_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) : page{ctx, parent} {}
     ~home_page() override = default;
 
     void on_enter() override;

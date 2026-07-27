@@ -23,9 +23,8 @@ enum class page_type_t : u8 {
 [[nodiscard]] constexpr const char* page_type_str(page_type_t page_type) {
     switch (page_type) {
     case page_type_t::HOME:   return "Home";
-    case page_type_t::RPM:    return "RPM";
-    case page_type_t::SHOCK:  return "Shock";
-    case page_type_t::VIEW:   return "View";
+    case page_type_t::PLOT:    return "Plot";
+    case page_type_t::ANALYSIS:  return "Analysis";
     case page_type_t::SERIAL: return "Serial Monitor";
     default:                  return "Unknown";
     }

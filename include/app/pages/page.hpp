@@ -1,12 +1,15 @@
 #pragma once
 
 #include <memory>
+#include <QWidget>
+#include <qtmetamacros.h>
 
 #include "app/context.hpp"
 
 namespace mbr::pages {
 
-class page {
+class page : public QWidget{
+    Q_OBJECT
   public:
     page()          = default;
     virtual ~page() = default;
@@ -16,7 +19,7 @@ class page {
     virtual void update()   = 0;
 
   protected:
-    explicit page(const std::shared_ptr<app_context>& ctx) : context_{ctx} {}
+    explicit page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) : QWidget(parent), context_{ctx} {}
     std::shared_ptr<app_context> context_;
 };
 

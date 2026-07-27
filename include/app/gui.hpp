@@ -6,6 +6,9 @@
 #include <qtmetamacros.h>
 #include "app/context.hpp"
 #include "app/pages/page.hpp"
+#include <stdx/assert.hh>
+#include <stdx/profiler.hh>
+#include <stdx/types.hh>
 
 namespace mbr {
 
@@ -21,12 +24,8 @@ private:
 
 private:
     QStackedWidget*              pages_;
-    pages::page*                 current_page_ = nullptr; // now owned by pages_, not unique_ptr
-    //homepage*                  home_page_;
-    //plot_page*                 plot_page;
-    //analysis_page*             analysis_page_;
-    //serial_page*               serial_page;
     std::shared_ptr<app_context> context_;
+    ankerl::unordered_dense::map<page_type_t, QWidget*> page_lookup_;
 };
 
 } // namespace mbr
