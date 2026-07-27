@@ -21,9 +21,6 @@ class serial_page : public page {
     void update() override;
 
   private:
-    void draw_top_lhs();
-    void draw_top_rhs();
-    void draw_bottom();
 
   private:
     utils::text_drawers text_drawer_;

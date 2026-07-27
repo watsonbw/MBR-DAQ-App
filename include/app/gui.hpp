@@ -15,7 +15,7 @@ namespace mbr {
 class gui_t : public QMainWindow {
     Q_OBJECT
 public:
-    explicit gui_t(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr);
+    explicit gui_t(const std::shared_ptr<app_context>& ctx);
 
 private:
     void change_page(page_type_t type);

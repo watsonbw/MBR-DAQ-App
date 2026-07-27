@@ -46,31 +46,6 @@ class analysis_page : public page {
     void update() override;
 
   private:
-    void cleanup();
-
-    void draw_lhs();
-    void draw_lhs_controls();
-    void draw_open_video();
-
-    void draw_rhs();
-    void draw_open_text();
-    void draw_sync_video_buttons();
-
-    selected_video_t open_video_file(const std::string& previous_file);
-    void             request_seek(i32 frame_index);
-
-    selected_txt_file_t open_text_file(const std::string& previous_file);
-    void                load_data();
-    stdx::option<usize> sync_data_video(const std::vector<u64>& micros_times);
-    void                delete_extra(usize erase_pos);
-    void                dynamic_plot_start();
-    void                dynamic_plot_loop();
-
-    void start_decoding_thread();
-    void stop_decoding_thread();
-    void update_texture(bool is_timer_tick);
-
-    void try_cleanup_sokol_resources();
 
   private:
     std::shared_ptr<bool> is_alive_;

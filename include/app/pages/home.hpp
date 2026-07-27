@@ -21,13 +21,7 @@ class home_page : public page {
     void update() override;
 
   private:
-    void draw_top_lhs();
-    void draw_top_rhs();
 
-    void draw_bottom_lhs();
-    void draw_bottom_rhs();
-    void draw_ip_controls();
-    void draw_credential_controls();
 
   private:
     ipv4_t      previous_ip_;
