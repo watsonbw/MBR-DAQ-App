@@ -24,7 +24,7 @@ jobs:
               if: runner.os == 'macOS'
               run: |
                   brew update
-                  brew install llvm
+                  brew install llvm qt
               env:
                   HOMEBREW_NO_AUTO_UPDATE: 1
 
@@ -38,6 +38,7 @@ jobs:
                       mingw-w64-ucrt-x86_64-gcc
                       mingw-w64-ucrt-x86_64-cmake
                       mingw-w64-ucrt-x86_64-ninja
+                      mingw-w64-ucrt-x86_64-qt6-base
                       zip
                       tar
 
@@ -78,3 +79,17 @@ jobs:
                   path: |
                       *.tar.gz
                       *.zip
+                
+    release:
+        needs: package
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/download-artifact@v4
+              with:
+                  path: artifacts
+                  merge-multiple: true
+            - uses: softprops/action-gh-release@v2
+              with:
+                  files: artifacts/*
