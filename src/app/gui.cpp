@@ -98,7 +98,7 @@ namespace mbr {
             context_->backend->send_cmd(std::format("CMD SYNC {}", sync_time));
         });
 
-        menuBar()->addAction("Restart Connection", this, [this] { context_->backend->get_try_connection() = true; });
+        menuBar()->addAction("Restart Connection", this, [this] { context_->backend->restart(); });
 
         menuBar()->addAction("Clear Data", this, [this] { context_->backend->get_data().clear(); });
 

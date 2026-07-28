@@ -108,6 +108,12 @@ void telemetry_backend::kill() {
     }
 }
 
+void telemetry_backend::restart() {
+    kill();
+    should_kill_ = false;
+    start();
+}
+
 void telemetry_backend::send_cmd(const std::string& text) {
     if (web_sockets_.getReadyState() == ix::ReadyState::Open) {
         const ix::WebSocketSendInfo info = web_sockets_.send(text);
@@ -244,7 +250,6 @@ void telemetry_backend::set_ip(const ipv4_t& ipv4) {
     kill();
     should_kill_ = false;
     start();
-    try_connection_ = false;
 }
 
 namespace {

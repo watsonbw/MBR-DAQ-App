@@ -25,6 +25,7 @@ app_t::app_t(i32 argc, char** argv) : qt_app_{std::make_unique<QApplication>(arg
     ix::initNetSystem();
     context_->backend = std::make_unique<telemetry_backend>(DEFAULT_JSON_PATH, context_->log);
     gui_              = std::make_unique<gui_t>(context_);
+    context_->backend->start();
 }
 
 app_t::~app_t() { ix::uninitNetSystem(); }

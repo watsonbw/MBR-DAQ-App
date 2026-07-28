@@ -71,7 +71,6 @@ class telemetry_backend {
     [[nodiscard]] const telemetry_data& get_data() const noexcept { return data_; }
     [[nodiscard]] serial_manager_t&     get_serial_manager() noexcept { return serial_manager_; }
 
-    [[nodiscard]] std::atomic<bool>& get_try_connection() noexcept { return try_connection_; }
 
     [[nodiscard]] bool is_connected() const noexcept {
         return is_connected_.load(std::memory_order_relaxed);
@@ -91,6 +90,7 @@ class telemetry_backend {
 
     stdx::option<std::vector<std::pair<std::string_view, std::string_view>>>
     validate_packet(std::string_view str) const;
+    void restart();
 
   private:
     void worker_loop();
@@ -104,7 +104,6 @@ class telemetry_backend {
     rw_latch                                           data_latch_;
     telemetry_data                                     data_;
     serial_manager_t                                   serial_manager_;
-    std::atomic<bool>                                  try_connection_{false};
     std::atomic<bool>                                  is_connected_{false};
     std::atomic<bool>                                  is_logging_{false};
     std::atomic<bool>                                  is_receiving_{false};
