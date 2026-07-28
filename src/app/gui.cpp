@@ -32,6 +32,7 @@
 #include "app/pages/settings.hpp"
 #include "core/time.hpp"
 #include "esp32/backend.hpp"
+#include "stdx/enum.hh"
 
 using namespace std::chrono;
 
@@ -40,8 +41,8 @@ namespace mbr {
     gui_t::gui_t(const std::shared_ptr<app_context>& ctx) : bridge_(ctx->backend.get(), this), context_(ctx) {
         pages_ = new QStackedWidget(this);
         setCentralWidget(pages_);
-        for (auto type : {page_type_t::HOME, page_type_t::PLOT, page_type_t::ANALYSIS, page_type_t::SERIAL}) {
-            pages::page* p = create_page(type, context_, pages_);
+        for (auto type : stdx::enum_range<page_type_t>()) {
+            auto* p = create_page(type, context_, pages_);
             pages_->addWidget(p);
             page_lookup_[type] = p;
         }

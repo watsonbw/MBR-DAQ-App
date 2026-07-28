@@ -8,6 +8,8 @@
 #include "app/context.hpp"
 #include "app/pages/page.hpp"
 #include "app/backend_bridge.hpp"
+#include "stdx/fixed/enum_map.hh"
+#include <qwidget.h>
 #include <stdx/assert.hh>
 #include <stdx/profiler.hh>
 #include <stdx/types.hh>
@@ -30,7 +32,7 @@ private:
     backend_bridge bridge_;
     QStackedWidget*              pages_;
     std::shared_ptr<app_context> context_;
-    ankerl::unordered_dense::map<page_type_t, QWidget*> page_lookup_;
+    stdx::fixed::enum_map<page_type_t, QWidget*> page_lookup_;
     QLabel* connection_status_;
     QLabel* status_dot_ = nullptr;
     bool    is_connected_ = false;
