@@ -18,7 +18,7 @@ class settings_page : public page {
 
     void on_enter() override;
     void on_exit() override;
-    void update() override;
+    void build_page() override;
 
   private:
 

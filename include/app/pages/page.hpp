@@ -16,7 +16,7 @@ class page : public QWidget{
 
     virtual void on_enter() = 0;
     virtual void on_exit()  = 0;
-    virtual void update()   = 0;
+    virtual void build_page() = 0;
 
   protected:
     explicit page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) : QWidget(parent), context_{ctx} {}

@@ -18,10 +18,11 @@ class home_page : public page {
 
     void on_enter() override;
     void on_exit() override;
-    void update() override;
+    void build_page() override;
 
   private:
-
+    void build_rhs();
+    void build_lhs();
 
   private:
     ipv4_t      previous_ip_;

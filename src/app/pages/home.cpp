@@ -16,7 +16,17 @@ namespace mbr::pages {
 void home_page::on_enter() { log_info(context_->log, "Entered HomePage"); }
 void home_page::on_exit() { log_info(context_->log, "Exited HomePage"); }
 
-void home_page::update() {
+void home_page::build_page() {
     PROFILE_FUNCTION();
+    build_rhs();
+    build_lhs();
+}
+
+void home_page::build_rhs() {
+
+}
+
+void home_page::build_lhs() {
+
 }
 } // namespace mbr::pages

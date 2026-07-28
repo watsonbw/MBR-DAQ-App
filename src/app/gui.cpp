@@ -22,6 +22,7 @@
 #include <QLineEdit>
 
 #include "app/assets/images/app_icon.hpp"
+#include "app/backend_bridge.hpp"
 #include "app/pages/page.hpp"
 #include "app/context.hpp"
 #include "app/pages/home.hpp"
@@ -66,27 +67,64 @@ namespace mbr {
     }
 
     void gui_t::build_menu_bar() {
-        menuBar()->setStyleSheet(R"(
+        static const QString kMenuBarStyle = R"(
             QMenuBar {
                 background-color: #2b2b2b;
                 color: white;
                 font-size: 20px;
                 spacing: 2px;
+                border-bottom: 1px solid #3C3F41;
             }
             QMenuBar::item {
                 background-color: transparent;
                 padding: 4px 6px;
                 border-radius: 4px;
+                border: 1px solid transparent;
             }
             QMenuBar::item:selected {
                 background-color: #3C3F41;
+                border: 1px solid #5A5D5F;
             }
-        )");
+        )";
+
+        static const QString kMenuStyle = R"(
+            QMenu {
+                background-color: #2b2b2b;
+                color: white;
+                font-size: 20px;
+                border: 1px solid #3C3F41;
+                padding: 4px;
+            }
+            QMenu::item {
+                background-color: transparent;
+                padding: 4px 24px 4px 12px;
+                border-radius: 4px;
+                border: 1px solid transparent;
+            }
+            QMenu::item:selected {
+                background-color: #3C3F41;
+                border: 1px solid #5A5D5F;
+            }
+            QMenu::item:disabled {
+                color: #6e6e6e;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: #3C3F41;
+                margin: 4px 6px;
+            }
+        )";
+
+        menuBar()->setStyleSheet(kMenuBarStyle);
+
         auto* file = menuBar()->addMenu("File");
+        file->setStyleSheet(kMenuStyle);
         file->addAction("Settings");
         file->addAction("Export Log");
         file->addAction("Exit", this, [] { QApplication::quit(); });
+
         auto* nav = menuBar()->addMenu("Navigation");
+        nav->setStyleSheet(kMenuStyle);
         nav->addAction("Home", this, [this] { change_page(page_type_t::HOME); });
         nav->addAction("Plot", this, [this] { change_page(page_type_t::PLOT); });
         nav->addAction("Serial", this, [this] { change_page(page_type_t::SERIAL); });

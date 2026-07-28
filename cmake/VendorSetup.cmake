@@ -175,7 +175,7 @@ elseif(APPLE)
     endif()
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Charts PrintSupport)
 
 if(WIN32)
     find_program(WINDEPLOYQT_EXE windeployqt
@@ -188,3 +188,30 @@ elseif(APPLE)
     )
     message(STATUS "macdeployqt found: ${MACDEPLOYQT_EXE}")
 endif()
+
+# QCustomPlot
+include(FetchContent)
+
+FetchContent_Declare(
+    qcustomplot
+    URL https://www.qcustomplot.com/release/2.1.1/QCustomPlot-source.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    SOURCE_SUBDIR "no-cmake"
+)
+
+FetchContent_MakeAvailable(qcustomplot)
+
+add_library(QCustomPlot STATIC
+    ${qcustomplot_SOURCE_DIR}/qcustomplot.cpp
+    ${qcustomplot_SOURCE_DIR}/qcustomplot.h
+)
+
+set_target_properties(QCustomPlot PROPERTIES
+    AUTOMOC ON
+    AUTOUIC OFF
+    AUTORCC OFF
+)
+
+target_include_directories(QCustomPlot PUBLIC ${qcustomplot_SOURCE_DIR})
+target_compile_options(QCustomPlot PRIVATE ${WARNING_IGNORE})
+target_link_libraries(QCustomPlot PUBLIC Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::PrintSupport)

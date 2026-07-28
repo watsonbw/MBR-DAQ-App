@@ -21,6 +21,9 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         stdx
         Qt6::Core
         Qt6::Widgets
+        Qt6::Charts
+        Qt6::PrintSupport
+        QCustomPlot
     )
 
     target_include_directories(mbrdaq_core_${TARGET_NAME} PUBLIC include)
@@ -112,16 +115,6 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
                 "${CMAKE_BINARY_DIR}/bin"
                 "$<TARGET_FILE_DIR:mbrdaq_${TARGET_NAME}>"
             COMMENT "Copy FFMPEG binaries to output directory"
-        )
-
-        # Automatically copy MSYS2 GCC/MinGW compiler runtimes
-        add_custom_command(TARGET mbrdaq_${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "C:/msys64/ucrt64/bin/libstdc++-6.dll"
-                "C:/msys64/ucrt64/bin/libgcc_s_seh-1.dll"
-                "C:/msys64/ucrt64/bin/libwinpthread-1.dll"
-                "$<TARGET_FILE_DIR:mbrdaq_${TARGET_NAME}>"
-            COMMENT "Copying MinGW runtime DLLs"
         )
 
         if(WINDEPLOYQT_EXE)
