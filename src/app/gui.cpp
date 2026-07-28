@@ -155,6 +155,11 @@ namespace mbr {
             connection_status_->setText(connected ? "Connected" : "Disconnected");
             update_status_dot();
         });
+
+        connect(context_->bridge.get(), &backend_bridge::receiving_changed, this, [this](bool receiving) {
+            is_receiving_ = receiving;
+            update_status_dot();
+        });
         connection_status_->setStyleSheet("font-size: 20px;");
 
         status_dot_ = new QLabel(rightWidget);

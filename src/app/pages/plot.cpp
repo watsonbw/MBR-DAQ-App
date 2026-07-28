@@ -6,6 +6,7 @@
 #include <qtoolbutton.h>
 #include <qtreewidget.h>
 #include <qtreewidgetitemiterator.h>
+#include <spdlog/common.h>
 #include <string>
 #include <vector>
 #include <cstddef>
@@ -296,7 +297,14 @@ void plot_page::plot_signal(const std::string key) {
     auto series = context_->backend->get_data().get_series(key);
     auto time   = context_->backend->get_data().get_time();
 
-    QVector<double> x_times(time.begin(), time.end());
+    if (!has_offset_ && !time.empty()) {
+        time_offset_ = time.front();
+        has_offset_  = true;
+    }
+
+    QVector<double> x_times;
+    x_times.reserve(time.size());
+    for (auto t : time) x_times.append(t - time_offset_);
     QVector<double> y_values(series.begin(), series.end());
 
     QCPGraph* graph = plot_->addGraph();
@@ -331,6 +339,10 @@ void plot_page::on_data_updated() {
 }
 
 void plot_page::update_plot() {
+    auto sync_opt = context_->backend->get_data().get_sync_lt();
+        plot_->xAxis->setLabel(sync_opt
+            ? QString("Data Synced at: %1").arg(QString::fromStdString(sync_opt->to_string(false)))
+            : "No Time Synced");
 
     if (active_graphs_.empty()) {
         return;
@@ -354,7 +366,11 @@ void plot_page::update_plot() {
             continue;
         }
 
-        QVector<double> new_x(time.begin() + already_plotted, time.end());
+        QVector<double> new_x;
+            new_x.reserve(total - already_plotted);
+            for (auto it = time.begin() + already_plotted; it != time.end(); ++it) {
+                new_x.append(*it - time_offset_);
+            }
         QVector<double> new_y(series.begin() + already_plotted, series.end());
         graph->addData(new_x, new_y);
 

@@ -57,6 +57,9 @@ class plot_page : public page {
     bool pending_update_ = false;
     QTimer* redraw_timer_ = nullptr;
 
+    double time_offset_ = 0.0;
+    bool   has_offset_  = false;
+
   private slots:
     void on_data_updated();
 };

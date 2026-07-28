@@ -72,7 +72,7 @@ void telemetry_data::clear() {
     time_no_normal_micros_.clear();
     raw_lines_.clear();
     current_line_.clear();
-    sync_lt_.reset();
+    //sync_lt_.reset();
     logged_missing_keys_.clear();
 }
 
