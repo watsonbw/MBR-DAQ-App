@@ -148,12 +148,18 @@ namespace mbr {
 
 
         connection_status_ = new QLabel("Disconnected", rightWidget);
+        connection_status_->setStyleSheet("font-size: 20px;");
+        connection_status_->setMinimumWidth(connection_status_->fontMetrics().horizontalAdvance("Disconnected") + 4);
+        connection_status_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        int w = std::max(connection_status_->fontMetrics().horizontalAdvance("Connected"), connection_status_->fontMetrics().horizontalAdvance("Disconnected"));
+        connection_status_->setMinimumWidth(w + 4);
 
         connect(context_->bridge.get(), &backend_bridge::connection_changed, this, [this](bool connected) {
             is_connected_ = connected;
             if (!connected) is_receiving_ = false;
             connection_status_->setText(connected ? "Connected" : "Disconnected");
             update_status_dot();
+
         });
 
         connect(context_->bridge.get(), &backend_bridge::receiving_changed, this, [this](bool receiving) {
