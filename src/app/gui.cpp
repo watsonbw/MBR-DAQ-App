@@ -38,7 +38,7 @@ using namespace std::chrono;
 
 namespace mbr {
 
-    gui_t::gui_t(const std::shared_ptr<app_context>& ctx) : bridge_(ctx->backend.get(), this), context_(ctx) {
+    gui_t::gui_t(const std::shared_ptr<app_context>& ctx) : context_(ctx) {
         pages_ = new QStackedWidget(this);
         setCentralWidget(pages_);
         for (auto type : stdx::enum_range<page_type_t>()) {
@@ -149,7 +149,7 @@ namespace mbr {
 
         connection_status_ = new QLabel("Disconnected", rightWidget);
 
-        connect(&bridge_, &backend_bridge::connection_changed, this, [this](bool connected) {
+        connect(context_->bridge.get(), &backend_bridge::connection_changed, this, [this](bool connected) {
             is_connected_ = connected;
             if (!connected) is_receiving_ = false;
             connection_status_->setText(connected ? "Connected" : "Disconnected");

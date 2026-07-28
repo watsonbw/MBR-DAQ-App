@@ -15,6 +15,7 @@
 #include "core/log.hpp"
 #include "esp32/backend.hpp"
 #include "esp32/data.hpp"
+#include "app/backend_bridge.hpp"
 
 namespace mbr {
 
@@ -24,6 +25,7 @@ app_t::app_t(i32 argc, char** argv) : qt_app_{std::make_unique<QApplication>(arg
     context_->log = context_->logger.get_log_fn();
     ix::initNetSystem();
     context_->backend = std::make_unique<telemetry_backend>(DEFAULT_JSON_PATH, context_->log);
+    context_->bridge  = std::make_unique<backend_bridge>(context_->backend.get());
     gui_              = std::make_unique<gui_t>(context_);
     context_->backend->start();
 }

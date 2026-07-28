@@ -9,6 +9,7 @@
 
 #include "core/log.hpp"
 #include "esp32/backend.hpp"
+#include "app/backend_bridge.hpp"
 
 namespace mbr {
 
@@ -40,6 +41,7 @@ struct app_context {
     bool              is_cmd_input_focused{false};
 
     std::unique_ptr<telemetry_backend> backend;
+    std::unique_ptr<backend_bridge>    bridge;
     std::string                        username;
     std::string                        password;
     log_fn_t                           log;

@@ -7,7 +7,6 @@
 #include <qtmetamacros.h>
 #include "app/context.hpp"
 #include "app/pages/page.hpp"
-#include "app/backend_bridge.hpp"
 #include "stdx/fixed/enum_map.hh"
 #include <qwidget.h>
 #include <stdx/assert.hh>
@@ -29,7 +28,7 @@ private:
     [[nodiscard]] pages::page* create_page(page_type_t type, const std::shared_ptr<app_context>& ctx, QWidget* parent);
 
 private:
-    backend_bridge bridge_;
+
     QStackedWidget*              pages_;
     std::shared_ptr<app_context> context_;
     stdx::fixed::enum_map<page_type_t, QWidget*> page_lookup_;
