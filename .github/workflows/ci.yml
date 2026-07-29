@@ -51,7 +51,9 @@ jobs:
                       mingw-w64-ucrt-x86_64-cmake
                       mingw-w64-ucrt-x86_64-ninja
                       mingw-w64-ucrt-x86_64-python
-            - name: Install Qt
+
+            - name: Install Qt (Windows)
+              if: runner.os == 'Windows'
               shell: msys2 {0}
               run: python3 scripts/install_qt.py
 

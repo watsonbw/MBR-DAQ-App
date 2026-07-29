@@ -42,7 +42,8 @@ jobs:
                       mingw-w64-ucrt-x86_64-python
                       zip
                       tar
-            - name: Install Qt
+            - name: Install Qt (Windows)
+              if: runner.os == 'Windows'
               shell: msys2 {0}
               run: python3 scripts/install_qt.py
 
