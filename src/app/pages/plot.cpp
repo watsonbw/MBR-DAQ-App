@@ -34,6 +34,7 @@
 #include <fmt/ostream.h>
 
 #include "app/backend_bridge.hpp"
+#include "app/assets/style.hpp"
 #include "core/log.hpp"
 #include "esp32/backend.hpp"
 #include "esp32/data.hpp"
@@ -41,6 +42,9 @@
 #include <qcustomplot.h>
 
 namespace mbr::pages {
+
+namespace style  = mbr::ui::style;
+namespace colors = mbr::ui::style::color;
 
 void plot_page::on_enter() { log_info(context_->log, "Entered PlotPage"); }
 void plot_page::on_exit() { log_info(context_->log, "Exited PlotPage"); }
@@ -60,26 +64,21 @@ void plot_page::build_page() {
 }
 
 QWidget* plot_page::build_lhs() {
-    QString button_style =
-        "QToolButton {"
-        "   background-color: #1e1e1e; color: #d4d4d4; border: 1px solid #2d2d2d;"
-        "   border-radius: 4px; padding: 4px 16px; font-size: 16px;"
-        "}"
-        "QToolButton:hover { background-color: #2a2a2a; }";
+    style::button_style_options button_style;
+    button_style.font_size = 10;
+
     auto* container = new QWidget(this);
     auto* v_layout  = new QVBoxLayout(container);
     auto* h_layout  = new QHBoxLayout();
 
     auto* log_button = new QToolButton();
-    auto* log_action =
-        new QAction(context_->backend->is_logging() ? "Stop Logging" : "Start Logging", this);
-    connect(log_action, &QAction::triggered, this, [this, log_action] {
+    log_button->setText(context_->backend->is_logging() ? "Stop Logging" : "Start Logging");
+    connect(log_button, &QToolButton::clicked, this, [this, log_button] {
         context_->backend->set_logging(!context_->backend->is_logging());
-        log_action->setText(context_->backend->is_logging() ? "Stop Logging" : "Start Logging");
+        log_button->setText(context_->backend->is_logging() ? "Stop Logging" : "Start Logging");
     });
-    log_button->setDefaultAction(log_action);
     log_button->setMinimumHeight(32);
-    log_button->setStyleSheet(button_style);
+    log_button->setStyleSheet(style::make_button_style(button_style));
     h_layout->addWidget(log_button);
 
     auto* download_name_input = new QLineEdit();
@@ -89,8 +88,8 @@ QWidget* plot_page::build_lhs() {
     h_layout->addWidget(download_name_input);
 
     auto* download_button = new QToolButton();
-    auto* download_action = new QAction("Download Data", this);
-    connect(download_action, &QAction::triggered, this, [this, download_name_input] {
+    download_button->setText("Download Data");
+    connect(download_button, &QToolButton::clicked, this, [this, download_name_input] {
         std::string name = download_name_input->text().toStdString();
 
         local_time  lt;
@@ -122,8 +121,7 @@ QWidget* plot_page::build_lhs() {
     });
 
     download_button->setMinimumHeight(32);
-    download_button->setStyleSheet(button_style);
-    download_button->setDefaultAction(download_action);
+    download_button->setStyleSheet(style::make_button_style(button_style));
     h_layout->addWidget(download_button);
 
     text_log_ = new QPlainTextEdit(container);
@@ -147,24 +145,20 @@ QWidget* plot_page::build_rhs() {
 
     plot_ = new QCustomPlot(container);
 
-    const QColor bg_color("#1e1e1e");
-    const QColor axis_color("#a0a0a0");
-    const QColor grid_color("#2d2d2d");
-    const QColor line_color("#00adb5");
 
-    plot_->setBackground(QBrush(bg_color));
-    plot_->axisRect()->setBackground(QBrush(bg_color));
+    plot_->setBackground(QBrush(colors::bg_dark));
+    plot_->axisRect()->setBackground(QBrush(colors::bg_dark));
 
     auto configure_axis = [&](QCPAxis* axis, const QString& label) {
         axis->setLabel(label);
-        axis->setBasePen(QPen(axis_color, 1.0));
-        axis->setTickPen(QPen(axis_color, 1.0));
-        axis->setSubTickPen(QPen(axis_color, 0.5));
-        axis->setTickLabelColor(axis_color);
-        axis->setLabelColor(axis_color);
+        axis->setBasePen(QPen(colors::text_muted, 1.0));
+        axis->setTickPen(QPen(colors::text_muted, 1.0));
+        axis->setSubTickPen(QPen(colors::text_muted, 0.5));
+        axis->setTickLabelColor(colors::text_muted);
+        axis->setLabelColor(colors::text_muted);
 
-        axis->grid()->setPen(QPen(grid_color, 1.0, Qt::SolidLine));
-        axis->grid()->setSubGridPen(QPen(grid_color, 0.5, Qt::DotLine));
+        axis->grid()->setPen(QPen(colors::border, 1.0, Qt::SolidLine));
+        axis->grid()->setSubGridPen(QPen(colors::border, 0.5, Qt::DotLine));
         axis->grid()->setSubGridVisible(true);
     };
 
@@ -178,8 +172,8 @@ QWidget* plot_page::build_rhs() {
     plot_->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
     plot_->replot();
     plot_->legend->setVisible(true);
-    plot_->legend->setBrush(QBrush(bg_color));
-    plot_->legend->setTextColor(axis_color);
+    plot_->legend->setBrush(QBrush(colors::bg_dark));
+    plot_->legend->setTextColor(colors::text_muted);
 
     layout->addWidget(plot_, 1);
 
@@ -237,19 +231,13 @@ QToolButton* plot_page::create_tree_dropdown(const std::vector<telemetry_data::d
     select->setPopupMode(QToolButton::InstantPopup);
     select->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
-    select->setStyleSheet("QToolButton {"
-                          "   background-color: #1e1e1e; color: #d4d4d4; border: 1px solid #2d2d2d;"
-                          "   border-radius: 4px; padding: 6px 12px; text-align: left;"
-                          "}"
-                          "QToolButton:hover { background-color: #2a2a2a; }");
+    select->setStyleSheet(style::make_button_style());
 
     auto* tree = new QTreeWidget(select);
     tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
     tree->setHeaderHidden(true);
     tree->setColumnCount(1);
-    tree->setStyleSheet(
-        "QTreeWidget { background-color: #1e1e1e; color: #d4d4d4; border: 1px solid #2d2d2d; }"
-        "QTreeWidget::item:hover { background-color: #00adb5; color: white; }");
+    tree->setStyleSheet(style::make_tree_style());
 
     for (auto it : data) {
         bool             found        = false;
@@ -305,12 +293,7 @@ void plot_page::plot_signal(const std::string& key) {
     QCPGraph* graph = plot_->addGraph();
     graph->setAdaptiveSampling(true);
 
-    static const std::array<QColor, 6> palette = {QColor("#00adb5"),
-                                                  QColor("#ff5722"),
-                                                  QColor("#e91e63"),
-                                                  QColor("#9c27b0"),
-                                                  QColor("#4caf50"),
-                                                  QColor("#ffeb3b")};
+    static const std::array<QColor, 6> palette = colors::graph_palette;
     QColor                             color   = palette[active_graphs_.size() % palette.size()];
 
     graph->setPen(QPen(color, 2.0));

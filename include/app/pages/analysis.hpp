@@ -31,8 +31,6 @@ class analysis_page : public page {
         SHOCKDATA,
     };
 
-    [[nodiscard]] static const char* data_type_string(data_view_t type);
-
   public:
     explicit analysis_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr)
         : page(ctx, parent) {};

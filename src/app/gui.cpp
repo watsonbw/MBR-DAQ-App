@@ -29,6 +29,7 @@
 #include "app/pages/plot.hpp"
 #include "app/pages/serialmon.hpp"
 #include "app/pages/settings.hpp"
+#include "app/assets/style.hpp"
 #include "core/time.hpp"
 #include "esp32/backend.hpp"
 #include "stdx/enum.hh"
@@ -36,6 +37,9 @@
 using namespace std::chrono;
 
 namespace mbr {
+
+namespace style  = mbr::ui::style;
+namespace colors = mbr::ui::style::color;
 
 gui_t::gui_t(const std::shared_ptr<app_context>& ctx) : context_(ctx) {
     pages_ = new QStackedWidget(this);
@@ -64,64 +68,17 @@ gui_t::create_page(page_type_t type, const std::shared_ptr<app_context>& ctx, QW
 void gui_t::change_page(page_type_t type) { pages_->setCurrentWidget(page_lookup_[type]); }
 
 void gui_t::build_menu_bar() {
-    static const QString kMenuBarStyle = R"(
-            QMenuBar {
-                background-color: #2b2b2b;
-                color: white;
-                font-size: 20px;
-                spacing: 2px;
-                border-bottom: 1px solid #3C3F41;
-            }
-            QMenuBar::item {
-                background-color: transparent;
-                padding: 4px 6px;
-                border-radius: 4px;
-                border: 1px solid transparent;
-            }
-            QMenuBar::item:selected {
-                background-color: #3C3F41;
-                border: 1px solid #5A5D5F;
-            }
-        )";
 
-    static const QString kMenuStyle = R"(
-            QMenu {
-                background-color: #2b2b2b;
-                color: white;
-                font-size: 20px;
-                border: 1px solid #3C3F41;
-                padding: 4px;
-            }
-            QMenu::item {
-                background-color: transparent;
-                padding: 4px 24px 4px 12px;
-                border-radius: 4px;
-                border: 1px solid transparent;
-            }
-            QMenu::item:selected {
-                background-color: #3C3F41;
-                border: 1px solid #5A5D5F;
-            }
-            QMenu::item:disabled {
-                color: #6e6e6e;
-            }
-            QMenu::separator {
-                height: 1px;
-                background-color: #3C3F41;
-                margin: 4px 6px;
-            }
-        )";
-
-    menuBar()->setStyleSheet(kMenuBarStyle);
+    menuBar()->setStyleSheet(style::make_menubar_style());
 
     auto* file = menuBar()->addMenu("File");
-    file->setStyleSheet(kMenuStyle);
+    file->setStyleSheet(style::make_menu_style());
     file->addAction("Settings");
     file->addAction("Export Log");
     file->addAction("Exit", this, [] { QApplication::quit(); });
 
     auto* nav = menuBar()->addMenu("Navigation");
-    nav->setStyleSheet(kMenuStyle);
+    nav->setStyleSheet(style::make_menu_style());
     nav->addAction("Home", this, [this] { change_page(page_type_t::HOME); });
     nav->addAction("Plot", this, [this] { change_page(page_type_t::PLOT); });
     nav->addAction("Serial", this, [this] { change_page(page_type_t::SERIAL); });
@@ -168,7 +125,7 @@ void gui_t::build_menu_bar() {
 
     status_dot_ = new QLabel(rightWidget);
     status_dot_->setFixedSize(20, 20);
-    status_dot_->setStyleSheet("background-color: #F44336; border-radius: 10px;");
+    status_dot_->setStyleSheet(QString::fromStdString(fmt::format(fmt::runtime("background-color: {0}; border-radius: 10px;"), colors::status_error.name().toStdString())));
     rightLayout->addWidget(connection_status_, 0, Qt::AlignVCenter);
     rightLayout->addWidget(status_dot_, 0, Qt::AlignVCenter);
 
@@ -176,7 +133,7 @@ void gui_t::build_menu_bar() {
 }
 
 void gui_t::update_status_dot() {
-    QString color = !is_connected_ ? "#F44336" : !is_receiving_ ? "#FFC107" : "#00E676";
+    QString color = !is_connected_ ? colors::status_error.name() : !is_receiving_ ? colors::status_warn.name() : colors::status_ok.name();
     status_dot_->setStyleSheet(QString("background-color: %1; border-radius: 10px;").arg(color));
 }
 
