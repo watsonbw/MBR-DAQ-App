@@ -36,6 +36,7 @@ jobs:
               run: |
                   brew update
                   brew install llvm
+                  run: python3 scripts/install_qt.py
               env:
                   HOMEBREW_NO_AUTO_UPDATE: 1
 
@@ -49,6 +50,9 @@ jobs:
                       mingw-w64-ucrt-x86_64-gcc
                       mingw-w64-ucrt-x86_64-cmake
                       mingw-w64-ucrt-x86_64-ninja
+            - name: Install Qt
+              shell: msys2 {0}
+              run: python3 scripts/install_qt.py
 
             - name: Cache build directory
               uses: actions/cache@v4
