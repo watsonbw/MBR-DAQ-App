@@ -33,8 +33,8 @@
 
 #include <fmt/ostream.h>
 
-#include "app/backend_bridge.hpp"
 #include "app/assets/style.hpp"
+#include "app/backend_bridge.hpp"
 #include "core/log.hpp"
 #include "esp32/backend.hpp"
 #include "esp32/data.hpp"
@@ -144,7 +144,6 @@ QWidget* plot_page::build_rhs() {
     layout->addWidget(channel_selector);
 
     plot_ = new QCustomPlot(container);
-
 
     plot_->setBackground(QBrush(colors::bg_dark));
     plot_->axisRect()->setBackground(QBrush(colors::bg_dark));
@@ -332,25 +331,25 @@ void plot_page::update_plot() {
     for (auto& [key, graph] : active_graphs_) {
         auto series = context_->backend->get_data().get_series(key);
 
-        usize* already_plotted = &plotted_counts_[key];
+        usize& already_plotted = plotted_counts_[key];
         usize  total           = series.size();
 
-        if (total < *already_plotted) {
+        if (total < already_plotted) {
             graph->data()->clear();
-            *already_plotted = 0;
+            already_plotted = 0;
         }
 
-        if (total == *already_plotted) { continue; }
+        if (total == already_plotted) { continue; }
 
         QVector<double> new_x;
-        new_x.reserve(total - *already_plotted);
-        for (auto it = time.begin() + *already_plotted; it != time.end(); ++it) {
+        new_x.reserve(total - already_plotted);
+        for (auto it = time.begin() + already_plotted; it != time.end(); ++it) {
             new_x.append(*it - time_offset_);
         }
-        QVector<double> new_y(series.begin() + *already_plotted, series.end());
+        QVector<double> new_y(series.begin() + already_plotted, series.end());
         graph->addData(new_x, new_y);
 
-        *already_plotted = total;
+        already_plotted = total;
     }
 
     plot_->xAxis->rescale();

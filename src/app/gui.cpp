@@ -21,6 +21,7 @@
 #include <QWidget>
 
 #include "app/assets/images/app_icon.hpp"
+#include "app/assets/style.hpp"
 #include "app/backend_bridge.hpp"
 #include "app/context.hpp"
 #include "app/pages/analysis.hpp"
@@ -29,7 +30,6 @@
 #include "app/pages/plot.hpp"
 #include "app/pages/serialmon.hpp"
 #include "app/pages/settings.hpp"
-#include "app/assets/style.hpp"
 #include "core/time.hpp"
 #include "esp32/backend.hpp"
 #include "stdx/enum.hh"
@@ -125,7 +125,9 @@ void gui_t::build_menu_bar() {
 
     status_dot_ = new QLabel(rightWidget);
     status_dot_->setFixedSize(20, 20);
-    status_dot_->setStyleSheet(QString::fromStdString(fmt::format(fmt::runtime("background-color: {0}; border-radius: 10px;"), colors::status_error.name().toStdString())));
+    status_dot_->setStyleSheet(QString::fromStdString(
+        fmt::format(fmt::runtime("background-color: {0}; border-radius: 10px;"),
+                    colors::status_error.name().toStdString())));
     rightLayout->addWidget(connection_status_, 0, Qt::AlignVCenter);
     rightLayout->addWidget(status_dot_, 0, Qt::AlignVCenter);
 
@@ -133,7 +135,9 @@ void gui_t::build_menu_bar() {
 }
 
 void gui_t::update_status_dot() {
-    QString color = !is_connected_ ? colors::status_error.name() : !is_receiving_ ? colors::status_warn.name() : colors::status_ok.name();
+    QString color = !is_connected_   ? colors::status_error.name()
+                    : !is_receiving_ ? colors::status_warn.name()
+                                     : colors::status_ok.name();
     status_dot_->setStyleSheet(QString("background-color: %1; border-radius: 10px;").arg(color));
 }
 
