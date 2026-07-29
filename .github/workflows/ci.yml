@@ -36,7 +36,7 @@ jobs:
               run: |
                   brew update
                   brew install llvm
-                  run: python3 scripts/install_qt.py
+                  python3 scripts/install_qt.py
               env:
                   HOMEBREW_NO_AUTO_UPDATE: 1
 
