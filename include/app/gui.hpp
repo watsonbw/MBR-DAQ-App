@@ -1,17 +1,21 @@
 #pragma once
-#include "app/context.hpp"
-#include "app/pages/page.hpp"
-#include "stdx/fixed/enum_map.hh"
+
+#include <memory>
+
 #include <QMainWindow>
 #include <QStackedWidget>
 #include <QWidget>
-#include <memory>
 #include <qlabel.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+
 #include <stdx/assert.hh>
+#include <stdx/fixed/enum_map.hh>
 #include <stdx/profiler.hh>
 #include <stdx/types.hh>
+
+#include "app/context.hpp"
+#include "app/pages/page.hpp"
 
 namespace mbr {
 

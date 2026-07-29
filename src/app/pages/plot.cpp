@@ -31,6 +31,8 @@
 #include <QtCharts/QValueAxis>
 #include <qcontainerfwd.h>
 
+#include <fmt/ostream.h>
+
 #include "app/backend_bridge.hpp"
 #include "core/log.hpp"
 #include "esp32/backend.hpp"
@@ -114,7 +116,7 @@ QWidget* plot_page::build_lhs() {
             return;
         }
 
-        for (const auto& line : raw_lines) { out << line << "\n"; }
+        for (const auto& line : raw_lines) { fmt::println(out, "{}", line); }
 
         download_name_input->clear();
     });
@@ -187,7 +189,7 @@ QWidget* plot_page::build_rhs() {
         connect(tree, &QTreeWidget::itemSelectionChanged, this, [this, tree, channel_selector]() {
             plot_->clearGraphs();
             plotted_counts_.clear();
-            int count = tree->selectedItems().count();
+            usize count = tree->selectedItems().count();
             channel_selector->setText(count == 0 ? "Select Data"
                                                  : QString("%1 selected").arg(count));
             active_graphs_.clear();
@@ -196,7 +198,7 @@ QWidget* plot_page::build_rhs() {
                 if (!key.isEmpty()) { plot_signal(key.toStdString()); }
 
                 if (item->childCount() > 0) {
-                    for (int i = 0; i < item->childCount(); ++i) {
+                    for (i32 i = 0; i < item->childCount(); ++i) {
                         QTreeWidgetItem* child = item->child(i);
                         std::string      child_key =
                             child->data(0, Qt::UserRole).toString().toStdString();
@@ -252,7 +254,7 @@ QToolButton* plot_page::create_tree_dropdown(const std::vector<telemetry_data::d
     for (auto it : data) {
         bool             found        = false;
         QTreeWidgetItem* target_group = nullptr;
-        for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+        for (i32 i = 0; i < tree->topLevelItemCount(); ++i) {
             if (QString::fromStdString(it.group) == tree->topLevelItem(i)->text(0)) {
                 found        = true;
                 target_group = tree->topLevelItem(i);
@@ -284,7 +286,7 @@ QToolButton* plot_page::create_tree_dropdown(const std::vector<telemetry_data::d
     return select;
 }
 
-void plot_page::plot_signal(const std::string key) {
+void plot_page::plot_signal(const std::string& key) {
     auto [it, inserted] = active_graphs_.try_emplace(key);
     if (!inserted) { return; }
     auto series = context_->backend->get_data().get_series(key);
@@ -303,17 +305,17 @@ void plot_page::plot_signal(const std::string key) {
     QCPGraph* graph = plot_->addGraph();
     graph->setAdaptiveSampling(true);
 
-    static const std::vector<QColor> palette = {QColor("#00adb5"),
-                                                QColor("#ff5722"),
-                                                QColor("#e91e63"),
-                                                QColor("#9c27b0"),
-                                                QColor("#4caf50"),
-                                                QColor("#ffeb3b")};
-    QColor                           color   = palette[active_graphs_.size() % palette.size()];
+    static const std::array<QColor, 6> palette = {QColor("#00adb5"),
+                                                  QColor("#ff5722"),
+                                                  QColor("#e91e63"),
+                                                  QColor("#9c27b0"),
+                                                  QColor("#4caf50"),
+                                                  QColor("#ffeb3b")};
+    QColor                             color   = palette[active_graphs_.size() % palette.size()];
 
     graph->setPen(QPen(color, 2.0));
     graph->setData(x_times, y_values);
-    for (auto d : context_->backend->get_data().data_values) {
+    for (auto& d : context_->backend->get_data().data_values) {
         if (d.key == key) {
             graph->setName(QString::fromStdString(d.name));
             break;
@@ -321,7 +323,7 @@ void plot_page::plot_signal(const std::string key) {
     }
     graph->addToLegend();
 
-    active_graphs_[key]  = graph;
+    it->second           = graph;
     plotted_counts_[key] = series.size();
 
     plot_->rescaleAxes();
@@ -347,17 +349,15 @@ void plot_page::update_plot() {
     for (auto& [key, graph] : active_graphs_) {
         auto series = context_->backend->get_data().get_series(key);
 
-        std::size_t* already_plotted = &plotted_counts_[key];
-        std::size_t total           = series.size();
+        usize* already_plotted = &plotted_counts_[key];
+        usize  total           = series.size();
 
         if (total < *already_plotted) {
             graph->data()->clear();
             *already_plotted = 0;
         }
 
-        if (total == *already_plotted) {
-            continue;
-        }
+        if (total == *already_plotted) { continue; }
 
         QVector<double> new_x;
         new_x.reserve(total - *already_plotted);
@@ -380,14 +380,14 @@ void plot_page::update_stream() {
 
     auto series = context_->backend->get_data().get_raw_lines();
 
-    std::size_t displayed = 0;
+    usize displayed = 0;
     if (text_log_->document()->isEmpty()) {
         displayed = 0;
     } else {
-        displayed = static_cast<std::size_t>(text_log_->document()->blockCount());
+        displayed = static_cast<usize>(text_log_->document()->blockCount());
     }
 
-    std::size_t total = series.size();
+    usize total = series.size();
 
     if (total < displayed) {
         text_log_->clear();
@@ -396,7 +396,7 @@ void plot_page::update_stream() {
 
     if (total <= displayed) { return; }
 
-    for (std::size_t i = displayed; i < total; ++i) {
+    for (usize i = displayed; i < total; ++i) {
         text_log_->appendPlainText(QString::fromStdString(series[i]));
     }
 }

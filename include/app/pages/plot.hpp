@@ -44,7 +44,7 @@ class plot_page : public page {
     QWidget*     build_lhs();
     QToolButton* create_tree_dropdown(const std::vector<telemetry_data::data_info>& data,
                                       QWidget*                                      parent);
-    void         plot_signal(const std::string key);
+    void         plot_signal(const std::string& key);
     void         plot_timer();
     void         update_plot();
     void         update_stream();
