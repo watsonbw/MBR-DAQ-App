@@ -41,11 +41,13 @@ class telemetry_backend {
     using status_cb    = std::function<void(bool)>;
     using receiving_cb = std::function<void(bool)>;
     using cmd_cb       = std::function<void(const std::string&)>;
+    using fields_cb    = std::function<void(const std::vector<std::string>&)>;
 
     void set_on_data(data_cb cb) { on_data_ = std::move(cb); }
     void set_on_connection_changed(status_cb cb) { on_connection_changed_ = std::move(cb); }
     void set_on_receiving_changed(receiving_cb cb) { on_receiving_changed_ = std::move(cb); }
     void set_on_cmd(cmd_cb cb) { on_cmd_ = std::move(cb); }
+    void set_on_fields_received(fields_cb cb) { on_fields_ = std::move(cb); }
 
   private:
     void notify_data(const ankerl::unordered_dense::map<std::string, std::vector<double>>& s) {
@@ -58,10 +60,15 @@ class telemetry_backend {
         if (on_receiving_changed_) { on_receiving_changed_(r); }
     }
 
+    void notify_fields_received(const std::vector<std::string>& keys) {
+        if (on_fields_) { on_fields_(keys); }
+    }
+
     data_cb      on_data_;
     status_cb    on_connection_changed_;
     receiving_cb on_receiving_changed_;
     cmd_cb       on_cmd_;
+    fields_cb    on_fields_;
 
   public:
     explicit telemetry_backend(const std::filesystem::path& json_path, log_fn_t log = nullptr);

@@ -166,18 +166,23 @@ void telemetry_backend::on_message(const ix::WebSocketMessagePtr& msg) {
             // Now we can safely unpack the packet
             const std::unique_lock lock{data_latch_};
 
-            // write data
-            if (!is_logging_) { continue; }
-
+            // Write data and add keys received to signal
+            std::vector<std::string> received_keys;
+            received_keys.reserve(parsed.value().size());
             for (const auto& [ident, value] : parsed.value()) {
-                data_.write_data(std::string{ident}, std::string{value});
+                received_keys.push_back(std::string{ident});
+                if (is_logging_) { data_.write_data(std::string{ident}, std::string{value}); }
             }
-            notify_data(data_.get_series());
-            data_.write_raw_line(line);
-            for (const auto& [ident, value] : parsed.value()) {
-                if (ident == "W") {
-                    data_.save_current_line(line);
-                    break;
+            notify_fields_received(received_keys);
+
+            if (is_logging_) {
+                notify_data(data_.get_series());
+                data_.write_raw_line(line);
+                for (const auto& [ident, value] : parsed.value()) {
+                    if (ident == "W") {
+                        data_.save_current_line(line);
+                        break;
+                    }
                 }
             }
         }

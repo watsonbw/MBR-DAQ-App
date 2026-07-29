@@ -125,9 +125,8 @@ void gui_t::build_menu_bar() {
 
     status_dot_ = new QLabel(rightWidget);
     status_dot_->setFixedSize(20, 20);
-    status_dot_->setStyleSheet(QString::fromStdString(
-        fmt::format(fmt::runtime("background-color: {0}; border-radius: 10px;"),
-                    colors::status_error.name().toStdString())));
+    status_dot_->setStyleSheet(QString::fromStdString(fmt::format(
+        "background-color: {0}; border-radius: 10px;", colors::status_error.name().toStdString())));
     rightLayout->addWidget(connection_status_, 0, Qt::AlignVCenter);
     rightLayout->addWidget(status_dot_, 0, Qt::AlignVCenter);
 
