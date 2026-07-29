@@ -285,7 +285,8 @@ QToolButton* plot_page::create_tree_dropdown(const std::vector<telemetry_data::d
 }
 
 void plot_page::plot_signal(const std::string key) {
-    if (active_graphs_.contains(key)) { return; }
+    auto [it, inserted] = active_graphs_.try_emplace(key);
+    if (!inserted) { return; }
     auto series = context_->backend->get_data().get_series(key);
     auto time   = context_->backend->get_data().get_time();
 
@@ -346,28 +347,27 @@ void plot_page::update_plot() {
     for (auto& [key, graph] : active_graphs_) {
         auto series = context_->backend->get_data().get_series(key);
 
-        std::size_t already_plotted = plotted_counts_[key];
+        std::size_t* already_plotted = &plotted_counts_[key];
         std::size_t total           = series.size();
 
-        if (total < already_plotted) {
+        if (total < *already_plotted) {
             graph->data()->clear();
-            already_plotted = 0;
+            *already_plotted = 0;
         }
 
-        if (total <= already_plotted) {
-            plotted_counts_[key] = total;
+        if (total == *already_plotted) {
             continue;
         }
 
         QVector<double> new_x;
-        new_x.reserve(total - already_plotted);
-        for (auto it = time.begin() + already_plotted; it != time.end(); ++it) {
+        new_x.reserve(total - *already_plotted);
+        for (auto it = time.begin() + *already_plotted; it != time.end(); ++it) {
             new_x.append(*it - time_offset_);
         }
-        QVector<double> new_y(series.begin() + already_plotted, series.end());
+        QVector<double> new_y(series.begin() + *already_plotted, series.end());
         graph->addData(new_x, new_y);
 
-        plotted_counts_[key] = total;
+        *already_plotted = total;
     }
 
     plot_->xAxis->rescale();
