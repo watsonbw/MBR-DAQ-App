@@ -58,9 +58,7 @@ class telemetry_data {
         return dummy;
     }
 
-    [[nodiscard]] auto& get_series() noexcept {
-        return series_;
-    }
+    [[nodiscard]] auto& get_series() noexcept { return series_; }
 
     void set_sync_lt(local_time lt) noexcept { sync_lt_ = lt; }
     void write_data(const std::string& identifier, const std::string& value);

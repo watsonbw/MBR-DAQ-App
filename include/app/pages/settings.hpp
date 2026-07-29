@@ -13,7 +13,8 @@ namespace mbr::pages {
 
 class settings_page : public page {
   public:
-    explicit settings_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) : page{ctx, parent} {}
+    explicit settings_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr)
+        : page{ctx, parent} {}
     ~settings_page() override = default;
 
     void on_enter() override;
@@ -21,10 +22,7 @@ class settings_page : public page {
     void build_page() override;
 
   private:
-
-
   private:
-
 };
 
 } // namespace mbr::pages

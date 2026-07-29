@@ -17,7 +17,6 @@ namespace mbr::pages {
 void settings_page::on_enter() { log_info(context_->log, "Entered SettingsPage"); }
 void settings_page::on_exit() { log_info(context_->log, "Exited SettingsPage"); }
 
-void settings_page::build_page() {
-}
+void settings_page::build_page() {}
 
 } // namespace mbr::pages

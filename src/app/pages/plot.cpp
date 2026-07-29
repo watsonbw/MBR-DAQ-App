@@ -1,5 +1,6 @@
 #include "app/pages/plot.hpp"
 
+#include <cstddef>
 #include <qaction.h>
 #include <qboxlayout.h>
 #include <qplaintextedit.h>
@@ -9,7 +10,6 @@
 #include <spdlog/common.h>
 #include <string>
 #include <vector>
-#include <cstddef>
 
 #include <fmt/format.h>
 #include <gsl/span>
@@ -17,24 +17,24 @@
 #include <stdx/profiler.hh>
 #include <stdx/types.hh>
 
-#include <QWidget>
+#include <QComboBox>
 #include <QHBoxLayout>
-#include <QSplitter>
+#include <QHeaderView>
 #include <QPlainTextEdit>
+#include <QSplitter>
+#include <QTimer>
+#include <QTreeWidget>
+#include <QWidget>
 #include <QtCharts/QChart>
 #include <QtCharts/QChartView>
 #include <QtCharts/QLineSeries>
 #include <QtCharts/QValueAxis>
-#include <QComboBox>
-#include <QTreeWidget>
-#include <QHeaderView>
-#include <QTimer>
 #include <qcontainerfwd.h>
 
+#include "app/backend_bridge.hpp"
 #include "core/log.hpp"
 #include "esp32/backend.hpp"
 #include "esp32/data.hpp"
-#include "app/backend_bridge.hpp"
 
 #include <qcustomplot.h>
 
@@ -65,11 +65,12 @@ QWidget* plot_page::build_lhs() {
         "}"
         "QToolButton:hover { background-color: #2a2a2a; }";
     auto* container = new QWidget(this);
-    auto* v_layout = new QVBoxLayout(container);
-    auto* h_layout = new QHBoxLayout();
+    auto* v_layout  = new QVBoxLayout(container);
+    auto* h_layout  = new QHBoxLayout();
 
     auto* log_button = new QToolButton();
-    auto* log_action = new QAction(context_->backend->is_logging() ? "Stop Logging" : "Start Logging", this);
+    auto* log_action =
+        new QAction(context_->backend->is_logging() ? "Stop Logging" : "Start Logging", this);
     connect(log_action, &QAction::triggered, this, [this, log_action] {
         context_->backend->set_logging(!context_->backend->is_logging());
         log_action->setText(context_->backend->is_logging() ? "Stop Logging" : "Start Logging");
@@ -90,7 +91,7 @@ QWidget* plot_page::build_lhs() {
     connect(download_action, &QAction::triggered, this, [this, download_name_input] {
         std::string name = download_name_input->text().toStdString();
 
-        local_time lt;
+        local_time  lt;
         std::string filepath;
         if (!name.empty()) {
             filepath = fmt::format("{}_{}.txt", lt.to_string(false), name);
@@ -107,14 +108,13 @@ QWidget* plot_page::build_lhs() {
 
         std::ofstream out{filepath};
         if (!out.is_open()) {
-            log_error(context_->log, fmt::format("Failed to open output file: {}", std::strerror(errno)));
+            log_error(context_->log,
+                      fmt::format("Failed to open output file: {}", std::strerror(errno)));
             download_name_input->clear();
             return;
         }
 
-        for (const auto& line : raw_lines) {
-            out << line << "\n";
-        }
+        for (const auto& line : raw_lines) { out << line << "\n"; }
 
         download_name_input->clear();
     });
@@ -134,11 +134,12 @@ QWidget* plot_page::build_lhs() {
 QWidget* plot_page::build_rhs() {
 
     auto* container = new QWidget(this);
-    auto* layout = new QVBoxLayout(container);
+    auto* layout    = new QVBoxLayout(container);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(8);
 
-    QToolButton* channel_selector = create_tree_dropdown(context_->backend->get_data().data_values, container);
+    QToolButton* channel_selector =
+        create_tree_dropdown(context_->backend->get_data().data_values, container);
 
     layout->addWidget(channel_selector);
 
@@ -187,46 +188,46 @@ QWidget* plot_page::build_rhs() {
             plot_->clearGraphs();
             plotted_counts_.clear();
             int count = tree->selectedItems().count();
-            channel_selector->setText(count == 0 ? "Select Data" : QString("%1 selected").arg(count));
+            channel_selector->setText(count == 0 ? "Select Data"
+                                                 : QString("%1 selected").arg(count));
             active_graphs_.clear();
             for (QTreeWidgetItem* item : tree->selectedItems()) {
                 QString key = item->data(0, Qt::UserRole).toString();
-                if (!key.isEmpty()) {
-                    plot_signal(key.toStdString());
-                }
+                if (!key.isEmpty()) { plot_signal(key.toStdString()); }
 
                 if (item->childCount() > 0) {
                     for (int i = 0; i < item->childCount(); ++i) {
                         QTreeWidgetItem* child = item->child(i);
-                        std::string child_key = child->data(0, Qt::UserRole).toString().toStdString();
-                        if (!child_key.empty()) {
-                            plot_signal(child_key);
-                        }
+                        std::string      child_key =
+                            child->data(0, Qt::UserRole).toString().toStdString();
+                        if (!child_key.empty()) { plot_signal(child_key); }
                     }
                 }
             }
         });
     }
 
-
     return container;
 }
 
 void plot_page::plot_timer() {
 
-    connect(context_->bridge.get(), &backend_bridge::data_updated, this, [this](const auto&) { pending_update_ = true; });
+    connect(context_->bridge.get(), &backend_bridge::data_updated, this, [this](const auto&) {
+        pending_update_ = true;
+    });
 
     redraw_timer_ = new QTimer(this);
-        connect(redraw_timer_, &QTimer::timeout, this, [this]() {
-            if (pending_update_) {
-                on_data_updated();
-                pending_update_ = false;
-            }
-        });
-        redraw_timer_->start(17);
+    connect(redraw_timer_, &QTimer::timeout, this, [this]() {
+        if (pending_update_) {
+            on_data_updated();
+            pending_update_ = false;
+        }
+    });
+    redraw_timer_->start(17);
 }
 
-QToolButton* plot_page::create_tree_dropdown(const std::vector<telemetry_data::data_info>& data, QWidget* parent) {
+QToolButton* plot_page::create_tree_dropdown(const std::vector<telemetry_data::data_info>& data,
+                                             QWidget*                                      parent) {
     auto* select = new QToolButton(parent);
 
     select->setText("Select Data");
@@ -234,49 +235,44 @@ QToolButton* plot_page::create_tree_dropdown(const std::vector<telemetry_data::d
     select->setPopupMode(QToolButton::InstantPopup);
     select->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
-    select->setStyleSheet(
-        "QToolButton {"
-        "   background-color: #1e1e1e; color: #d4d4d4; border: 1px solid #2d2d2d;"
-        "   border-radius: 4px; padding: 6px 12px; text-align: left;"
-        "}"
-        "QToolButton:hover { background-color: #2a2a2a; }"
-    );
+    select->setStyleSheet("QToolButton {"
+                          "   background-color: #1e1e1e; color: #d4d4d4; border: 1px solid #2d2d2d;"
+                          "   border-radius: 4px; padding: 6px 12px; text-align: left;"
+                          "}"
+                          "QToolButton:hover { background-color: #2a2a2a; }");
 
-    auto* tree  = new QTreeWidget(select);
+    auto* tree = new QTreeWidget(select);
     tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
     tree->setHeaderHidden(true);
     tree->setColumnCount(1);
     tree->setStyleSheet(
         "QTreeWidget { background-color: #1e1e1e; color: #d4d4d4; border: 1px solid #2d2d2d; }"
-        "QTreeWidget::item:hover { background-color: #00adb5; color: white; }"
-    );
+        "QTreeWidget::item:hover { background-color: #00adb5; color: white; }");
 
     for (auto it : data) {
-        bool found = false;
+        bool             found        = false;
         QTreeWidgetItem* target_group = nullptr;
         for (int i = 0; i < tree->topLevelItemCount(); ++i) {
             if (QString::fromStdString(it.group) == tree->topLevelItem(i)->text(0)) {
-                found = true;
+                found        = true;
                 target_group = tree->topLevelItem(i);
                 break;
             }
         }
         if (!found && it.plot) {
-            target_group = new QTreeWidgetItem;
+            target_group       = new QTreeWidgetItem;
             QString group_name = QString::fromStdString(it.group);
             target_group->setText(0, group_name);
             tree->addTopLevelItem(target_group);
         }
-        if (!target_group) {
-            continue;
-        }
+        if (!target_group) { continue; }
         auto* child_item = new QTreeWidgetItem(target_group);
         child_item->setText(0, QString::fromStdString(it.name));
         child_item->setData(0, Qt::UserRole, QString::fromStdString(it.key));
     }
     tree->expandAll();
 
-    auto* menu = new QMenu(select);
+    auto* menu          = new QMenu(select);
     auto* widget_action = new QWidgetAction(menu);
 
     tree->setMinimumSize(300, 0);
@@ -288,12 +284,8 @@ QToolButton* plot_page::create_tree_dropdown(const std::vector<telemetry_data::d
     return select;
 }
 
-
-
 void plot_page::plot_signal(const std::string key) {
-    if (active_graphs_.contains(key)) {
-            return;
-        }
+    if (active_graphs_.contains(key)) { return; }
     auto series = context_->backend->get_data().get_series(key);
     auto time   = context_->backend->get_data().get_time();
 
@@ -304,17 +296,19 @@ void plot_page::plot_signal(const std::string key) {
 
     QVector<double> x_times;
     x_times.reserve(time.size());
-    for (auto t : time) x_times.append(t - time_offset_);
+    for (auto t : time) { x_times.append(t - time_offset_); }
     QVector<double> y_values(series.begin(), series.end());
 
     QCPGraph* graph = plot_->addGraph();
     graph->setAdaptiveSampling(true);
 
-    static const std::vector<QColor> palette = {
-        QColor("#00adb5"), QColor("#ff5722"), QColor("#e91e63"),
-        QColor("#9c27b0"), QColor("#4caf50"), QColor("#ffeb3b")
-    };
-    QColor color = palette[active_graphs_.size() % palette.size()];
+    static const std::vector<QColor> palette = {QColor("#00adb5"),
+                                                QColor("#ff5722"),
+                                                QColor("#e91e63"),
+                                                QColor("#9c27b0"),
+                                                QColor("#4caf50"),
+                                                QColor("#ffeb3b")};
+    QColor                           color   = palette[active_graphs_.size() % palette.size()];
 
     graph->setPen(QPen(color, 2.0));
     graph->setData(x_times, y_values);
@@ -326,7 +320,7 @@ void plot_page::plot_signal(const std::string key) {
     }
     graph->addToLegend();
 
-    active_graphs_[key] = graph;
+    active_graphs_[key]  = graph;
     plotted_counts_[key] = series.size();
 
     plot_->rescaleAxes();
@@ -340,13 +334,12 @@ void plot_page::on_data_updated() {
 
 void plot_page::update_plot() {
     auto sync_opt = context_->backend->get_data().get_sync_lt();
-        plot_->xAxis->setLabel(sync_opt
+    plot_->xAxis->setLabel(
+        sync_opt
             ? QString("Data Synced at: %1").arg(QString::fromStdString(sync_opt->to_string(false)))
             : "No Time Synced");
 
-    if (active_graphs_.empty()) {
-        return;
-    }
+    if (active_graphs_.empty()) { return; }
 
     auto time = context_->backend->get_data().get_time();
 
@@ -354,7 +347,7 @@ void plot_page::update_plot() {
         auto series = context_->backend->get_data().get_series(key);
 
         std::size_t already_plotted = plotted_counts_[key];
-        std::size_t total = series.size();
+        std::size_t total           = series.size();
 
         if (total < already_plotted) {
             graph->data()->clear();
@@ -367,10 +360,10 @@ void plot_page::update_plot() {
         }
 
         QVector<double> new_x;
-            new_x.reserve(total - already_plotted);
-            for (auto it = time.begin() + already_plotted; it != time.end(); ++it) {
-                new_x.append(*it - time_offset_);
-            }
+        new_x.reserve(total - already_plotted);
+        for (auto it = time.begin() + already_plotted; it != time.end(); ++it) {
+            new_x.append(*it - time_offset_);
+        }
         QVector<double> new_y(series.begin() + already_plotted, series.end());
         graph->addData(new_x, new_y);
 
@@ -383,9 +376,7 @@ void plot_page::update_plot() {
 
 void plot_page::update_stream() {
 
-    if (!context_->backend->is_logging()) {
-        return;
-    }
+    if (!context_->backend->is_logging()) { return; }
 
     auto series = context_->backend->get_data().get_raw_lines();
 
@@ -403,9 +394,7 @@ void plot_page::update_stream() {
         displayed = 0;
     }
 
-    if (total <= displayed) {
-        return;
-    }
+    if (total <= displayed) { return; }
 
     for (std::size_t i = displayed; i < total; ++i) {
         text_log_->appendPlainText(QString::fromStdString(series[i]));

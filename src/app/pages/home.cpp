@@ -22,11 +22,8 @@ void home_page::build_page() {
     build_lhs();
 }
 
-void home_page::build_rhs() {
+void home_page::build_rhs() {}
 
-}
+void home_page::build_lhs() {}
 
-void home_page::build_lhs() {
-
-}
 } // namespace mbr::pages

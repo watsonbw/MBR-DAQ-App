@@ -1,7 +1,7 @@
 #pragma once
 
-#include <memory>
 #include <QApplication>
+#include <memory>
 
 #include <stdx/types.hh>
 #include <stdx/utility.hh>
@@ -21,8 +21,8 @@ class app_t {
 
   private:
     std::unique_ptr<QApplication> qt_app_;
-    std::unique_ptr<gui_t>       gui_;
-    std::shared_ptr<app_context> context_;
+    std::unique_ptr<gui_t>        gui_;
+    std::shared_ptr<app_context>  context_;
 };
 
 } // namespace mbr

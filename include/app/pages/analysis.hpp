@@ -10,10 +10,9 @@
 #include <utility>
 #include <vector>
 
-
+#include <QWidget>
 #include <stdx/option.hh>
 #include <stdx/types.hh>
-#include <QWidget>
 
 #include "app/context.hpp"
 #include "app/pages/page.hpp"
@@ -35,7 +34,8 @@ class analysis_page : public page {
     [[nodiscard]] static const char* data_type_string(data_view_t type);
 
   public:
-      explicit analysis_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr) : page(ctx, parent) {};
+    explicit analysis_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr)
+        : page(ctx, parent) {};
     ~analysis_page() override = default;
 
     void on_enter() override;
@@ -43,9 +43,7 @@ class analysis_page : public page {
     void build_page() override;
 
   private:
-
   private:
-
 };
 
 } // namespace mbr::pages
