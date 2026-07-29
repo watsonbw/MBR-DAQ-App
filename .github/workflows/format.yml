@@ -32,6 +32,7 @@ jobs:
                   brew update
                   brew install llvm@21
                   echo "/opt/homebrew/opt/llvm@21/bin" >> $GITHUB_PATH
+                  python3 scripts/install_qt.py
               env:
                   HOMEBREW_NO_AUTO_UPDATE: 1
 
