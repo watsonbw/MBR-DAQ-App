@@ -1,5 +1,4 @@
 """scripts/install_qt.py — installs Qt6 for local dev."""
-
 import platform
 import subprocess
 import os
@@ -11,7 +10,8 @@ elif "MSYSTEM" in os.environ:
     subprocess.run(
         ["pacman", "-S", "--noconfirm", "--needed",
          "mingw-w64-ucrt-x86_64-qt6-base",
-         "mingw-w64-ucrt-x86_64-qt6-tools"],
+         "mingw-w64-ucrt-x86_64-qt6-tools",
+         "mingw-w64-ucrt-x86_64-qt6-charts"],
         check=True,
     )
 else:
