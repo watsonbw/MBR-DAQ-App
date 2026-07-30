@@ -25,7 +25,7 @@
 #include "app/pages/page.hpp"
 #include "esp32/data.hpp"
 
-namespace mbr::pages {
+namespace mbr::ui::pages {
 
 class plot_page : public page {
   public:
@@ -55,14 +55,14 @@ class plot_page : public page {
     ankerl::unordered_dense::map<std::string, QCPGraph*> active_graphs_;
 
     ankerl::unordered_dense::map<std::string, std::size_t> plotted_counts_;
-    bool                                                   pending_update_ = false;
-    QTimer*                                                redraw_timer_   = nullptr;
+    QTimer*                                                redraw_timer_ = nullptr;
 
-    double time_offset_ = 0.0;
-    bool   has_offset_  = false;
+    double time_offset_    = 0.0;
+    bool   pending_update_ = false;
+    bool   has_offset_     = false;
 
   private slots:
     void on_data_updated();
 };
 
-} // namespace mbr::pages
+} // namespace mbr::ui::pages

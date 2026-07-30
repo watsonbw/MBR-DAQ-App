@@ -38,8 +38,9 @@ using namespace std::chrono;
 
 namespace mbr {
 
-namespace style  = mbr::ui::style;
-namespace colors = mbr::ui::style::color;
+namespace style  = ui::style;
+namespace colors = ui::style::color;
+namespace page   = ui::pages;
 
 gui_t::gui_t(const std::shared_ptr<app_context>& ctx) : context_(ctx) {
     pages_ = new QStackedWidget(this);
@@ -53,15 +54,15 @@ gui_t::gui_t(const std::shared_ptr<app_context>& ctx) : context_(ctx) {
     build_menu_bar();
 }
 
-[[nodiscard]] pages::page*
+[[nodiscard]] page::page*
 gui_t::create_page(page_type_t type, const std::shared_ptr<app_context>& ctx, QWidget* parent) {
     switch (type) {
-    case page_type_t::HOME:     return new pages::home_page(ctx, parent);
-    case page_type_t::PLOT:     return new pages::plot_page(ctx, parent);
-    case page_type_t::ANALYSIS: return new pages::analysis_page(ctx, parent);
-    case page_type_t::SERIAL:   return new pages::serial_page(ctx, parent);
-    case page_type_t::SETTINGS: return new pages::settings_page(ctx, parent);
-    default:                    return nullptr;
+    case page_type_t::HOME:           return new page::home_page(ctx, parent);
+    case page_type_t::PLOT:           return new page::plot_page(ctx, parent);
+    case page_type_t::ANALYSIS:       return new page::analysis_page(ctx, parent);
+    case page_type_t::SERIAL_MONITOR: return new page::serial_page(ctx, parent);
+    case page_type_t::SETTINGS:       return new page::settings_page(ctx, parent);
+    default:                          return nullptr;
     }
 }
 
@@ -81,7 +82,7 @@ void gui_t::build_menu_bar() {
     nav->setStyleSheet(style::make_menu_style());
     nav->addAction("Home", this, [this] { change_page(page_type_t::HOME); });
     nav->addAction("Plot", this, [this] { change_page(page_type_t::PLOT); });
-    nav->addAction("Serial", this, [this] { change_page(page_type_t::SERIAL); });
+    nav->addAction("Serial", this, [this] { change_page(page_type_t::SERIAL_MONITOR); });
     nav->addAction("Analysis", this, [this] { change_page(page_type_t::ANALYSIS); });
 
     menuBar()->addAction("Sync Time", this, [this] {
@@ -101,26 +102,26 @@ void gui_t::build_menu_bar() {
 
     connection_status_ = new QLabel("Disconnected", rightWidget);
     connection_status_->setStyleSheet("font-size: 20px;");
-    connection_status_->setMinimumWidth(
-        connection_status_->fontMetrics().horizontalAdvance("Disconnected") + 4);
+    connection_status_->setMinimumWidth(120);
     connection_status_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    int w = std::max(connection_status_->fontMetrics().horizontalAdvance("Connected"),
-                     connection_status_->fontMetrics().horizontalAdvance("Disconnected"));
-    connection_status_->setMinimumWidth(w + 4);
 
-    connect(
-        context_->bridge.get(), &backend_bridge::connection_changed, this, [this](bool connected) {
-            is_connected_ = connected;
-            if (!connected) { is_receiving_ = false; }
-            connection_status_->setText(connected ? "Connected" : "Disconnected");
-            update_status_dot();
-        });
+    connect(context_->bridge.get(),
+            &ui::bridge::backend_bridge::connection_changed,
+            this,
+            [this](bool connected) {
+                is_connected_ = connected;
+                if (!connected) { is_receiving_ = false; }
+                connection_status_->setText(connected ? "Connected" : "Disconnected");
+                update_status_dot();
+            });
 
-    connect(
-        context_->bridge.get(), &backend_bridge::receiving_changed, this, [this](bool receiving) {
-            is_receiving_ = receiving;
-            update_status_dot();
-        });
+    connect(context_->bridge.get(),
+            &ui::bridge::backend_bridge::receiving_changed,
+            this,
+            [this](bool receiving) {
+                is_receiving_ = receiving;
+                update_status_dot();
+            });
     connection_status_->setStyleSheet("font-size: 20px;");
 
     status_dot_ = new QLabel(rightWidget);

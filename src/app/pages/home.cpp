@@ -20,10 +20,12 @@
 #include "core/log.hpp"
 #include "core/time.hpp"
 
-namespace mbr::pages {
+namespace mbr::ui::pages {
 
-namespace style  = mbr::ui::style;
-namespace colors = mbr::ui::style::color;
+namespace style  = ui::style;
+namespace colors = ui::style::color;
+
+using namespace std::chrono_literals;
 
 void home_page::on_enter() { log_info(context_->log, "Entered HomePage"); }
 void home_page::on_exit() { log_info(context_->log, "Exited HomePage"); }
@@ -94,7 +96,7 @@ QWidget* home_page::build_lhs() {
 
 void home_page::connect_signals() {
     connect(context_->bridge.get(),
-            &backend_bridge::fields_received,
+            &ui::bridge::backend_bridge::fields_received,
             this,
             [this](const std::vector<std::string>& keys) {
                 const auto now = std::chrono::steady_clock::now();
@@ -113,7 +115,7 @@ void home_page::connect_signals() {
     connect(timer, &QTimer::timeout, this, [this]() {
         const auto now = std::chrono::steady_clock::now();
         for (const auto& [key, time] : last_updated_) {
-            if (now - time > std::chrono::milliseconds(250)) {
+            if (now - time > 250ms) {
                 if (auto it = labels_.find(key); it != labels_.end()) {
                     it->second->setStyleSheet(QString::fromStdString(
                         fmt::format("background-color: {}; border-radius: 10px;",
@@ -125,4 +127,4 @@ void home_page::connect_signals() {
     timer->start(100);
 }
 
-} // namespace mbr::pages
+} // namespace mbr::ui::pages

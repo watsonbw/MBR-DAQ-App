@@ -41,10 +41,10 @@
 
 #include <qcustomplot.h>
 
-namespace mbr::pages {
+namespace mbr::ui::pages {
 
-namespace style  = mbr::ui::style;
-namespace colors = mbr::ui::style::color;
+namespace style  = ui::style;
+namespace colors = ui::style::color;
 
 void plot_page::on_enter() { log_info(context_->log, "Entered PlotPage"); }
 void plot_page::on_exit() { log_info(context_->log, "Exited PlotPage"); }
@@ -103,7 +103,6 @@ QWidget* plot_page::build_lhs() {
         auto raw_lines = context_->backend->get_data().get_raw_lines();
         if (raw_lines.empty()) {
             log_warn(context_->log, "Cannot download data as the data buffer is empty!");
-            download_name_input->clear();
             return;
         }
 
@@ -111,7 +110,6 @@ QWidget* plot_page::build_lhs() {
         if (!out.is_open()) {
             log_error(context_->log,
                       fmt::format("Failed to open output file: {}", std::strerror(errno)));
-            download_name_input->clear();
             return;
         }
 
@@ -207,9 +205,10 @@ QWidget* plot_page::build_rhs() {
 
 void plot_page::plot_timer() {
 
-    connect(context_->bridge.get(), &backend_bridge::data_updated, this, [this](const auto&) {
-        pending_update_ = true;
-    });
+    connect(context_->bridge.get(),
+            &ui::bridge::backend_bridge::data_updated,
+            this,
+            [this](const auto&) { pending_update_ = true; });
 
     redraw_timer_ = new QTimer(this);
     connect(redraw_timer_, &QTimer::timeout, this, [this]() {
@@ -383,4 +382,4 @@ void plot_page::update_stream() {
     }
 }
 
-} // namespace mbr::pages
+} // namespace mbr::ui::pages

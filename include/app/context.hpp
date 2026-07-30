@@ -17,18 +17,18 @@ enum class page_type_t : u8 {
     HOME,
     PLOT,
     ANALYSIS,
-    SERIAL,
+    SERIAL_MONITOR,
     SETTINGS,
 };
 
 [[nodiscard]] constexpr const char* page_type_str(page_type_t page_type) {
     switch (page_type) {
-    case page_type_t::HOME:     return "Home";
-    case page_type_t::PLOT:     return "Plot";
-    case page_type_t::ANALYSIS: return "Analysis";
-    case page_type_t::SERIAL:   return "Serial Monitor";
-    case page_type_t::SETTINGS: return "Settings";
-    default:                    return "Unknown";
+    case page_type_t::HOME:           return "Home";
+    case page_type_t::PLOT:           return "Plot";
+    case page_type_t::ANALYSIS:       return "Analysis";
+    case page_type_t::SERIAL_MONITOR: return "Serial Monitor";
+    case page_type_t::SETTINGS:       return "Settings";
+    default:                          return "Unknown";
     }
 }
 
@@ -40,11 +40,11 @@ struct app_context {
     std::atomic<bool> should_exit{false};
     bool              is_cmd_input_focused{false};
 
-    std::unique_ptr<telemetry_backend> backend;
-    std::unique_ptr<backend_bridge>    bridge;
-    std::string                        username;
-    std::string                        password;
-    log_fn_t                           log;
+    std::unique_ptr<telemetry_backend>          backend;
+    std::unique_ptr<ui::bridge::backend_bridge> bridge;
+    std::string                                 username;
+    std::string                                 password;
+    log_fn_t                                    log;
 };
 
 } // namespace mbr

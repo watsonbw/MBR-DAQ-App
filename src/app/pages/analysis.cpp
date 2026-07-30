@@ -29,11 +29,11 @@
 
 using namespace std::chrono_literals;
 
-namespace mbr::pages {
+namespace mbr::ui::pages {
 
 void analysis_page::on_enter() { log_info(context_->log, "Entered AnalysisPage"); }
 void analysis_page::on_exit() { log_info(context_->log, "Exited AnalysisPage"); }
 
 void analysis_page::build_page() { PROFILE_FUNCTION(); }
 
-} // namespace mbr::pages
+} // namespace mbr::ui::pages

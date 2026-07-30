@@ -9,7 +9,7 @@
 #include "app/pages/page.hpp"
 #include "core/ip.hpp"
 
-namespace mbr::pages {
+namespace mbr::ui::pages {
 
 class settings_page : public page {
   public:
@@ -25,4 +25,4 @@ class settings_page : public page {
   private:
 };
 
-} // namespace mbr::pages
+} // namespace mbr::ui::pages

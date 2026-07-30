@@ -10,7 +10,7 @@
 #include "app/pages/page.hpp"
 #include "core/ip.hpp"
 
-namespace mbr::pages {
+namespace mbr::ui::pages {
 
 class home_page : public page {
   public:
@@ -40,4 +40,4 @@ class home_page : public page {
     ankerl::unordered_dense::map<QString, std::chrono::steady_clock::time_point> last_updated_;
 };
 
-} // namespace mbr::pages
+} // namespace mbr::ui::pages

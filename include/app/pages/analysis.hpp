@@ -18,19 +18,9 @@
 #include "app/pages/page.hpp"
 #include "core/time.hpp"
 
-namespace mbr::pages {
+namespace mbr::ui::pages {
 
 class analysis_page : public page {
-  public:
-    using selected_video_t    = stdx::option<std::pair<std::string, stdx::option<date_time>>>;
-    using selected_txt_file_t = stdx::option<std::string>;
-
-    enum class data_view_t : u8 {
-        ALL,
-        RPMDATA,
-        SHOCKDATA,
-    };
-
   public:
     explicit analysis_page(const std::shared_ptr<app_context>& ctx, QWidget* parent = nullptr)
         : page(ctx, parent) {};
@@ -41,7 +31,6 @@ class analysis_page : public page {
     void build_page() override;
 
   private:
-  private:
 };
 
-} // namespace mbr::pages
+} // namespace mbr::ui::pages

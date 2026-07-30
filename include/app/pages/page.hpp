@@ -6,7 +6,7 @@
 
 #include "app/context.hpp"
 
-namespace mbr::pages {
+namespace mbr::ui::pages {
 
 class page : public QWidget {
     Q_OBJECT
@@ -24,4 +24,4 @@ class page : public QWidget {
     std::shared_ptr<app_context> context_;
 };
 
-} // namespace mbr::pages
+} // namespace mbr::ui::pages

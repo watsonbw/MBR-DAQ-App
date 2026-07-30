@@ -29,7 +29,7 @@ class gui_t : public QMainWindow {
     void change_page(page_type_t type);
     void build_menu_bar();
     void update_status_dot();
-    [[nodiscard]] pages::page*
+    [[nodiscard]] ui::pages::page*
     create_page(page_type_t type, const std::shared_ptr<app_context>& ctx, QWidget* parent);
 
   private:

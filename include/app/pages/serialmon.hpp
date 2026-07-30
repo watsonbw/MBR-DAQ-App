@@ -8,7 +8,7 @@
 
 #include "app/pages/page.hpp"
 
-namespace mbr::pages {
+namespace mbr::ui::pages {
 
 class serial_page : public page {
   public:
@@ -25,4 +25,4 @@ class serial_page : public page {
     std::string serial_buffer_;
 };
 
-} // namespace mbr::pages
+} // namespace mbr::ui::pages

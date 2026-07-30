@@ -10,11 +10,11 @@
 #include "core/log.hpp"
 #include "esp32/serial.hpp"
 
-namespace mbr::pages {
+namespace mbr::ui::pages {
 
 void serial_page::on_enter() { log_info(context_->log, "Entered SerialPage"); }
 void serial_page::on_exit() { log_info(context_->log, "Exited SerialPage"); }
 
 void serial_page::build_page() { PROFILE_FUNCTION(); }
 
-} // namespace mbr::pages
+} // namespace mbr::ui::pages
