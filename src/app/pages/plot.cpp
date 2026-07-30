@@ -237,11 +237,13 @@ QToolButton* plot_page::create_tree_dropdown(const std::vector<telemetry_data::d
     tree->setColumnCount(1);
     tree->setStyleSheet(style::make_tree_style());
 
-    for (auto it : data) {
+    QString current_group;
+    for (auto& it : data) {
         bool             found        = false;
         QTreeWidgetItem* target_group = nullptr;
+        current_group                 = QString::fromStdString(it.group);
         for (i32 i = 0; i < tree->topLevelItemCount(); ++i) {
-            if (QString::fromStdString(it.group) == tree->topLevelItem(i)->text(0)) {
+            if (current_group == tree->topLevelItem(i)->text(0)) {
                 found        = true;
                 target_group = tree->topLevelItem(i);
                 break;
