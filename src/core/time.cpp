@@ -126,10 +126,10 @@ date_time::date_time() {
 
     const auto total_us = duration_cast<microseconds>(duration).count();
     local               = local_time{static_cast<u64>(lt.tm_hour),
-                       static_cast<u64>(lt.tm_min),
-                       static_cast<u64>(lt.tm_sec),
-                       static_cast<u64>((total_us / 1'000) % 1'000),
-                       static_cast<u64>(total_us % 1'000)};
+                                     static_cast<u64>(lt.tm_min),
+                                     static_cast<u64>(lt.tm_sec),
+                                     static_cast<u64>((total_us / 1'000) % 1'000),
+                                     static_cast<u64>(total_us % 1'000)};
 }
 
 date_time::date_time(u64 creation_time_seconds) {

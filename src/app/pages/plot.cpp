@@ -279,7 +279,7 @@ void plot_page::plot_signal(const std::string& key) {
     if (!inserted) { return; }
     auto series = context_->backend->get_data().get_series(key);
     if (!series) { return; }
-    auto time   = context_->backend->get_data().get_time();
+    auto time = context_->backend->get_data().get_time();
 
     if (!has_offset_ && !time.empty()) {
         time_offset_ = time.front();
