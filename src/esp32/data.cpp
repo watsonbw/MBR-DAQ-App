@@ -49,7 +49,7 @@ void telemetry_data::init_json(const std::filesystem::path& path) {
 }
 
 void telemetry_data::init_data() {
-    for (const auto& data : data_values) { series.try_emplace(data.key, std::vector<f64>{}); }
+    for (const auto& data : data_values) { series_.try_emplace(data.key, std::vector<f64>{}); }
 }
 
 void telemetry_data::write_data(const std::string& identifier, const std::string& value) {
@@ -57,7 +57,7 @@ void telemetry_data::write_data(const std::string& identifier, const std::string
     try {
         // This cannot be from_chars since apple clang doesn't support it :(
         f64 val = std::stod(value);
-        series[identifier].emplace_back(val);
+        series_[identifier].emplace_back(val);
         if (identifier == "T") {
             u64 raw_micros = static_cast<u64>(val);
             time_no_normal_micros_.emplace_back(raw_micros);
@@ -67,7 +67,7 @@ void telemetry_data::write_data(const std::string& identifier, const std::string
 }
 
 void telemetry_data::clear() {
-    for (auto& [key, values] : series) { values.clear(); }
+    for (auto& [key, values] : series_) { values.clear(); }
     time_.clear();
     time_no_normal_micros_.clear();
     raw_lines_.clear();

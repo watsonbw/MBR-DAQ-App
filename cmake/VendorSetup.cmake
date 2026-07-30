@@ -45,85 +45,10 @@ add_vendor_fetch_content(gsl vendor/gsl)
 add_vendor_fetch_content(fmt vendor/fmt)
 
 # Sokol
-add_library(sokol_setup STATIC src/vendor/sokol_impl.cpp)
-target_include_directories(sokol_setup SYSTEM PUBLIC
-    vendor/sokol
-    vendor/sokol/util
-    vendor/imgui
-    vendor/imgui/backends)
-target_compile_options(sokol_setup PRIVATE ${WARNING_IGNORE})
 
-if(APPLE)
-    target_compile_definitions(sokol_setup PUBLIC SOKOL_METAL)
-    set_source_files_properties(src/vendor/sokol_impl.cpp PROPERTIES LANGUAGE OBJCXX)
-    target_link_libraries(sokol_setup INTERFACE
-        "-framework Cocoa"
-        "-framework IOKit"
-        "-framework Metal"
-        "-framework MetalKit"
-        "-framework QuartzCore"
-        "-framework AVFoundation"
-        "-framework CoreMedia"
-        "-framework CoreVideo"
-    )
-elseif(WIN32)
-    target_compile_definitions(sokol_setup PUBLIC SOKOL_D3D11)
-    target_link_libraries(sokol_setup INTERFACE d3d11 dxgi dwmapi)
-endif()
-
-# Dear ImGUI
-add_library(imgui_setup STATIC
-    vendor/imgui/imgui.cpp
-    vendor/imgui/imgui_draw.cpp
-    vendor/imgui/imgui_widgets.cpp
-    vendor/imgui/imgui_tables.cpp
-    vendor/imgui/imgui_demo.cpp
-)
-target_include_directories(imgui_setup SYSTEM PUBLIC
-    vendor/imgui vendor/imgui/backends)
-target_link_libraries(imgui_setup PUBLIC sokol_setup)
-
-# ImPlot
-add_library(implot_setup STATIC
-    vendor/implot/implot.cpp
-    vendor/implot/implot_items.cpp
-    vendor/implot/implot_demo.cpp
-)
-target_include_directories(implot_setup SYSTEM PUBLIC vendor/implot)
-target_link_libraries(implot_setup PUBLIC imgui_setup)
-target_compile_options(implot_setup PRIVATE ${WARNING_IGNORE})
 
 # OpenCV
-set(BUILD_LIST "core,imgproc,imgcodecs,videoio,highgui" CACHE STRING "" FORCE)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Static linking" FORCE)
-set(BUILD_opencv_apps OFF CACHE BOOL "Classifier training not needed" FORCE)
-set(BUILD_opencv_python2 OFF CACHE BOOL "Disable python support" FORCE)
-set(BUILD_opencv_python3 OFF CACHE BOOL "Disable python support" FORCE)
-set(BUILD_EXAMPLES OFF CACHE BOOL "Examples not needed" FORCE)
-set(BUILD_DOCS OFF CACHE BOOL "OpenCV docs are not needed" FORCE)
-set(BUILD_TESTS OFF CACHE BOOL "Testing not needed for vendoring" FORCE)
-set(BUILD_PERF_TESTS OFF CACHE BOOL "Testing not needed for vendoring" FORCE)
-set(BUILD_CUDA_STUBS OFF CACHE BOOL "Cuda is never needed" FORCE)
-set(WITH_CUDA OFF CACHE BOOL "" FORCE)
-set(BUILD_JAVA OFF CACHE BOOL "" FORCE)
-set(WITH_IPP OFF CACHE BOOL "Intel IPP support not needed" FORCE)
-set(WITH_ITT OFF CACHE BOOL "Intel ITT support not needed" FORCE)
-set(WITH_OPENCL OFF CACHE BOOL "" FORCE)
-set(WITH_WEBP OFF CACHE BOOL "" FORCE)
-set(WITH_OPENEXR OFF CACHE BOOL "" FORCE)
 
-set(OPENCV_WARNINGS_ARE_ERRORS OFF CACHE BOOL "" FORCE)
-set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS ON CACHE BOOL "" FORCE)
-
-if(APPLE)
-    set(WITH_FFMPEG OFF CACHE BOOL "System dependencies instead" FORCE)
-    set(HAVE_FFMPEG OFF CACHE BOOL "System dependencies instead" FORCE)
-    set(WITH_AVFOUNDATION ON CACHE BOOL "Apple framework is statically linked" FORCE)
-    unset(FFMPEG_LIBRARIES CACHE)
-    unset(FFMPEG_INCLUDE_DIRS CACHE)
-endif()
-
-add_vendor_subdirectory(vendor/opencv)
 
 # TinyFileDialogs
 add_library(tinyfiledialogs STATIC vendor/libtinyfiledialogs/tinyfiledialogs.c)
@@ -230,3 +155,63 @@ option(ENABLE_STDX_PROFILE "Enable profiling/tracing in stdx" OFF)
 set(STDX_PROFILE ${ENABLE_STDX_PROFILE} CACHE BOOL "" FORCE)
 
 add_vendor_subdirectory(vendor/stdx)
+
+# Qt
+if(WIN32)
+    list(APPEND CMAKE_PREFIX_PATH "C:/msys64/ucrt64")
+elseif(APPLE)
+    # Homebrew Qt6 install location differs by CPU architecture
+    execute_process(
+        COMMAND brew --prefix qt
+        OUTPUT_VARIABLE HOMEBREW_QT_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    if(HOMEBREW_QT_PREFIX)
+        list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_QT_PREFIX}")
+    else()
+        # Fallback if `brew` isn't on PATH (e.g. CI) - covers both arches
+        list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/qt" "/usr/local/opt/qt")
+    endif()
+endif()
+
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Charts PrintSupport)
+
+if(WIN32)
+    find_program(WINDEPLOYQT_EXE windeployqt
+        HINTS "${Qt6_DIR}/../../../bin" "${Qt6_DIR}/../../../share/qt6/bin"
+    )
+    message(STATUS "windeployqt found: ${WINDEPLOYQT_EXE}")
+elseif(APPLE)
+    find_program(MACDEPLOYQT_EXE macdeployqt
+        HINTS "${Qt6_DIR}/../../../bin"
+    )
+    message(STATUS "macdeployqt found: ${MACDEPLOYQT_EXE}")
+endif()
+
+# QCustomPlot
+include(FetchContent)
+
+FetchContent_Declare(
+    qcustomplot
+    URL https://www.qcustomplot.com/release/2.1.1/QCustomPlot-source.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    SOURCE_SUBDIR "no-cmake"
+)
+
+FetchContent_MakeAvailable(qcustomplot)
+
+add_library(QCustomPlot STATIC
+    ${qcustomplot_SOURCE_DIR}/qcustomplot.cpp
+    ${qcustomplot_SOURCE_DIR}/qcustomplot.h
+)
+
+set_target_properties(QCustomPlot PROPERTIES
+    AUTOMOC ON
+    AUTOUIC OFF
+    AUTORCC OFF
+)
+
+target_include_directories(QCustomPlot PUBLIC ${qcustomplot_SOURCE_DIR})
+target_compile_options(QCustomPlot PRIVATE ${WARNING_IGNORE})
+target_link_libraries(QCustomPlot PUBLIC Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::PrintSupport)

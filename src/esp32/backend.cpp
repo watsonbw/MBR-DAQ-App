@@ -67,7 +67,9 @@ void telemetry_backend::start() {
     web_sockets_.setOnMessageCallback([this](const ix::WebSocketMessagePtr& msg) {
         if (msg->type == ix::WebSocketMessageType::Open) {
             is_connected_ = true;
+            notify_connection_changed(true);
             is_receiving_ = false;
+            notify_receiving_changed(false);
             send_cmd("STATUS");
             log_info(log_, "Connected to ESP32");
         }
@@ -76,6 +78,8 @@ void telemetry_backend::start() {
             msg->type == ix::WebSocketMessageType::Error) {
             is_connected_ = false;
             is_receiving_ = false;
+            notify_connection_changed(false);
+            notify_receiving_changed(false);
         }
         if (msg->type == ix::WebSocketMessageType::Close) { log_warn(log_, "WebSocket closed"); }
 
@@ -86,6 +90,7 @@ void telemetry_backend::start() {
 
         if (msg->type == ix::WebSocketMessageType::Message) {
             is_receiving_ = true;
+            notify_receiving_changed(true);
             this->on_message(msg);
             last_data_time_ = std::chrono::steady_clock::now();
         }
@@ -103,12 +108,19 @@ void telemetry_backend::kill() {
     }
 }
 
+void telemetry_backend::restart() {
+    kill();
+    should_kill_ = false;
+    start();
+}
+
 void telemetry_backend::send_cmd(const std::string& text) {
     if (web_sockets_.getReadyState() == ix::ReadyState::Open) {
         const ix::WebSocketSendInfo info = web_sockets_.send(text);
         if (!info.success) {
             log_warn(log_, "Send failed:");
             is_connected_ = false;
+            notify_connection_changed(false);
             return;
         }
 
@@ -122,9 +134,13 @@ void telemetry_backend::send_cmd(const std::string& text) {
 void telemetry_backend::worker_loop() {
     while (!should_kill_) {
         std::this_thread::sleep_for(10ms);
-        if (web_sockets_.getReadyState() != ix::ReadyState::Open) { is_connected_ = false; }
-        if (std::chrono::steady_clock::now() - last_data_time_.load() > 500ms) {
+        if (web_sockets_.getReadyState() != ix::ReadyState::Open) {
+            is_connected_ = false;
+            notify_connection_changed(false);
+        }
+        if (std::chrono::steady_clock::now() - last_data_time_.load() > 250ms) {
             is_receiving_ = false;
+            notify_receiving_changed(false);
         }
     }
 }
@@ -150,17 +166,23 @@ void telemetry_backend::on_message(const ix::WebSocketMessagePtr& msg) {
             // Now we can safely unpack the packet
             const std::unique_lock lock{data_latch_};
 
-            // write data
-            if (!is_logging_) { continue; }
-
+            // Write data and add keys received to signal
+            std::vector<std::string> received_keys;
+            received_keys.reserve(parsed.value().size());
             for (const auto& [ident, value] : parsed.value()) {
-                data_.write_data(std::string{ident}, std::string{value});
+                received_keys.push_back(std::string{ident});
+                if (is_logging_) { data_.write_data(std::string{ident}, std::string{value}); }
             }
-            data_.write_raw_line(line);
-            for (const auto& [ident, value] : parsed.value()) {
-                if (ident == "W") {
-                    data_.save_current_line(line);
-                    break;
+            notify_fields_received(received_keys);
+
+            if (is_logging_) {
+                notify_data(data_.get_series());
+                data_.write_raw_line(line);
+                for (const auto& [ident, value] : parsed.value()) {
+                    if (ident == "W") {
+                        data_.save_current_line(line);
+                        break;
+                    }
                 }
             }
         }
@@ -233,7 +255,6 @@ void telemetry_backend::set_ip(const ipv4_t& ipv4) {
     kill();
     should_kill_ = false;
     start();
-    try_connection_ = false;
 }
 
 namespace {
@@ -327,79 +348,5 @@ void telemetry_backend::register_handlers() {
         }
     };
 }
-
-/*
-auto TelemetryBackend::HandleCommand(
-    stdx::option<std::vector<std::pair<std::string_view, std::string_view>>> parsed) -> void {
-    if (!parsed || parsed->size() < 2) {
-        LOG_ERROR("Command Not Found");
-        return;
-    }
-    auto response = parsed.value()[1];
-    if (response.first == "SYNC") {
-        u64 micros = 0;
-        std::from_chars(
-            response.second.data(), response.second.data() + response.second.size(), micros);
-        LocalTime t{micros};
-        LOG_INFO("Time successfully synced at: {}", t.String(false));
-    } else if (response.first == "SD_START") {
-        if (response.second == "deadbeef") {
-            LOG_ERROR("SD Card Failed Initialization");
-        } else {
-            LOG_INFO("SD Card Initialized At {}", response.second);
-            IsOpen = true;
-        }
-    } else if (response.first == "SD_WRITE") {
-        if (response.second == "1") {
-            LOG_INFO("SD Card Has Begun Writing");
-            IsWriting = true;
-        } else if (response.second == "0") {
-            LOG_INFO("SD Card Has Stopped Writing");
-            IsWriting = false;
-        }
-    } else if (response.first == "SD_CLOSE") {
-        if (response.second == "1") {
-            IsOpen = false;
-            LOG_INFO("SD Card Has Closed Succesfully");
-        } else if (response.second == "0") {
-            LOG_INFO("SD Card Failed Close");
-        }
-    } else if (parsed.value()[0].second == "1") {
-        LOG_ERROR("Command Not Found");
-    }
-}
-for (const auto& field : m_PacketFields) {
-    const usize ident_start = pos;
-    while (pos < str.size() && str[pos] != ' ') {
-        pos += 1;
-    }
-    if (str.substr(ident_start, pos - ident_start) != field) { return stdx::none; }
-
-    // There can be an arbitrary amount of spaces between idents/values
-    if (pos >= str.size() || str[pos] != ' ') { return stdx::none; }
-    while (pos < str.size() && str[pos] == ' ') {
-        pos += 1;
-    }
-
-    const usize value_start = pos;
-    while (pos < str.size() && str[pos] != ' ') {
-        pos += 1;
-    }
-    if (value_start == pos) { return stdx::none; }
-    const auto value = str.substr(value_start, pos - value_start);
-
-    // Uncalibrated packets or unparsable times are invalid
-    if (field == "T") {
-        u64 t   = 0;
-        auto     res = std::from_chars(value.data(), value.data() + value.size(), t);
-        if (res.ec != std::errc{} || t == 0) { return stdx::none; }
-    }
-
-    parsed.emplace_back(field, value);
-    while (pos < str.size() && str[pos] == ' ') {
-        pos += 1;
-    }
-}
-*/
 
 } // namespace mbr

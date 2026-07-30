@@ -1,35 +1,45 @@
 #pragma once
 
 #include <memory>
-#include <string>
+
+#include <QMainWindow>
+#include <QStackedWidget>
+#include <QWidget>
+#include <qlabel.h>
+#include <qtmetamacros.h>
+#include <qwidget.h>
+
+#include <stdx/assert.hh>
+#include <stdx/fixed/enum_map.hh>
+#include <stdx/profiler.hh>
+#include <stdx/types.hh>
 
 #include "app/context.hpp"
 #include "app/pages/page.hpp"
-#include "assets/texture.hpp"
-
-struct sapp_event;
-struct sapp_desc;
 
 namespace mbr {
 
-class gui_t {
+class gui_t : public QMainWindow {
+    Q_OBJECT
   public:
-    explicit gui_t(const std::shared_ptr<app_context>& ctx) : context_{ctx} {};
-
-    sapp_desc get_sokol_desc();
-    void      on_init();
-    void      on_frame();
-    void      on_event(const sapp_event* event);
-    void      on_cleanup();
+    explicit gui_t(const std::shared_ptr<app_context>& ctx);
+    ~gui_t() = default;
 
   private:
     void change_page(page_type_t type);
-    void draw_main_menu_bar();
+    void build_menu_bar();
+    void update_status_dot();
+    [[nodiscard]] ui::pages::page*
+    create_page(page_type_t type, const std::shared_ptr<app_context>& ctx, QWidget* parent);
 
   private:
-    std::unique_ptr<pages::page> current_page_;
-    std::shared_ptr<app_context> context_;
-    std::string                  command_buf_;
+    QStackedWidget*                              pages_;
+    std::shared_ptr<app_context>                 context_;
+    stdx::fixed::enum_map<page_type_t, QWidget*> page_lookup_;
+    QLabel*                                      connection_status_;
+    QLabel*                                      status_dot_   = nullptr;
+    bool                                         is_connected_ = false;
+    bool                                         is_receiving_ = false;
 };
 
 } // namespace mbr

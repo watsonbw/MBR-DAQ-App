@@ -3,13 +3,14 @@
 #include <filesystem>
 #include <memory>
 
+#include <QApplication>
+#include <QScreen>
 #include <ixwebsocket/IXNetSystem.h>
-#include <sokol_app.h>
-#include <sokol_gfx.h>
-#include <sokol_glue.h>
-#include <sokol_imgui.h>
+#include <qapplication.h>
+#include <qsize.h>
 #include <stdx/types.hh>
 
+#include "app/backend_bridge.hpp"
 #include "app/context.hpp"
 #include "app/gui.hpp"
 #include "core/log.hpp"
@@ -20,18 +21,22 @@ namespace mbr {
 
 namespace { const std::filesystem::path DEFAULT_JSON_PATH{"MBR_data.json"}; } // namespace
 
-app_t::app_t(i32, char**) : context_{std::make_shared<app_context>()} /*, m_Manager{m_Context}*/ {
+app_t::app_t(i32 argc, char** argv)
+    : qt_app_{std::make_unique<QApplication>(argc, argv)},
+      context_{std::make_shared<app_context>()} {
     context_->log = context_->logger.get_log_fn();
     ix::initNetSystem();
-    gui_              = std::make_unique<gui_t>(context_);
     context_->backend = std::make_unique<telemetry_backend>(DEFAULT_JSON_PATH, context_->log);
+    context_->bridge  = std::make_unique<ui::bridge::backend_bridge>(*context_->backend);
+    gui_              = std::make_unique<gui_t>(context_);
+    context_->backend->start();
 }
 
 app_t::~app_t() { ix::uninitNetSystem(); }
 
 void app_t::run() {
-    auto app_desc = gui_->get_sokol_desc();
-    sapp_run(&app_desc);
+    gui_->showMaximized();
+    qt_app_->exec();
 }
 
 } // namespace mbr

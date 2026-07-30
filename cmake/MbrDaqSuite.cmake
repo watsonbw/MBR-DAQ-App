@@ -1,14 +1,13 @@
 function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     add_library(mbrdaq_core_${TARGET_NAME} STATIC ${LIB_SOURCES})
+    set_target_properties(mbrdaq_core_${TARGET_NAME} PROPERTIES
+        AUTOMOC ON
+        AUTOUIC OFF
+        AUTORCC OFF
+    )
+
     target_link_libraries(mbrdaq_core_${TARGET_NAME} PUBLIC
-        imgui_setup
-        implot_setup
         tinyfiledialogs
-        opencv_core
-        opencv_imgproc
-        opencv_imgcodecs
-        opencv_videoio
-        opencv_highgui
         spdlog::spdlog
         ixwebsocket
         stb_image_setup
@@ -20,6 +19,11 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
         magic_enum::magic_enum
         unordered_dense::unordered_dense
         stdx
+        Qt6::Core
+        Qt6::Widgets
+        Qt6::Charts
+        Qt6::PrintSupport
+        QCustomPlot
     )
 
     target_include_directories(mbrdaq_core_${TARGET_NAME} PUBLIC include)
@@ -35,11 +39,13 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
 
     target_compile_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${BASE_FLAGS})
     target_compile_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
+
     if(APPLE)
-        target_link_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS} "-static-libstdc++")
+        target_link_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
     elseif(WIN32)
         target_link_options(mbrdaq_core_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
     endif()
+
     set_target_properties(mbrdaq_core_${TARGET_NAME}
         PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${OUT_DIR})
 
@@ -53,6 +59,7 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     set_target_properties(catch2_${TARGET_NAME}
         PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${OUT_DIR})
 
+    # Test Executable
     add_executable(mbrdaq_tests_${TARGET_NAME} ${TEST_SOURCES})
     target_link_libraries(mbrdaq_tests_${TARGET_NAME}
         PRIVATE catch2_${TARGET_NAME} mbrdaq_core_${TARGET_NAME})
@@ -64,6 +71,7 @@ function(create_mbrdaq_suite TARGET_NAME EXTRA_FLAGS OUT_DIR)
     target_compile_options(mbrdaq_tests_${TARGET_NAME}
         PRIVATE ${EXTRA_FLAGS})
     target_link_options(mbrdaq_tests_${TARGET_NAME} PRIVATE ${EXTRA_FLAGS})
+
     set_target_properties(mbrdaq_tests_${TARGET_NAME}
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUT_DIR})
 endfunction()
@@ -78,11 +86,20 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
         if (NOT MINGW)
             target_link_options(mbrdaq_${TARGET_NAME} PRIVATE "LINKER:/ENTRY:mainCRTStartup")
         endif()
+    elseif(APPLE)
+        add_executable(mbrdaq_${TARGET_NAME} MACOSX_BUNDLE src/main.cpp)
+        set_target_properties(mbrdaq_${TARGET_NAME} PROPERTIES
+            MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
+            MACOSX_BUNDLE_GUI_IDENTIFIER "com.mbr.daq.${TARGET_NAME}"
+            MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+            MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+        )
     else()
         add_executable(mbrdaq_${TARGET_NAME} src/main.cpp)
     endif()
 
     target_link_libraries(mbrdaq_${TARGET_NAME} PRIVATE mbrdaq_core_${TARGET_NAME})
+
     add_custom_target(${TARGET_NAME} DEPENDS
         mbrdaq_tests_${TARGET_NAME} mbrdaq_${TARGET_NAME})
 
@@ -90,13 +107,32 @@ function(create_standard_target EXTRA_FLAGS TARGET_NAME)
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${TARGET_NAME}
         OUTPUT_NAME ${PROJECT_NAME})
 
-    # Windows still depends on a custom ffmpeg dll provided by opencv
     if(WIN32)
+        # Ensure destination directory exists
         add_custom_command(TARGET mbrdaq_${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/bin"
             COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${CMAKE_BINARY_DIR}/bin"
                 "$<TARGET_FILE_DIR:mbrdaq_${TARGET_NAME}>"
-            COMMENT "Copy FFMPEG to output directory"
+            COMMENT "Copy FFMPEG binaries to output directory"
         )
+
+        if(WINDEPLOYQT_EXE)
+            add_custom_command(TARGET mbrdaq_${TARGET_NAME} POST_BUILD
+                COMMAND ${WINDEPLOYQT_EXE}
+                    --dir "$<TARGET_FILE_DIR:mbrdaq_${TARGET_NAME}>"
+                    --no-translations
+                    "$<TARGET_FILE:mbrdaq_${TARGET_NAME}>"
+                COMMENT "Deploy Qt runtime libraries"
+            )
+        endif()
+    elseif(APPLE)
+        if(MACDEPLOYQT_EXE)
+            add_custom_command(TARGET mbrdaq_${TARGET_NAME} POST_BUILD
+                COMMAND ${MACDEPLOYQT_EXE}
+                    "$<TARGET_BUNDLE_DIR:mbrdaq_${TARGET_NAME}>"
+                COMMENT "Deploy Qt frameworks into app bundle"
+            )
+        endif()
     endif()
 endfunction()

@@ -3,9 +3,9 @@
     { "key": "T",  "name": "Timestamp",   "required": true,  "plot": false },
     { "key": "E",  "name": "Engine RPM",  "required": false, "plot": true, "unit": "RPM",  "group": "rpm" },
     { "key": "W",  "name": "Wheel RPM",   "required": false, "plot": true, "unit": "RPM",  "group": "rpm" },
-    { "key": "fr", "name": "Front Right", "required": false, "plot": true, "unit": "mm",   "group": "shock" },
-    { "key": "fl", "name": "Front Left", "required": false, "plot": true, "unit": "mm",   "group": "shock" },
-    { "key": "br", "name": "Back Right", "required": false, "plot": true, "unit": "mm",   "group": "shock" },
-    { "key": "bl", "name": "Back Left", "required": false, "plot": true, "unit": "mm",   "group": "shock" }
+    { "key": "FR", "name": "Front Right", "required": false, "plot": true, "unit": "mm",   "group": "shock" },
+    { "key": "FL", "name": "Front Left", "required": false, "plot": true, "unit": "mm",   "group": "shock" },
+    { "key": "RR", "name": "Back Right", "required": false, "plot": true, "unit": "mm",   "group": "shock" },
+    { "key": "RL", "name": "Back Left", "required": false, "plot": true, "unit": "mm",   "group": "shock" }
   ]
 }

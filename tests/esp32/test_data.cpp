@@ -41,15 +41,15 @@ TEST_CASE("telemetry_data config loading and data writing") {
         const auto& series_t = data.get_series("T");
         const auto& series_e = data.get_series("E");
 
-        REQUIRE(series_t.size() == 1);
-        CHECK(series_t[0] == Catch::Approx(60'000'000.0));
-        REQUIRE(series_e.size() == 1);
-        CHECK(series_e[0] == Catch::Approx(3500.5));
+        REQUIRE(series_t.get()->size() == 1);
+        CHECK(series_t.get()->at(0) == Catch::Approx(60'000'000.0));
+        REQUIRE(series_e.get()->size() == 1);
+        CHECK(series_e.get()->at(0) == Catch::Approx(3500.5));
     }
 
     SECTION("Handling missing keys") {
         const auto& series_missing = data.get_series("UNKNOWN_KEY");
-        CHECK(series_missing.empty());
+        CHECK_FALSE(series_missing);
         std::string logs = logger.get_streamed_logs();
         CHECK(logs.contains("Key 'UNKNOWN_KEY' not found in telemetry configuration!"));
     }
