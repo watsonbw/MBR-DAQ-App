@@ -126,8 +126,8 @@ void gui_t::build_menu_bar() {
 
     status_dot_ = new QLabel(rightWidget);
     status_dot_->setFixedSize(20, 20);
-    status_dot_->setStyleSheet(QString::fromStdString(fmt::format(
-        "background-color: {0}; border-radius: 10px;", colors::status_error.name().toStdString())));
+    status_dot_->setStyleSheet(QString::fromStdString(
+        fmt::format("background-color: {0}; border-radius: 10px;", colors::status_error)));
     rightLayout->addWidget(connection_status_, 0, Qt::AlignVCenter);
     rightLayout->addWidget(status_dot_, 0, Qt::AlignVCenter);
 
@@ -135,10 +135,11 @@ void gui_t::build_menu_bar() {
 }
 
 void gui_t::update_status_dot() {
-    QString color = !is_connected_   ? colors::status_error.name()
-                    : !is_receiving_ ? colors::status_warn.name()
-                                     : colors::status_ok.name();
-    status_dot_->setStyleSheet(QString("background-color: %1; border-radius: 10px;").arg(color));
+    QRgb color = !is_connected_   ? colors::status_error
+                 : !is_receiving_ ? colors::status_warn
+                                  : colors::status_ok;
+    status_dot_->setStyleSheet(
+        QString("background-color: %1; border-radius: 10px;").arg(QColor(color).name()));
 }
 
 } // namespace mbr

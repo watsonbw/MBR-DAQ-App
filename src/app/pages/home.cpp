@@ -1,5 +1,6 @@
 #include "app/pages/home.hpp"
 
+#include <qcolor.h>
 #include <qwidget.h>
 #include <string>
 #include <utility>
@@ -50,8 +51,8 @@ QWidget* home_page::build_rhs() {
     auto* jason_grid = new QGridLayout();
 
     auto* title = new QLabel("Data Status");
-    title->setStyleSheet(QString::fromStdString(
-        fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
+    title->setStyleSheet(
+        QString::fromStdString(fmt::format("color: {}; font: 12pt", colors::text_main)));
 
     auto* line = new QFrame;
     line->setFrameShape(QFrame::HLine);
@@ -60,15 +61,15 @@ QWidget* home_page::build_rhs() {
     usize row = 0;
     for (auto& d : context_->backend->get_data().data_values) {
         auto* label = new QLabel(QString::fromStdString(d.name));
-        label->setStyleSheet(QString::fromStdString(
-            fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
+        label->setStyleSheet(
+            QString::fromStdString(fmt::format("color: {}; font: 12pt", colors::text_main)));
         jason_grid->addWidget(label, row, 0);
 
         auto* status = new QLabel();
         status->setFixedSize(20, 20);
         status->setStyleSheet(
             QString::fromStdString(fmt::format("background-color: {}; border-radius: 10px;",
-                                               colors::status_error.name().toStdString())));
+                                               QColor(colors::status_error).name().toStdString())));
         jason_grid->addWidget(status, row, 1);
         labels_.try_emplace(QString::fromStdString(d.key), status);
         row++;
@@ -106,7 +107,7 @@ void home_page::connect_signals() {
                     if (auto it = labels_.find(qkey); it != labels_.end()) {
                         it->second->setStyleSheet(QString::fromStdString(
                             fmt::format("background-color: {}; border-radius: 10px;",
-                                        colors::status_ok.name().toStdString())));
+                                        QColor(colors::status_ok).name().toStdString())));
                     }
                 }
             });
@@ -119,7 +120,7 @@ void home_page::connect_signals() {
                 if (auto it = labels_.find(key); it != labels_.end()) {
                     it->second->setStyleSheet(QString::fromStdString(
                         fmt::format("background-color: {}; border-radius: 10px;",
-                                    colors::status_error.name().toStdString())));
+                                    QColor(colors::status_error).name().toStdString())));
                 }
             }
         }

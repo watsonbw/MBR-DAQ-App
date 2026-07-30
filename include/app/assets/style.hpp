@@ -13,22 +13,21 @@ namespace mbr::ui::style {
 namespace color {
 
 // Dark Mode Theme Standards
-inline const QColor bg_dark{"#1e1e1e"};
-inline const QColor bg_hover{"#2a2a2a"};
-inline const QColor border{"#2d2d2d"};
-inline const QColor text_main{"#d4d4d4"};
-inline const QColor text_muted{"#a0a0a0"};
-inline const QColor accent{"#00adb5"};
+inline constexpr QRgb bg_dark{0xff1e1e1e};
+inline constexpr QRgb bg_hover{0xff2a2a2a};
+inline constexpr QRgb border{0xff2d2d2d};
+inline constexpr QRgb text_main{0xffd4d4d4};
+inline constexpr QRgb text_muted{0xffa0a0a0};
+inline constexpr QRgb accent{0xff00adb5};
 
 // Status Indicator Colors
-inline const QColor status_error{"#f44336"};
-inline const QColor status_warn{"#ffc107"};
-inline const QColor status_ok{"#00e676"};
+inline constexpr QRgb status_error{0xfff44336};
+inline constexpr QRgb status_warn{0xffffc107};
+inline constexpr QRgb status_ok{0xff00e676};
 
 // Graph Line Palette
-inline const std::array<QColor, 6> graph_palette = {
-    "#00adb5", "#ff5722", "#e91e63", "#9c27b0", "#4caf50", "#ffeb3b"};
-
+inline constexpr std::array<QRgb, 6> graph_palette = {
+    0xff00adb5, 0xffff5722, 0xffe91e63, 0xff9c27b0, 0xff4caf50, 0xffffeb3b};
 QColor get_graph_color(std::size_t index);
 
 } // namespace color

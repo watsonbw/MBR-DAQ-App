@@ -4,6 +4,7 @@
 #include <qaction.h>
 #include <qboxlayout.h>
 #include <qplaintextedit.h>
+#include <qrgb.h>
 #include <qtoolbutton.h>
 #include <qtreewidget.h>
 #include <qtreewidgetitemiterator.h>
@@ -148,14 +149,14 @@ QWidget* plot_page::build_rhs() {
 
     auto configure_axis = [&](QCPAxis* axis, const QString& label) {
         axis->setLabel(label);
-        axis->setBasePen(QPen(colors::text_muted, 1.0));
-        axis->setTickPen(QPen(colors::text_muted, 1.0));
-        axis->setSubTickPen(QPen(colors::text_muted, 0.5));
+        axis->setBasePen(QPen(QColor(colors::text_muted), 1.0));
+        axis->setTickPen(QPen(QColor(colors::text_muted), 1.0));
+        axis->setSubTickPen(QPen(QColor(colors::text_muted), 0.5));
         axis->setTickLabelColor(colors::text_muted);
         axis->setLabelColor(colors::text_muted);
 
-        axis->grid()->setPen(QPen(colors::border, 1.0, Qt::SolidLine));
-        axis->grid()->setSubGridPen(QPen(colors::border, 0.5, Qt::DotLine));
+        axis->grid()->setPen(QPen(QColor(colors::border), 1.0, Qt::SolidLine));
+        axis->grid()->setSubGridPen(QPen(QColor(colors::border), 0.5, Qt::DotLine));
         axis->grid()->setSubGridVisible(true);
     };
 
@@ -294,8 +295,8 @@ void plot_page::plot_signal(const std::string& key) {
     QCPGraph* graph = plot_->addGraph();
     graph->setAdaptiveSampling(true);
 
-    static const std::array<QColor, 6> palette = colors::graph_palette;
-    QColor                             color   = palette[active_graphs_.size() % palette.size()];
+    static const std::array<QRgb, 6> palette = colors::graph_palette;
+    QColor                           color   = palette[active_graphs_.size() % palette.size()];
 
     graph->setPen(QPen(color, 2.0));
     graph->setData(x_times, y_values);
