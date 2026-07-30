@@ -278,6 +278,7 @@ void plot_page::plot_signal(const std::string& key) {
     auto [it, inserted] = active_graphs_.try_emplace(key);
     if (!inserted) { return; }
     auto series = context_->backend->get_data().get_series(key);
+    if (!series) { return; }
     auto time   = context_->backend->get_data().get_time();
 
     if (!has_offset_ && !time.empty()) {
@@ -288,7 +289,7 @@ void plot_page::plot_signal(const std::string& key) {
     QVector<double> x_times;
     x_times.reserve(time.size());
     for (auto t : time) { x_times.append(t - time_offset_); }
-    QVector<double> y_values(series.begin(), series.end());
+    QVector<double> y_values(series->begin(), series->end());
 
     QCPGraph* graph = plot_->addGraph();
     graph->setAdaptiveSampling(true);
@@ -307,7 +308,7 @@ void plot_page::plot_signal(const std::string& key) {
     graph->addToLegend();
 
     it->second           = graph;
-    plotted_counts_[key] = series.size();
+    plotted_counts_[key] = series->size();
 
     plot_->rescaleAxes();
     plot_->replot();
@@ -331,9 +332,10 @@ void plot_page::update_plot() {
 
     for (auto& [key, graph] : active_graphs_) {
         auto series = context_->backend->get_data().get_series(key);
+        if (!series) { return; }
 
         usize& already_plotted = plotted_counts_[key];
-        usize  total           = series.size();
+        usize  total           = series->size();
 
         if (total < already_plotted) {
             graph->data()->clear();
@@ -347,7 +349,7 @@ void plot_page::update_plot() {
         for (auto it = time.begin() + already_plotted; it != time.end(); ++it) {
             new_x.append(*it - time_offset_);
         }
-        QVector<double> new_y(series.begin() + already_plotted, series.end());
+        QVector<double> new_y(series->begin() + already_plotted, series->end());
         graph->addData(new_x, new_y);
 
         already_plotted = total;

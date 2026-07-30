@@ -46,19 +46,19 @@ class telemetry_data {
     [[nodiscard]] const std::string&              get_current_line() { return current_line_; }
 
     template <typename Self>
-    [[nodiscard]] auto& get_series(this Self&& self, const std::string& key) noexcept {
-        auto it = self.series_.find(key);
-        if (it != self.series_.end()) { return it->second; }
+    [[nodiscard]] auto get_series(this Self&& self, const std::string& key) noexcept {
+        using ret_t = stdx::option<stdx::const_dispatch_t<Self, std::vector<f64>>&>;
 
-        if (!self.logged_missing_keys_.contains(key)) {
-            self.logged_missing_keys_.insert(key);
+        auto it = self.series_.find(key);
+        if (it != self.series_.end()) { return ret_t{it->second}; }
+
+        if (self.logged_missing_keys_.insert(key).second) {
             log_error(self.log_, "Key '{}' not found in telemetry configuration!", key);
         }
-        static stdx::const_dispatch_t<Self, std::vector<f64>> dummy;
-        return dummy;
+        return ret_t{};
     }
 
-    [[nodiscard]] auto& get_series() noexcept { return series_; }
+    [[nodiscard]] const auto& get_series() noexcept { return series_; }
 
     void set_sync_lt(local_time lt) noexcept { sync_lt_ = lt; }
     void write_data(const std::string& identifier, const std::string& value);
