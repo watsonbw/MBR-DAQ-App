@@ -51,8 +51,8 @@ QWidget* home_page::build_rhs() {
     auto* jason_grid = new QGridLayout();
 
     auto* title = new QLabel("Data Status");
-    title->setStyleSheet(
-        QString::fromStdString(fmt::format("color: {}; font: 12pt", colors::text_main)));
+    title->setStyleSheet(QString::fromStdString(
+        fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
 
     auto* line = new QFrame;
     line->setFrameShape(QFrame::HLine);
@@ -61,15 +61,15 @@ QWidget* home_page::build_rhs() {
     usize row = 0;
     for (auto& d : context_->backend->get_data().data_values) {
         auto* label = new QLabel(QString::fromStdString(d.name));
-        label->setStyleSheet(
-            QString::fromStdString(fmt::format("color: {}; font: 12pt", colors::text_main)));
+        label->setStyleSheet(QString::fromStdString(
+            fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
         jason_grid->addWidget(label, row, 0);
 
         auto* status = new QLabel();
         status->setFixedSize(20, 20);
         status->setStyleSheet(
             QString::fromStdString(fmt::format("background-color: {}; border-radius: 10px;",
-                                               QColor(colors::status_error).name().toStdString())));
+                                               colors::status_error.name().toStdString())));
         jason_grid->addWidget(status, row, 1);
         labels_.try_emplace(QString::fromStdString(d.key), status);
         row++;
