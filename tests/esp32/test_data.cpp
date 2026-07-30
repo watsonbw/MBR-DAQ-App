@@ -49,7 +49,7 @@ TEST_CASE("telemetry_data config loading and data writing") {
 
     SECTION("Handling missing keys") {
         const auto& series_missing = data.get_series("UNKNOWN_KEY");
-        CHECK(series_missing.get()->empty());
+        CHECK_FALSE(series_missing);
         std::string logs = logger.get_streamed_logs();
         CHECK(logs.contains("Key 'UNKNOWN_KEY' not found in telemetry configuration!"));
     }
