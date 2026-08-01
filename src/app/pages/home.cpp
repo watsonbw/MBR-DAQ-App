@@ -9,7 +9,10 @@
 #include <QHBoxLayout>
 #include <QPlainTextEdit>
 #include <QTimer>
+#include <QLineEdit>
 #include <QVBoxLayout>
+#include <QToolButton>
+#include <QScrollBar>
 #include <qgridlayout.h>
 #include <qlabel.h>
 
@@ -88,11 +91,32 @@ QWidget* home_page::build_lhs() {
     auto* container = new QWidget;
     auto* v_layout  = new QVBoxLayout(container);
 
-    auto* grid_container = new QWidget;
-    //auto* grid           = new QGridLayout(grid_container);
-    //grid->addWidget(some_stat_widget, 0, 0);
-    //grid->addWidget(other_stat_widget, 0, 1);
-    //grid->addWidget(another_widget, 1, 0, 1, 2);
+    auto* sd_grid           = new QGridLayout();
+
+    auto* sd_title = new QLabel("SD Card Control");
+    sd_title->setStyleSheet(QString::fromStdString(
+        fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
+
+    auto* sd_name_input = new QLineEdit();
+    sd_name_input->setPlaceholderText("current_time.txt");
+    sd_name_input->setMaximumWidth(160);
+    sd_name_input->setMinimumHeight(32);
+
+    auto* sd_name_button = new QToolButton();
+    sd_name_button->setText("Create File");
+    sd_name_button->setStyleSheet(style::make_button_style());
+
+
+    auto* sd_open_button = new QToolButton();
+    sd_open_button->setText("Open File");
+    sd_open_button->setStyleSheet(style::make_button_style());
+
+    sd_grid->addWidget(sd_name_input, 0, 0);
+    sd_grid->addWidget(sd_name_button, 0, 1);
+    sd_grid->addWidget(sd_open_button, 0, 2);
+
+    sd_grid->setColumnStretch(0, 1);
+    sd_grid->setColumnStretch(3, 2);
 
     auto* title = new QLabel("Log Output");
     title->setStyleSheet(QString::fromStdString(
@@ -102,15 +126,23 @@ QWidget* home_page::build_lhs() {
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
 
+    auto* line2 = new QFrame;
+    line2->setFrameShape(QFrame::HLine);
+    line2->setFrameShadow(QFrame::Sunken);
+
     log_view_ = new QPlainTextEdit(this);
     log_view_->setReadOnly(true);
     log_view_->setMaximumBlockCount(2000);
     log_view_->setStyleSheet(QString::fromStdString(
         fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
 
-    v_layout->addWidget(grid_container);
-    v_layout->addWidget(title);
+
+    v_layout->addWidget(sd_title);
     v_layout->addWidget(line);
+    v_layout->addLayout(sd_grid);
+    v_layout->addStretch();
+    v_layout->addWidget(title);
+    v_layout->addWidget(line2);
     v_layout->addWidget(log_view_);
     return container;
 }
@@ -156,5 +188,6 @@ void home_page::connect_signals() {
     });
     poll_timer->start(250);
 }
+
 
 } // namespace mbr::ui::pages
