@@ -5,6 +5,7 @@
 
 #include <QLabel>
 #include <QWidget>
+#include <QPlainTextEdit>
 
 #include "app/context.hpp"
 #include "app/pages/page.hpp"
@@ -38,6 +39,8 @@ class home_page : public page {
     std::string                                                                  set_name_;
     ankerl::unordered_dense::map<QString, QLabel*>                               labels_;
     ankerl::unordered_dense::map<QString, std::chrono::steady_clock::time_point> last_updated_;
+
+    QPlainTextEdit* log_view_;
 };
 
 } // namespace mbr::ui::pages

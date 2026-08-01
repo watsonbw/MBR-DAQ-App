@@ -7,6 +7,7 @@
 
 #include <QFrame>
 #include <QHBoxLayout>
+#include <QPlainTextEdit>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <qgridlayout.h>
@@ -33,7 +34,6 @@ void home_page::on_exit() { log_info(context_->log, "Exited HomePage"); }
 
 void home_page::build_page() {
     auto* layout = new QHBoxLayout(this);
-    // layout->setContentsMargins(8, 8, 8, 8);
     layout->setSpacing(1);
 
     auto* lhs = build_lhs();
@@ -87,15 +87,37 @@ QWidget* home_page::build_rhs() {
 QWidget* home_page::build_lhs() {
     auto* container = new QWidget;
     auto* v_layout  = new QVBoxLayout(container);
-    // auto* jason_grid  = new QGridLayout();
 
-    auto* title = new QLabel("hello world");
+    auto* grid_container = new QWidget;
+    //auto* grid           = new QGridLayout(grid_container);
+    //grid->addWidget(some_stat_widget, 0, 0);
+    //grid->addWidget(other_stat_widget, 0, 1);
+    //grid->addWidget(another_widget, 1, 0, 1, 2);
 
+    auto* title = new QLabel("Log Output");
+    title->setStyleSheet(QString::fromStdString(
+        fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
+
+    auto* line = new QFrame;
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+
+    log_view_ = new QPlainTextEdit(this);
+    log_view_->setReadOnly(true);
+    log_view_->setMaximumBlockCount(2000);
+    log_view_->setStyleSheet(QString::fromStdString(
+        fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
+
+    v_layout->addWidget(grid_container);
     v_layout->addWidget(title);
+    v_layout->addWidget(line);
+    v_layout->addWidget(log_view_);
     return container;
 }
 
 void home_page::connect_signals() {
+
+    // rhs
     connect(context_->bridge.get(),
             &ui::bridge::backend_bridge::fields_received,
             this,
@@ -126,6 +148,13 @@ void home_page::connect_signals() {
         }
     });
     timer->start(100);
+
+    // lhs
+    auto* poll_timer = new QTimer(this);
+    connect(poll_timer, &QTimer::timeout, this, [this]() {
+        log_view_->setPlainText(QString::fromStdString(context_->logger.get_streamed_logs()));
+    });
+    poll_timer->start(250);
 }
 
 } // namespace mbr::ui::pages
