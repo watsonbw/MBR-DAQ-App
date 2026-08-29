@@ -144,19 +144,19 @@ QWidget* plot_page::build_rhs() {
 
     plot_ = new QCustomPlot(container);
 
-    plot_->setBackground(QBrush(colors::bg_dark));
-    plot_->axisRect()->setBackground(QBrush(colors::bg_dark));
+    plot_->setBackground(QBrush(colors::bg_d));
+    plot_->axisRect()->setBackground(QBrush(colors::bg_d));
 
     auto configure_axis = [&](QCPAxis* axis, const QString& label) {
         axis->setLabel(label);
-        axis->setBasePen(QPen(QColor(colors::text_muted), 1.0));
-        axis->setTickPen(QPen(QColor(colors::text_muted), 1.0));
-        axis->setSubTickPen(QPen(QColor(colors::text_muted), 0.5));
-        axis->setTickLabelColor(colors::text_muted);
-        axis->setLabelColor(colors::text_muted);
+        axis->setBasePen(QPen(QColor(colors::text_muted_d), 1.0));
+        axis->setTickPen(QPen(QColor(colors::text_muted_d), 1.0));
+        axis->setSubTickPen(QPen(QColor(colors::text_muted_d), 0.5));
+        axis->setTickLabelColor(colors::text_muted_d);
+        axis->setLabelColor(colors::text_muted_d);
 
-        axis->grid()->setPen(QPen(QColor(colors::border), 1.0, Qt::SolidLine));
-        axis->grid()->setSubGridPen(QPen(QColor(colors::border), 0.5, Qt::DotLine));
+        axis->grid()->setPen(QPen(QColor(colors::border_d), 1.0, Qt::SolidLine));
+        axis->grid()->setSubGridPen(QPen(QColor(colors::border_d), 0.5, Qt::DotLine));
         axis->grid()->setSubGridVisible(true);
     };
 
@@ -170,8 +170,8 @@ QWidget* plot_page::build_rhs() {
     plot_->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
     plot_->replot();
     plot_->legend->setVisible(true);
-    plot_->legend->setBrush(QBrush(colors::bg_dark));
-    plot_->legend->setTextColor(colors::text_muted);
+    plot_->legend->setBrush(QBrush(colors::bg_d));
+    plot_->legend->setTextColor(colors::text_muted_d);
 
     layout->addWidget(plot_, 1);
 

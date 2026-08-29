@@ -55,7 +55,7 @@ QWidget* home_page::build_rhs() {
 
     auto* title = new QLabel("Data Status");
     title->setStyleSheet(QString::fromStdString(
-        fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
+        fmt::format("color: {}; font: 12pt", colors::text_main_d.name().toStdString())));
 
     auto* line = new QFrame;
     line->setFrameShape(QFrame::HLine);
@@ -65,7 +65,7 @@ QWidget* home_page::build_rhs() {
     for (auto& d : context_->backend->get_data().data_values) {
         auto* label = new QLabel(QString::fromStdString(d.name));
         label->setStyleSheet(QString::fromStdString(
-            fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
+            fmt::format("color: {}; font: 12pt", colors::text_main_d.name().toStdString())));
         jason_grid->addWidget(label, row, 0);
 
         auto* status = new QLabel();
@@ -95,7 +95,7 @@ QWidget* home_page::build_lhs() {
 
     auto* sd_title = new QLabel("SD Card Control");
     sd_title->setStyleSheet(QString::fromStdString(
-        fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
+        fmt::format("color: {}; font: 12pt", colors::text_main_d.name().toStdString())));
 
     auto* sd_name_input = new QLineEdit();
     sd_name_input->setPlaceholderText("current_time.txt");
@@ -120,7 +120,7 @@ QWidget* home_page::build_lhs() {
 
     auto* title = new QLabel("Log Output");
     title->setStyleSheet(QString::fromStdString(
-        fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
+        fmt::format("color: {}; font: 12pt", colors::text_main_d.name().toStdString())));
 
     auto* line = new QFrame;
     line->setFrameShape(QFrame::HLine);
@@ -134,7 +134,7 @@ QWidget* home_page::build_lhs() {
     log_view_->setReadOnly(true);
     log_view_->setMaximumBlockCount(2000);
     log_view_->setStyleSheet(QString::fromStdString(
-        fmt::format("color: {}; font: 12pt", colors::text_main.name().toStdString())));
+        fmt::format("color: {}; font: 12pt", colors::text_main_d.name().toStdString())));
 
 
     v_layout->addWidget(sd_title);

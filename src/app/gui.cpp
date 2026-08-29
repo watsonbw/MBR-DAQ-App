@@ -74,7 +74,7 @@ void gui_t::build_menu_bar() {
 
     auto* file = menuBar()->addMenu("File");
     file->setStyleSheet(style::make_menu_style());
-    file->addAction("Settings");
+    file->addAction("Settings", this, [this] { change_page(page_type_t::SETTINGS); });
     file->addAction("Export Log");
     file->addAction("Exit", this, [] { QApplication::quit(); });
 

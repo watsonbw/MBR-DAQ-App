@@ -13,10 +13,6 @@
 #include <QSplitter>
 #include <QTimer>
 #include <QWidget>
-#include <QtCharts/QChart>
-#include <QtCharts/QChartView>
-#include <QtCharts/QLineSeries>
-#include <QtCharts/QValueAxis>
 #include <qcustomplot.h>
 #include <qplaintextedit.h>
 #include <qtoolbutton.h>
